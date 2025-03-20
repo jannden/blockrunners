@@ -49,7 +49,7 @@ describe("blockrunners", () => {
     const tx = await program.methods
       .joinGame()
       .accounts({
-        authority: provider.publicKey,
+        player: provider.publicKey,
       })
       .rpc();
     
