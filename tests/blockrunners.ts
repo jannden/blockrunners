@@ -1,8 +1,8 @@
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
-import { Blockrunners } from "../target/types/blockrunners";
 import { PublicKey } from "@solana/web3.js";
 import { expect } from "chai";
+import { Blockrunners } from "../target/types/blockrunners";
 
 describe("blockrunners", () => {
   // Configure the client to use the local cluster.
@@ -37,5 +37,30 @@ describe("blockrunners", () => {
     // Verify game state values
     expect(gameState.prizePool.toNumber()).to.equal(0);
     expect(gameState.pathLength).to.equal(PATH_LENGTH);
+  });
+
+  it("Initializes the player state", async () => {
+    const [playerStatePda] = PublicKey.findProgramAddressSync(
+      [Buffer.from("player_state"), provider.wallet.publicKey.toBuffer()],
+      program.programId
+    );
+
+    // Initialize the player with the specified card amount
+    const tx = await program.methods
+      .joinGame()
+      .accounts({
+        player: provider.publicKey,
+      })
+      .rpc();
+    
+    console.log("Transaction signature", tx);
+    
+    // Fetch the player state to verify initialization
+    const playerState = await program.account.playerState.fetch(playerStatePda);
+    
+    // Verify player state values
+    expect(playerState.ciphers.toNumber()).to.equal(0);
+    expect(playerState.cards.toNumber()).to.equal(1);
+    expect(playerState.position).to.equal(0);
   });
 });

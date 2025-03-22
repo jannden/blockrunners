@@ -2,10 +2,17 @@
 
 use anchor_lang::prelude::*;
 
-declare_id!("D3Z8EKaXQssyvFBcVLuSPnj5xVywsxCujqd9wxgbuEkU");
+mod state;
+mod instructions;
+mod errors;
+
+use instructions::*;
+
+declare_id!("2gt4rq13cxxjWBhfrdA8yXbhTwaqYAettE5rEuquqjgp");
 
 const INITIAL_PRIZE_POOL: u64 = 0;
 const INITIAL_PATH_LENGTH: u8 = 20;
+const INITIAL_PLAYER_CARDS_AMOUNT: u64 = 1;
 
 #[program]
 pub mod blockrunners {
@@ -19,6 +26,10 @@ pub mod blockrunners {
 
         msg!("Game initialized.");
         Ok(())
+    }
+
+    pub fn join_game(ctx: Context<JoinGame>) -> Result<()> {
+        ctx.accounts.join_game(&ctx.bumps)
     }
 }
 
