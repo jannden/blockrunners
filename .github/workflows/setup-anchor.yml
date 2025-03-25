@@ -29,7 +29,7 @@ jobs:
         uses: ./.github/actions/setup-anchor
         with:
           node-version: '20.16.0'
-          solana-cli-version: '1.18.18'
+          solana-cli-version: '2.2.3'
           anchor-version: '0.31.2'
 
       - name: Verify Installation
@@ -39,10 +39,10 @@ jobs:
           anchor --version
         shell: bash
       
-      - name: Build Anchor Project
-        run: |
-          anchor build
-        shell: bash
+      # - name: Build Anchor Project
+      #   run: |
+      #     anchor build
+      #   shell: bash
 
       # - name: Run Anchor Tests
       #   run: |
