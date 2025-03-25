@@ -1,0 +1,30 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  setup-anchor:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Anchor & Solana CLI
+        uses: ./setup-anchor
+        with:
+          node-version: '20.16.0'
+          solana-cli-version: '1.18.18'
+          anchor-version: '0.30.1'
+
+      - name: Verify Installation
+        run: |
+          node -v
+          solana --version
+          anchor --version
+        shell: bash
