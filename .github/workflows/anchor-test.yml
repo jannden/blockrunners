@@ -21,12 +21,23 @@ jobs:
         uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
+      
+      - name: Install Solana CLI
+        run: |
+          sh -c "$(curl -sSfL https://release.solana.com/stable/install)"
+          echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
+          solana --version
 
       # Install Anchor
       - name: Install Anchor
         run: |
           cargo install --git https://github.com/coral-xyz/anchor anchor-cli --locked
+      
+      # Build Anchor project
+      - name: Build project
+        run: |
+          anchor build
 
-      # Run Anchor Tests
-      - name: Run Tests
+      # Run Anchor tests
+      - name: Run tests
         run: anchor test
