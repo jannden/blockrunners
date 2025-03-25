@@ -28,11 +28,13 @@ jobs:
           solana --version
           anchor --version
         shell: bash
-  test-anchor:
-    runs-on: ubuntu-latest
-    needs: setup-anchor
-    steps:
+      
+      - name: Build Anchor Project
+        run: |
+          anchor build
+        shell: bash
       - name: Run Anchor Tests
         run: |
           anchor test
         shell: bash
+        
