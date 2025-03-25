@@ -14,7 +14,7 @@ jobs:
     steps:
       # Check out the repository
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       # Install Rust
       - name: Install Rust
@@ -24,7 +24,7 @@ jobs:
       
       - name: Install Solana CLI
         run: |
-          sh -c "$(curl -sSfL https://release.solana.com/stable/install)"
+          sh -c "$(curl -sSfL https://release.anza.xyz/v2.2.3/install)"
           echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
           solana --version
 
