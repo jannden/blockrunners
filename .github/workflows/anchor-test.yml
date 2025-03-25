@@ -1,0 +1,32 @@
+name: Anchor Test
+
+# Trigger workflow on pull requests
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  anchor-test:
+    name: Run Anchor Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      # Check out the repository
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Install Rust
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+
+      # Install Anchor
+      - name: Install Anchor
+        run: |
+          cargo install --git https://github.com/coral-xyz/anchor anchor-cli --locked
+
+      # Run Anchor Tests
+      - name: Run Tests
+        run: anchor test
