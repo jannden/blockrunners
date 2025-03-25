@@ -16,7 +16,7 @@ pub const INITIAL_PLAYER_CARDS_AMOUNT: u64 = 1;
 pub const CIPHER_COST: u64 = LAMPORTS_PER_SOL / 1000;
 
 #[constant]
-pub const PLAYER_STATE_SEED: &[u8] = b"player_state";
+pub const GAME_STATE_SEED: &[u8] = b"game_state";
 
 #[constant]
-pub const GAME_STATE_SEED: &[u8] = b"game_state";
+pub const PLAYER_STATE_SEED: &[u8] = b"player_state";

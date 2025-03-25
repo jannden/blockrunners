@@ -3,8 +3,8 @@ import { Program } from "@coral-xyz/anchor";
 import { Keypair, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import { expect } from "chai";
 import { Blockrunners } from "../target/types/blockrunners";
+import { GAME_STATE_SEED, INITIAL_PATH_LENGTH, PLAYER_STATE_SEED } from "./helpers/constants";
 import { airdropSol, getMsgLogs } from "./helpers/utils";
-import { GAME_STATE_SEED } from "./helpers/constants";
 
 describe("Purchase ciphers", () => {
   // Configure the client to use the local cluster.
@@ -28,7 +28,7 @@ describe("Purchase ciphers", () => {
 
   // Player state PDA
   const [playerStatePda] = PublicKey.findProgramAddressSync(
-    [Buffer.from("player_state"), playerKeypair.publicKey.toBuffer()],
+    [Buffer.from(PLAYER_STATE_SEED), playerKeypair.publicKey.toBuffer()],
     program.programId
   );
 
@@ -105,6 +105,9 @@ describe("Purchase ciphers", () => {
 
     // Verify player has the correct number of ciphers
     expect(playerState.ciphers.toNumber()).to.equal(ciphersToPurchase);
+
+    // Verify player has the correct path length
+    expect(playerState.path.length).to.equal(INITIAL_PATH_LENGTH);
   });
 
   it("Allows player to purchase ciphers again", async () => {
@@ -161,7 +164,7 @@ describe("Purchase ciphers", () => {
 
     // Get the player2 state PDA
     const [player2StatePda] = PublicKey.findProgramAddressSync(
-      [Buffer.from("player_state"), player2Keypair.publicKey.toBuffer()],
+      [Buffer.from(PLAYER_STATE_SEED), player2Keypair.publicKey.toBuffer()],
       program.programId
     );
 
@@ -221,6 +224,9 @@ describe("Purchase ciphers", () => {
 
     // Verify game balance increased by exactly the cost of the ciphers
     expect(gameBalanceAfter - gameBalanceBefore).to.equal(expectedCost);
+
+    // Verify player has the correct path length
+    expect(player2State.path.length).to.equal(INITIAL_PATH_LENGTH);
   });
 
   it("Fails if player doesn't have enough balance", async () => {
@@ -275,5 +281,73 @@ describe("Purchase ciphers", () => {
     } catch (error) {
       expect(error.error.errorCode.code).to.equal("AccountNotInitialized");
     }
+  });
+
+  it("Verifies unique paths for different players", async () => {
+    // Create a first player
+    const player1Keypair = Keypair.generate();
+    // Create a second player
+    const player2Keypair = Keypair.generate();
+
+    // Get the player1 state PDA
+    const [player1StatePda] = PublicKey.findProgramAddressSync(
+      [Buffer.from(PLAYER_STATE_SEED), player1Keypair.publicKey.toBuffer()],
+      program.programId
+    );
+    // Get the player2 state PDA
+    const [player2StatePda] = PublicKey.findProgramAddressSync(
+      [Buffer.from(PLAYER_STATE_SEED), player2Keypair.publicKey.toBuffer()],
+      program.programId
+    );
+
+    // Airdrop some SOL to the first player
+    await airdropSol(provider, player1Keypair);
+    // Airdrop some SOL to the second player
+    await airdropSol(provider, player2Keypair);
+
+    // Initialize the first player
+    await program.methods
+      .initializePlayer()
+      .accounts({
+        player: player1Keypair.publicKey,
+      })
+      .signers([player1Keypair])
+      .rpc();
+    // Initialize the second player
+    await program.methods
+      .initializePlayer()
+      .accounts({
+        player: player2Keypair.publicKey,
+      })
+      .signers([player2Keypair])
+      .rpc();
+
+    // First player purchases ciphers
+    const ciphersToPurchase = 2;
+    const expectedCost = ciphersToPurchase * CIPHER_COST;
+
+    await program.methods
+      .purchaseCiphers(new anchor.BN(ciphersToPurchase))
+      .accounts({
+        player: player1Keypair.publicKey,
+      })
+      .signers([player1Keypair])
+      .rpc();
+    // Second player purchases ciphers
+    await program.methods
+      .purchaseCiphers(new anchor.BN(ciphersToPurchase))
+      .accounts({
+        player: player2Keypair.publicKey,
+      })
+      .signers([player2Keypair])
+      .rpc();
+
+    const player1State = await program.account.playerState.fetch(player1StatePda);
+    const player2State = await program.account.playerState.fetch(player2StatePda);
+
+    expect(player1State.path).to.not.deep.equal(player2State.path);
+
+    console.log("Player 1 path: ", player1State.path);
+    console.log("Player 2 path: ", player2State.path);
   });
 });

@@ -1,8 +1,12 @@
 use anchor_lang::prelude::*;
 
 use crate::{
-    constants::{DISCRIMINATOR_SIZE, INITIAL_PLAYER_CARDS_AMOUNT, PLAYER_STATE_SEED},
-    state::PlayerState,
+    constants::{
+        DISCRIMINATOR_SIZE, 
+        INITIAL_PLAYER_CARDS_AMOUNT, 
+        PLAYER_STATE_SEED
+    }, 
+    state::PlayerState
 };
 
 #[derive(Accounts)]

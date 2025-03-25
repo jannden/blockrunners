@@ -3,8 +3,11 @@ import { Program } from "@coral-xyz/anchor";
 import { Keypair, PublicKey } from "@solana/web3.js";
 import { expect } from "chai";
 import { Blockrunners } from "../target/types/blockrunners";
+import { 
+  GAME_STATE_SEED, 
+  PLAYER_STATE_SEED, 
+} from "./helpers/constants";
 import { airdropSol, getMsgLogs } from "./helpers/utils";
-import { GAME_STATE_SEED, PLAYER_STATE_SEED } from "./helpers/constants";
 
 describe("Initialize Player", () => {
   // Configure the client to use the local cluster
