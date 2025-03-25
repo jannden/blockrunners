@@ -26,6 +26,3 @@ export const GAME_STATE_SEED = getStringFromByteArray(
 export const PLAYER_STATE_SEED = getStringFromByteArray(
   constants.find((c) => c.name === "playerStateSeed")?.value
 );
-export const PLAYER_PATH_SEED = getStringFromByteArray(
-  constants.find((c) => c.name === "playerPathSeed")?.value
-);

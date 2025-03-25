@@ -20,6 +20,3 @@ pub const GAME_STATE_SEED: &[u8] = b"game_state";
 
 #[constant]
 pub const PLAYER_STATE_SEED: &[u8] = b"player_state";
-
-#[constant]
-pub const PLAYER_PATH_SEED: &[u8] = b"player_path";

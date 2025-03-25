@@ -1,9 +1,10 @@
 use anchor_lang::{prelude::*, system_program};
 
 use crate::{
-    constants::{CIPHER_COST, GAME_STATE_SEED, PLAYER_STATE_SEED},
-    errors::BlockrunnersError,
-    state::{GameState, PlayerState},
+    constants::{CIPHER_COST, GAME_STATE_SEED, PLAYER_STATE_SEED}, 
+    errors::BlockrunnersError, 
+    instructions::generate_player_path, 
+    state::{GameState, PlayerState}
 };
 
 #[derive(Accounts)]
@@ -43,6 +44,11 @@ pub fn purchase_ciphers(ctx: Context<PurchaseCiphers>, amount: u64) -> Result<()
         ctx.accounts.player.lamports() >= cost,
         BlockrunnersError::InsufficientBalance
     );
+
+    // Initialize player path
+    if player_state.ciphers == 0 {
+        generate_player_path(player_state)?;
+    }
 
     // Transfer SOL from player to the program
     let cpi_context = CpiContext::new(
