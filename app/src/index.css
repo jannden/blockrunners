@@ -2,6 +2,52 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Custom scrollbar styles */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.8);
+}
+
+/* Progress bar styles */
+.clip-path-progress-edge {
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 100% 50%);
+}
+
+.bg-stripes {
+  background-image: repeating-linear-gradient(45deg,
+      transparent,
+      transparent 10px,
+      rgba(0, 0, 0, 0.1) 10px,
+      rgba(0, 0, 0, 0.1) 20px);
+}
+
+.scanline-animation {
+  background-size: 100% 4px;
+  animation: scanline 2s linear infinite;
+}
+
+@keyframes scanline {
+  0% {
+    background-position: 0 0;
+  }
+
+  100% {
+    background-position: 0 100%;
+  }
+}
 :root {
   /* Base theme colors */
   --app-primary: #FFDC58;
@@ -14,19 +60,13 @@
   --app-text: #000;
   --app-border: #000;
 
-  /* Card colors - distinct from base theme */
-  --app-card-oracle: #B794F4;
-  /* Pastel purple - Solana's signature color */
+  /* Mint Green */
   --app-card-shield: #81C784;
-  /* Mint green - for protection */
-  --app-card-doubler: #FFB74D;
-  /* Soft orange - for power amplification */
+  /* Pastel Purple */
+  --app-card-doubler: #B794F4;
+  /* Soft Blue */
   --app-card-swift: #64B5F6;
-  /* Light blue - for speed */
-  --app-card-dejavu: #E57373;
-  /* Soft pink - for time manipulation */
-  /* Buff */
-  /* Deep indigo */
+  
 
   /* shadcn/ui theme variables */
   --background: 0 0% 100%;

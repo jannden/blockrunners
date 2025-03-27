@@ -1,4 +1,5 @@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { useStore } from "@/lib/game-store";
 
 interface CostInfoModalProps {
   open: boolean
@@ -8,6 +9,11 @@ interface CostInfoModalProps {
 }
 
 export function CostInfoModal({ open, onClose, baseCost, selectedCardsCount }: CostInfoModalProps) {
+  const { selectedCards } = useStore();
+  const hasSwiftCard = selectedCards.some((card) => card.type === "swift");
+  const swiftDiscount = hasSwiftCard ? 2 : 0;
+  const totalCost = Math.max(0, baseCost + selectedCardsCount - swiftDiscount);
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] max-w-md">
@@ -26,10 +32,16 @@ export function CostInfoModal({ open, onClose, baseCost, selectedCardsCount }: C
               <span className="font-bold">Selected Cards:</span>
               <span className="font-mono text-lg">+{selectedCardsCount}</span>
             </div>
+            {hasSwiftCard && (
+              <div className="flex justify-between items-center mt-2 text-[var(--app-card-swift)]">
+                <span className="font-bold">Swift Card Discount:</span>
+                <span className="font-mono text-lg">-{swiftDiscount}</span>
+              </div>
+            )}
             <div className="border-t-2 border-black mt-2 pt-2">
               <div className="flex justify-between items-center">
                 <span className="font-bold">Total Cost:</span>
-                <span className="font-mono text-xl">{baseCost + selectedCardsCount}</span>
+                <span className="font-mono text-xl">{totalCost}</span>
               </div>
             </div>
           </div>
@@ -37,21 +49,21 @@ export function CostInfoModal({ open, onClose, baseCost, selectedCardsCount }: C
           <div>
             <h3 className="font-bold text-lg">How It Works</h3>
             <p className="text-sm mt-1">
-              Each move has a base cost of {baseCost} cipher. When you select cards to use with your move, each card
-              adds +1 to the total cost.
+              Each move has a base cost of {baseCost} cipher. When you select cards to use with your
+              move, each card adds +1 to the total cost.
             </p>
           </div>
 
           <div>
             <h3 className="font-bold text-lg">Card Effects</h3>
             <p className="text-sm mt-1">
-              Some cards like "Swift" can reduce the cost of your next move, while using multiple cards will increase
-              the cost but provide more powerful effects.
+              The Swift card reduces the cost of your next move by 2 ciphers (but never below 0).
+              Using multiple cards will increase the cost but provide more powerful effects.
             </p>
           </div>
         </div>
       </DialogContent>
     </Dialog>
-  )
+  );
 }
 

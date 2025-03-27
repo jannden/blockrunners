@@ -45,9 +45,9 @@ A rogue-lite game built on Solana with Anchor using VRF and presented with React
 **Card System**
 
 - After each correct step, the player receives one random card from the following options:
-  1. **Oracle** - Shows the correct path for the next step
-  2. **Shield** - Prevents a reset if the next step is wrong
-  3. **Doubler** - Next correct step gives two random cards instead of one
+  1. **Shield** - Prevents a reset if the next step is wrong.
+  2. **Doubler** - Next correct step gives two random cards.
+  3. **Swift** - The next step costs two less ciphers than it would.
 - Using a card costs ciphers
 
 **Balancing Mechanisms**

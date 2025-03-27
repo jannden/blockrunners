@@ -1,20 +1,21 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import type { GameCard } from "./game-interface";
 
 interface StatusAreaProps {
-  card: GameCard | null;
   ciphers: number;
   nextMoveCost: number;
+  position: number;
+  totalBlocks: number;
   onBuyCiphers: () => void;
   statusMessage?: string;
 }
 
 export function StatusArea({
-  card,
   ciphers,
   nextMoveCost,
+  position,
+  totalBlocks,
   onBuyCiphers,
   statusMessage,
 }: StatusAreaProps) {
@@ -43,19 +44,12 @@ export function StatusArea({
     );
   }
 
-  // Card description
-  if (card) {
-    return (
-      <div className="text-muted-foreground">
-        <p className="text-sm text-center">{card.description}</p>
-      </div>
-    );
-  }
-
-  // Default state
+  // Default state - show position information
   return (
-    <div className="text-muted-foreground">
-      <p className="text-sm text-center">Make your move.</p>
+    <div className="text-muted-foreground text-center">
+      <p className="text-sm">
+        Position: {position} / {totalBlocks} blocks
+      </p>
     </div>
   );
 }

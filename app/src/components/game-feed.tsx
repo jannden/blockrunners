@@ -3,9 +3,10 @@
 import { useEffect, useRef } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card } from "@/components/ui/card";
+import { FeedMessage } from "@/types/game";
 
 interface GameFeedProps {
-  messages: { message: string; isNew: boolean }[];
+  messages: FeedMessage[];
 }
 
 export function GameFeed({ messages }: GameFeedProps) {
@@ -23,9 +24,9 @@ export function GameFeed({ messages }: GameFeedProps) {
     <Card className="flex-1 overflow-hidden border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] min-h-[30vh]">
       <ScrollArea className="h-full p-4" ref={scrollAreaRef}>
         <div className="space-y-2" ref={scrollRef}>
-          {messages.map((message, index) => (
+          {messages.map((message) => (
             <div
-              key={index}
+              key={message.id}
               className={`p-2 bg-[#f8f8f8] dark:bg-[#1e1e1e] border-2 border-black rounded-md transition-all ${
                 message.isNew ? "animate-pulse bg-[#fffde7]" : ""
               }`}
