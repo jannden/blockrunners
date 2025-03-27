@@ -1,6 +1,9 @@
 use anchor_lang::prelude::*;
 
-use crate::state::{SocialFeedEvent, SocialFeedEventType};
+use crate::{
+  constants::MAX_FEED_EVENTS, 
+  state::{SocialFeedEvent, SocialFeedEventType}
+};
 
 pub fn emit_social_feed_event(
   events: &mut Vec<SocialFeedEvent>, 
@@ -10,7 +13,7 @@ pub fn emit_social_feed_event(
     let clock = Clock::get()?; // Get the current timestamp
 
     // Limit the feed to the latest 20 events
-    if events.len() >= 20 {
+    if events.len() >= usize::from(MAX_FEED_EVENTS) {
       events.remove(0); // Remove the oldest event
     }
 
