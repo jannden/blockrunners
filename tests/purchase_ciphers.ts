@@ -64,6 +64,10 @@ describe("Purchase ciphers", () => {
   });
 
   it("Allows player to purchase ciphers", async () => {
+    const socialFeedEventListener = program.addEventListener("socialFeedEvent", event => {
+      console.log("Event data:", event.message);
+    });
+    
     const ciphersToPurchase = 5;
     const expectedCost = ciphersToPurchase * CIPHER_COST;
     const solCost = expectedCost / LAMPORTS_PER_SOL;
@@ -108,6 +112,15 @@ describe("Purchase ciphers", () => {
 
     // Verify player has the correct path length
     expect(playerState.path.length).to.equal(INITIAL_PATH_LENGTH);
+
+    // Verify player events were stored
+    expect(playerState.playerEvents.length).to.equal(1);
+
+    // Verify game events were stored
+    expect(gameState.gameEvents.length).to.equal(1);
+
+    // Remove listener
+    await program.removeEventListener(socialFeedEventListener);
   });
 
   it("Allows player to purchase ciphers again", async () => {

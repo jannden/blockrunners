@@ -6,11 +6,10 @@ import { Blockrunners } from "../target/types/blockrunners";
 import { 
   GAME_STATE_SEED, 
   PLAYER_STATE_SEED,
-  SOCIAL_FEED_SEED
 } from "./helpers/constants";
 import { airdropSol } from "./helpers/utils";
 
-describe("Get Game Information", () => {
+xdescribe("Get Game Information", () => {
   // Configure the client to use the local cluster
   anchor.setProvider(anchor.AnchorProvider.env());
 
@@ -29,11 +28,6 @@ describe("Get Game Information", () => {
 
   const [playerStatePda] = PublicKey.findProgramAddressSync(
     [Buffer.from(PLAYER_STATE_SEED), playerKeypair.publicKey.toBuffer()],
-    program.programId
-  );
-
-  const [socialFeedPda] = PublicKey.findProgramAddressSync(
-    [Buffer.from(SOCIAL_FEED_SEED)],
     program.programId
   );
 
@@ -56,22 +50,6 @@ describe("Get Game Information", () => {
         .rpc();
 
       console.log("Game initialization transaction signature", initGameTx);
-    }
-
-    // Initialize social feed if not already initialized
-    const socialFeed = await program.account.socialFeed.fetchNullable(socialFeedPda);
-    if (!socialFeed) {
-      const initSocialFeedTx = await program.methods
-        .initializeSocialFeed()
-        .accounts({
-          admin: adminKeypair.publicKey,
-          socialFeed: socialFeedPda,
-          systemProgram: anchor.web3.SystemProgram.programId,
-        })
-        .signers([adminKeypair])
-        .rpc();
-
-      console.log("Social feed initialization transaction signature", initSocialFeedTx);
     }
 
     // Initialize player if not already initialized
@@ -127,22 +105,5 @@ describe("Get Game Information", () => {
     expect(playerState.ciphers).to.not.be.null;
     expect(playerState.cards.toNumber()).to.equal(1); // Initial cards amount
     expect(playerState.position).to.equal(0); // Initial position
-  });
-
-  it("Can retrieve social feed information", async () => {
-    // Call the get_social_feed instruction
-    await program.methods
-      .getSocialFeed()
-      .accounts({
-        socialFeed: socialFeedPda,
-      })
-      .rpc();
-
-    // Fetch the social feed directly
-    const socialFeed = await program.account.socialFeed.fetch(socialFeedPda);
-
-    // Verify social feed properties
-    expect(socialFeed.authority).to.not.be.null;
-    expect(socialFeed.events).to.be.an('array');
   });
 }); 

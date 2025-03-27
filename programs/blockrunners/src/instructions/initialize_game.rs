@@ -28,6 +28,7 @@ pub fn initialize_game(ctx: Context<InitializeGame>) -> Result<()> {
     game_state.authority = ctx.accounts.admin.key();
     game_state.prize_pool = INITIAL_PRIZE_POOL;
     game_state.path_length = INITIAL_PATH_LENGTH;
+    game_state.game_events = Vec::new();
 
     msg!("Game initialized by admin");
     Ok(())

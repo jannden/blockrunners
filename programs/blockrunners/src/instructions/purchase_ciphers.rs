@@ -3,8 +3,8 @@ use anchor_lang::{prelude::*, system_program};
 use crate::{
     constants::{CIPHER_COST, GAME_STATE_SEED, PLAYER_STATE_SEED}, 
     errors::BlockrunnersError, 
-    instructions::generate_player_path, 
-    state::{GameState, PlayerState}
+    instructions::{emit_social_feed_event, generate_player_path}, 
+    state::{SocialFeedEventType, GameState, PlayerState}
 };
 
 #[derive(Accounts)]
@@ -16,6 +16,7 @@ pub struct PurchaseCiphers<'info> {
         mut,
         seeds = [PLAYER_STATE_SEED, player.key().as_ref()],
         bump = player_state.bump,
+        has_one = player
     )]
     pub player_state: Account<'info, PlayerState>,
 
@@ -45,9 +46,14 @@ pub fn purchase_ciphers(ctx: Context<PurchaseCiphers>, amount: u64) -> Result<()
         BlockrunnersError::InsufficientBalance
     );
 
-    // Initialize player path
+    // Check if the player is not already in the game
     if player_state.ciphers == 0 {
         generate_player_path(player_state)?;
+        emit_social_feed_event(
+            &mut game_state.game_events,
+            SocialFeedEventType::PlayerJoined,
+            format!("Player {} joined the game!", player_state.player.key()), 
+        )?;
     }
 
     // Transfer SOL from player to the program
@@ -72,6 +78,12 @@ pub fn purchase_ciphers(ctx: Context<PurchaseCiphers>, amount: u64) -> Result<()
         .checked_add(cost)
         .ok_or(ProgramError::ArithmeticOverflow)?;
 
+    emit_social_feed_event(
+        &mut player_state.player_events,
+        SocialFeedEventType::CiphersPurchased,
+        format!("You have successfully purchased {} for {}!", amount, cost),
+    )?;
+    
     msg!("Purchased {} ciphers for {} lamports", amount, cost);
     Ok(())
 }
