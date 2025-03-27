@@ -169,6 +169,12 @@ describe("Purchase ciphers", () => {
 
     // Verify game balance increased by exactly the cost of the ciphers
     expect(gameBalanceAfter - gameBalanceBefore).to.equal(expectedCost);
+
+    // Verify the amount of player events increased
+    expect(playerStateAfter.playerEvents.length).to.equal(2);
+
+    // Verify the amount of player events didn't increase
+    expect(gameStateAfter.gameEvents.length).to.equal(1);
   });
 
   it("Allows second player to purchase ciphers", async () => {

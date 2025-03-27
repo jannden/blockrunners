@@ -9,7 +9,7 @@ import {
 } from "./helpers/constants";
 import { airdropSol } from "./helpers/utils";
 
-xdescribe("Get Game Information", () => {
+describe("Get Game Information", () => {
   // Configure the client to use the local cluster
   anchor.setProvider(anchor.AnchorProvider.env());
 
