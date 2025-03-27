@@ -23,7 +23,23 @@ pub mod blockrunners {
         initialize_player::initialize_player(ctx)
     }
 
+    pub fn initialize_social_feed(ctx: Context<InitializeSocialFeed>) -> Result<()> {
+        initialize_social_feed::initialize_social_feed(ctx)
+    }
+
     pub fn purchase_ciphers(ctx: Context<PurchaseCiphers>, amount: u64) -> Result<()> {
         purchase_ciphers::purchase_ciphers(ctx, amount)
+    }
+
+    pub fn get_game_state(ctx: Context<GetGameState>) -> Result<()> {
+        get_game_state::get_game_state(ctx)
+    }
+
+    pub fn get_player_state(ctx: Context<GetPlayerState>) -> Result<()> {
+        get_player_state::get_player_state(ctx)
+    }
+
+    pub fn get_social_feed(ctx: Context<GetSocialFeed>) -> Result<()> {
+        get_social_feed::get_social_feed(ctx)
     }
 }
