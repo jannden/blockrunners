@@ -1,0 +1,88 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Base theme colors */
+  --app-primary: #FFDC58;
+  /* Yellow for primary actions */
+  --app-secondary: #ff5a5f;
+  /* Red for secondary elements */
+  --app-accent: #2196f3;
+  /* Blue for accents */
+  --app-background: #FEF2E8;
+  --app-text: #000;
+  --app-border: #000;
+
+  /* Card colors - distinct from base theme */
+  --app-card-oracle: #B794F4;
+  /* Pastel purple - Solana's signature color */
+  --app-card-shield: #81C784;
+  /* Mint green - for protection */
+  --app-card-doubler: #FFB74D;
+  /* Soft orange - for power amplification */
+  --app-card-swift: #64B5F6;
+  /* Light blue - for speed */
+  --app-card-dejavu: #E57373;
+  /* Soft pink - for time manipulation */
+  /* Buff */
+  /* Deep indigo */
+
+  /* shadcn/ui theme variables */
+  --background: 0 0% 100%;
+  --foreground: 0 0% 0%;
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 0%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 0 0% 0%;
+  --primary: 0 0% 0%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 0 0% 96%;
+  --secondary-foreground: 0 0% 0%;
+  --muted: 0 0% 96%;
+  --muted-foreground: 0 0% 45%;
+  --accent: 0 0% 96%;
+  --accent-foreground: 0 0% 0%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+  --input: 0 0% 90%;
+  --ring: 0 0% 0%;
+
+  --border-radius: 5px;
+  --box-shadow-x: 4px;
+  --box-shadow-y: 4px;
+  --reverse-box-shadow-x: -4px;
+  --reverse-box-shadow-y: -4px;
+  --base-font-weight: 500;
+  --heading-font-weight: 700;
+
+  --shadow: var(--box-shadow-x) var(--box-shadow-y) 0px 0px var(--border);
+}
+
+.dark {
+  --app-background: #121212;
+  --app-text: #e6e6e6;
+  --app-border: #000;
+
+  /* shadcn/ui dark theme variables */
+  --background: 0 0% 7%;
+  --foreground: 0 0% 100%;
+  --card: 0 0% 13%;
+  --card-foreground: 0 0% 100%;
+  --popover: 0 0% 13%;
+  --popover-foreground: 0 0% 100%;
+  --primary: 0 0% 100%;
+  --primary-foreground: 0 0% 13%;
+  --secondary: 0 0% 16%;
+  --secondary-foreground: 0 0% 100%;
+  --muted: 0 0% 16%;
+  --muted-foreground: 0 0% 45%;
+  --accent: 0 0% 16%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+  --input: 0 0% 15%;
+  --ring: 0 0% 45%;
+
+  --shadow: var(--box-shadow-x) var(--box-shadow-y) 0px 0px var(--border);
+}
