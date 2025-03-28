@@ -106,4 +106,22 @@ describe("Get Game Information", () => {
     expect(playerState.cards.toNumber()).to.equal(1); // Initial cards amount
     expect(playerState.position).to.equal(0); // Initial position
   });
+
+  it("Fails if an attacker wants to get player_state", async () => {
+    try {
+      const attackerKeypair = Keypair.generate();
+      
+      await program.methods
+      .getPlayerState()
+      .accounts({
+        player: attackerKeypair.publicKey,
+        playerState: playerStatePda,
+      })
+      .signers([attackerKeypair])
+      .rpc();
+    } catch (error) {
+      // TODO: Add enum for error codes
+      expect(error.error.errorCode.code).to.equal("ConstraintSeeds");
+    }
+  });
 }); 

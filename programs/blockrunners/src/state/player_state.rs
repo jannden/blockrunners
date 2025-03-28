@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-use crate::{constants::MAX_FEED_EVENTS, state::social_feed_event::SocialFeedEvent};
+use crate::{constants::MAX_FEED_EVENTS, state::SocialFeedEvent };
 
 #[derive(Clone, Copy, AnchorSerialize, AnchorDeserialize)]
 pub enum PathDirection {

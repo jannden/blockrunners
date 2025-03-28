@@ -12,7 +12,7 @@ pub struct GetPlayerState<'info> {
 
     #[account(
         seeds = [PLAYER_STATE_SEED, player.key().as_ref()],
-        bump
+        bump,
     )]
     pub player_state: Account<'info, PlayerState>,
 }

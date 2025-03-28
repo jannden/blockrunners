@@ -5,9 +5,9 @@ use crate::{
   state::{SocialFeedEvent, SocialFeedEventType}
 };
 
-pub fn emit_social_feed_event(
-  events: &mut Vec<SocialFeedEvent>, 
-  event_type: SocialFeedEventType, 
+pub fn save_and_emit_event (
+  events: &mut Vec<SocialFeedEvent>,
+  event_type: SocialFeedEventType,
   message: String,
 ) -> Result<()> {
     let clock = Clock::get()?; // Get the current timestamp
@@ -19,8 +19,8 @@ pub fn emit_social_feed_event(
 
     // Add the new event
     let new_event = SocialFeedEvent {
-        event_type,
         message,
+        event_type,
         timestamp: clock.unix_timestamp,
     };
 

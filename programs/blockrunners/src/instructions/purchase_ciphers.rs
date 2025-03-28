@@ -3,8 +3,8 @@ use anchor_lang::{prelude::*, system_program};
 use crate::{
     constants::{CIPHER_COST, GAME_STATE_SEED, PLAYER_STATE_SEED}, 
     errors::BlockrunnersError, 
-    instructions::{emit_social_feed_event, generate_player_path}, 
-    state::{SocialFeedEventType, GameState, PlayerState}
+    instructions::{generate_player_path, save_and_emit_event}, 
+    state::{GameState, PlayerState, SocialFeedEventType}
 };
 
 #[derive(Accounts)]
@@ -16,7 +16,6 @@ pub struct PurchaseCiphers<'info> {
         mut,
         seeds = [PLAYER_STATE_SEED, player.key().as_ref()],
         bump = player_state.bump,
-        has_one = player
     )]
     pub player_state: Account<'info, PlayerState>,
 
@@ -49,7 +48,7 @@ pub fn purchase_ciphers(ctx: Context<PurchaseCiphers>, amount: u64) -> Result<()
     // Check if the player is not already in the game
     if player_state.ciphers == 0 {
         generate_player_path(player_state)?;
-        emit_social_feed_event(
+        save_and_emit_event(
             &mut game_state.game_events,
             SocialFeedEventType::PlayerJoined,
             format!("Player {} joined the game!", player_state.player.key()), 
@@ -78,7 +77,7 @@ pub fn purchase_ciphers(ctx: Context<PurchaseCiphers>, amount: u64) -> Result<()
         .checked_add(cost)
         .ok_or(ProgramError::ArithmeticOverflow)?;
 
-    emit_social_feed_event(
+    save_and_emit_event(
         &mut player_state.player_events,
         SocialFeedEventType::CiphersPurchased,
         format!("You have successfully purchased {} for {}!", amount, cost),
