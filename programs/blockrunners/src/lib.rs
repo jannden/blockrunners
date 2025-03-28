@@ -9,7 +9,7 @@ mod state;
 
 use instructions::*;
 
-declare_id!("Eqbd2caPKBYpgwpa55ia7oyPhkNeeDjdmzrexkUocxCJ");
+declare_id!("8mUsmUoGDePRR51MkZBLTM2Pgx28zRewWgpC38F2c5pV");
 
 #[program]
 pub mod blockrunners {
@@ -23,10 +23,6 @@ pub mod blockrunners {
         initialize_player::initialize_player(ctx)
     }
 
-    pub fn initialize_social_feed(ctx: Context<InitializeSocialFeed>) -> Result<()> {
-        initialize_social_feed::initialize_social_feed(ctx)
-    }
-
     pub fn purchase_ciphers(ctx: Context<PurchaseCiphers>, amount: u64) -> Result<()> {
         purchase_ciphers::purchase_ciphers(ctx, amount)
     }
@@ -37,9 +33,5 @@ pub mod blockrunners {
 
     pub fn get_player_state(ctx: Context<GetPlayerState>) -> Result<()> {
         get_player_state::get_player_state(ctx)
-    }
-
-    pub fn get_social_feed(ctx: Context<GetSocialFeed>) -> Result<()> {
-        get_social_feed::get_social_feed(ctx)
     }
 }

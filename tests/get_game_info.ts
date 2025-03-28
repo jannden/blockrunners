@@ -4,9 +4,9 @@ import { Keypair, PublicKey } from "@solana/web3.js";
 import { expect } from "chai";
 import { Blockrunners } from "../target/types/blockrunners";
 import { 
+  CONSTRAINT_SEEDS,
   GAME_STATE_SEED, 
   PLAYER_STATE_SEED,
-  SOCIAL_FEED_SEED
 } from "./helpers/constants";
 import { airdropSol } from "./helpers/utils";
 
@@ -32,11 +32,6 @@ describe("Get Game Information", () => {
     program.programId
   );
 
-  const [socialFeedPda] = PublicKey.findProgramAddressSync(
-    [Buffer.from(SOCIAL_FEED_SEED)],
-    program.programId
-  );
-
   before(async () => {
     // Airdrop SOL to the admin and player
     await airdropSol(provider, adminKeypair);
@@ -56,22 +51,6 @@ describe("Get Game Information", () => {
         .rpc();
 
       console.log("Game initialization transaction signature", initGameTx);
-    }
-
-    // Initialize social feed if not already initialized
-    const socialFeed = await program.account.socialFeed.fetchNullable(socialFeedPda);
-    if (!socialFeed) {
-      const initSocialFeedTx = await program.methods
-        .initializeSocialFeed()
-        .accounts({
-          admin: adminKeypair.publicKey,
-          socialFeed: socialFeedPda,
-          systemProgram: anchor.web3.SystemProgram.programId,
-        })
-        .signers([adminKeypair])
-        .rpc();
-
-      console.log("Social feed initialization transaction signature", initSocialFeedTx);
     }
 
     // Initialize player if not already initialized
@@ -129,20 +108,20 @@ describe("Get Game Information", () => {
     expect(playerState.position).to.equal(0); // Initial position
   });
 
-  it("Can retrieve social feed information", async () => {
-    // Call the get_social_feed instruction
-    await program.methods
-      .getSocialFeed()
+  it("Fails if an attacker wants to get player_state", async () => {
+    try {
+      const attackerKeypair = Keypair.generate();
+      
+      await program.methods
+      .getPlayerState()
       .accounts({
-        socialFeed: socialFeedPda,
+        player: attackerKeypair.publicKey,
+        playerState: playerStatePda,
       })
+      .signers([attackerKeypair])
       .rpc();
-
-    // Fetch the social feed directly
-    const socialFeed = await program.account.socialFeed.fetch(socialFeedPda);
-
-    // Verify social feed properties
-    expect(socialFeed.authority).to.not.be.null;
-    expect(socialFeed.events).to.be.an('array');
+    } catch (error) {
+      expect(error.error.errorCode.code).to.equal(CONSTRAINT_SEEDS);
+    }
   });
 }); 

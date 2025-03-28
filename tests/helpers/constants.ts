@@ -29,6 +29,6 @@ export const GAME_STATE_SEED = getStringFromByteArray(
 export const PLAYER_STATE_SEED = getStringFromByteArray(
   constants.find((c) => c.name === "playerStateSeed")?.value
 );
-export const SOCIAL_FEED_SEED = getStringFromByteArray(
-  constants.find((c) => c.name === "socialFeedSeed")?.value
-);
+
+// Error codes
+export const CONSTRAINT_SEEDS = "ConstraintSeeds";
