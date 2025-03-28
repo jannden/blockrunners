@@ -16,7 +16,7 @@ pub const INITIAL_PLAYER_CARDS_AMOUNT: u64 = 1;
 pub const CIPHER_COST: u64 = LAMPORTS_PER_SOL / 1000;
 
 #[constant]
-pub const MAX_FEED_EVENTS: u8 = u8::MAX;
+pub const MAX_FEED_EVENTS: u8 = 20;
 
 #[constant]
 pub const GAME_STATE_SEED: &[u8] = b"game_state";

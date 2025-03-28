@@ -4,6 +4,7 @@ import { Keypair, PublicKey } from "@solana/web3.js";
 import { expect } from "chai";
 import { Blockrunners } from "../target/types/blockrunners";
 import { 
+  CONSTRAINT_SEEDS,
   GAME_STATE_SEED, 
   PLAYER_STATE_SEED,
 } from "./helpers/constants";
@@ -120,8 +121,7 @@ describe("Get Game Information", () => {
       .signers([attackerKeypair])
       .rpc();
     } catch (error) {
-      // TODO: Add enum for error codes
-      expect(error.error.errorCode.code).to.equal("ConstraintSeeds");
+      expect(error.error.errorCode.code).to.equal(CONSTRAINT_SEEDS);
     }
   });
 }); 
