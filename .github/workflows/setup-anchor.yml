@@ -15,16 +15,6 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Clear npm cache
-        run: |
-          npm cache clean --force
-        shell: bash
-
-      - name: Remove node_modules
-        run: |
-          rm -rf node_modules/
-        shell: bash
-
       - name: Setup Anchor & Solana CLI
         uses: ./.github/actions/setup-anchor
         with:
