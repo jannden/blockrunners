@@ -45,7 +45,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-cargo-
 
-      - name: Cache and Install Solana CLI
+      - name: Cache Solana CLI tools
         id: solana-cache
         uses: actions/cache@v4
         with:
@@ -55,11 +55,11 @@ jobs:
             solana-cli-${{ runner.os }}-
 
       - name: Install Solana CLI (if not cached)
-        if: steps.solana-cache.outputs.cache-hit != 'true'
         run: sh -c "$(curl -sSfL https://release.anza.xyz/v${{ env.SOLANA_VERSION }}/install)"
 
       - name: Add Solana to PATH
         run: echo "/home/runner/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
+        shell: bash
 
       - name: Install Anchor CLI
         run: |
