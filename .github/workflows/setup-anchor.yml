@@ -54,8 +54,7 @@ jobs:
         shell: bash
       - name: Update PATH
         run: |
-          echo "/home/runner/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH 
-          solana --version
+          echo "/home/runner/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
         shell: bash
       
       - name: Install Anchor CLI
