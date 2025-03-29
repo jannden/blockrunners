@@ -35,12 +35,16 @@ runs:
     - name: Update PATH
       run: echo "/home/runner/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH 
       shell: bash
-    - name: Install Cargo Deps
+    # - name: Install Cargo Deps
+    #   run: |
+    #     sudo apt-get update
+    #     sudo apt-get install -y pkg-config libudev-dev
+    #   shell: bash
+    # - name: Install Anchor
+    #   run: |
+    #     cargo install --git https://github.com/coral-xyz/anchor --tag v${{ inputs.anchor-version }} anchor-cli
+    #   shell: bash
+    - name: Install Anchor CLI
       run: |
-        sudo apt-get update
-        sudo apt-get install -y pkg-config libudev-dev
-      shell: bash
-    - name: Install Anchor
-      run: |
-        cargo install --git https://github.com/coral-xyz/anchor --tag v${{ inputs.anchor-version }} anchor-cli
+        cargo install --git https://github.com/coral-xyz/anchor --bin anchor-cli --tag v${{ inputs.anchor-version }} --locked
       shell: bash
