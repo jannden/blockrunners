@@ -15,7 +15,7 @@ inputs:
   anchor-version:
     description: 'Version of Anchor to use'
     required: false
-    default: '0.31.2' # latest
+    default: '0.31.0' # latest
 runs:
   using: 'composite'
   steps:
@@ -37,5 +37,5 @@ runs:
       shell: bash
     - name: Install Anchor
       run: |
-        npm i -g @coral-xyz/anchor-cli@${{ inputs.anchor-version }}
+        cargo install --git https://github.com/coral-xyz/anchor --tag v${{ inputs.anchor-version }} anchor-cli
       shell: bash

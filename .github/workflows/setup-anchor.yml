@@ -20,7 +20,7 @@ jobs:
         with:
           node-version: '20.16.0'
           solana-cli-version: '2.2.3'
-          anchor-version: '0.31.2'
+          anchor-version: '0.31.0'
 
       - name: Verify Installation
         run: |
