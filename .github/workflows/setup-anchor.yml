@@ -29,10 +29,10 @@ jobs:
           anchor --version
         shell: bash
       
-      # - name: Build Anchor Project
-      #   run: |
-      #     anchor build
-      #   shell: bash
+      - name: Build Anchor Project
+        run: |
+          anchor build
+        shell: bash
 
       # - name: Run Anchor Tests
       #   run: |
