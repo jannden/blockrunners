@@ -17,4 +17,4 @@ jobs:
         with:
           node-version: '20.11.0'
           solana-cli-version: '2.2.3'
-          anchor-version: '0.31.0'
+          anchor-version: '0.31.2'
