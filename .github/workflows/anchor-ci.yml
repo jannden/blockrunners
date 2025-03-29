@@ -64,6 +64,11 @@ jobs:
           solana --version
         shell: bash
 
+      - name: Configure Solana
+        run: |
+          solana-keygen new --no-bip39-passphrase
+          solana config set --url ${{ env.SOLANA_NETWORK }}
+
       - name: Install Anchor CLI
         run: |
           cargo install --git https://github.com/coral-xyz/anchor avm --locked --force
@@ -90,11 +95,6 @@ jobs:
 
       - name: Install Node.js Dependencies
         run: npm install
-
-      - name: Configure Solana
-        run: |
-          solana-keygen new --no-bip39-passphrase
-          solana config set --url ${{ env.SOLANA_NETWORK }}
 
       - name: Build Anchor Project
         run: anchor build
