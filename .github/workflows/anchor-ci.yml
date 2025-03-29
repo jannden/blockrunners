@@ -1,4 +1,4 @@
-name: Anchor Build and Test
+name: Actor CI
 
 on:
   push:
@@ -12,8 +12,7 @@ env:
   NODE_VERSION: "18"
 
 jobs:
-  build:
-    name: Build
+  build-and-test:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -24,6 +23,14 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
+
+      - name: Cache Node Modules
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-modules-
 
       - name: Install Rust
         uses: actions-rs/toolchain@v1
@@ -50,118 +57,33 @@ jobs:
             ~/.cache/solana/
             ~/.local/share/solana/
           key: solana-cli-${{ runner.os }}-build-${{ env.SOLANA_VERSION }}
-          
+
       - name: Install Solana CLI tools
         run: sh -c "$(curl -sSfL https://release.anza.xyz/v${{ env.SOLANA_VERSION }}/install)"
         shell: bash
-          
+
       - name: Update PATH
-        run: |
-          echo "/home/runner/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
+        run: echo "/home/runner/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
         shell: bash
       
-      - name: Cache Anchor CLI
-        uses: actions/cache@v4
-        id: cache-anchor
-        with:
-          path: |
-            ~/.cargo/bin/anchor
-            ~/.cargo/bin/avm
-            ~/.avm
-          key: anchor-cli-${{ runner.os }}-${{ env.ANCHOR_VERSION }}
-          
       - name: Install Anchor CLI
-        if: steps.cache-anchor.outputs.cache-hit != 'true'
         run: |
           cargo install --git https://github.com/coral-xyz/anchor avm --locked --force
           avm install ${{ env.ANCHOR_VERSION }}
-          
-      - name: Use Anchor version
-        run: |
           avm use ${{ env.ANCHOR_VERSION }}
-          echo "Anchor version: $(anchor --version)"
+          echo "$HOME/.avm/bin" >> $GITHUB_PATH
+        shell: bash
       
       - name: Install project dependencies
         run: npm install
       
-      - name: Anchor Build
-        run: anchor build
-        
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: program-artifacts
-          path: |
-            target/
-            target/idl/
-            target/types/
-            Anchor.toml
-          retention-days: 1
-
-  test:
-    name: Test
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-      
-      - name: Install project dependencies
-        run: npm install
-        
-      - name: Cache Solana CLI tools
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cache/solana/
-            ~/.local/share/solana/
-          key: solana-cli-${{ runner.os }}-build-${{ env.SOLANA_VERSION }}
-          
-      - name: Install Solana CLI tools
-        run: sh -c "$(curl -sSfL https://release.anza.xyz/v${{ env.SOLANA_VERSION }}/install)"
-        shell: bash
-          
-      - name: Update PATH
-        run: |
-          echo "/home/runner/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
-        shell: bash
-      
-      - name: Cache Anchor CLI
-        uses: actions/cache@v4
-        id: cache-anchor
-        with:
-          path: |
-            ~/.cargo/bin/anchor
-            ~/.cargo/bin/avm
-            ~/.avm
-          key: anchor-cli-${{ runner.os }}-${{ env.ANCHOR_VERSION }}
-          
-      - name: Install Anchor CLI
-        if: steps.cache-anchor.outputs.cache-hit != 'true'
-        run: |
-          cargo install --git https://github.com/coral-xyz/anchor avm --locked --force
-          avm install ${{ env.ANCHOR_VERSION }}
-          
-      - name: Use Anchor version
-        run: |
-          avm use ${{ env.ANCHOR_VERSION }}
-          echo "Anchor version: $(anchor --version)"
-        
-      - name: Download build artifacts
-        uses: actions/download-artifact@v3
-        with:
-          name: program-artifacts
-          
       - name: Solana Config
         run: |
           solana-keygen new --no-bip39-passphrase
           solana config set --url localhost
+      
+      - name: Anchor Build
+        run: anchor build
       
       - name: Run Anchor Tests
         run: anchor test
