@@ -1,4 +1,4 @@
-name: Setup Anchor
+name: Run Anchor Tests
 
 on:
   push:
@@ -9,32 +9,8 @@ on:
       - main
 
 jobs:
-  setup-anchor:
-    runs-on: ubuntu-latest
+  run-anchor-test:
+    runs-on: ubuntu-20.04
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: Setup Anchor & Solana CLI
-        uses: ./.github/actions/setup-anchor
-        with:
-          node-version: '20.16.0'
-          solana-cli-version: '2.2.3'
-          anchor-version: '0.31.0'
-
-      - name: Verify Installation
-        run: |
-          node -v
-          solana --version
-          anchor --version
-        shell: bash
-      
-      - name: Build Anchor Project
-        run: |
-          anchor build
-        shell: bash
-
-      # - name: Run Anchor Tests
-      #   run: |
-      #     anchor test
-      #   shell: bash
+      - uses: actions/checkout@v3
+      - uses: metadaoproject/anchor-test@v2
