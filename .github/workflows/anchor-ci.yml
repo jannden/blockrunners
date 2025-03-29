@@ -1,0 +1,119 @@
+name: Anchor Build, Test
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  NODE_VERSION: "18"
+  SOLANA_VERSION: "2.2.3"
+  ANCHOR_VERSION: "0.31.0"
+  SOLANA_NETWORK: localhost
+
+jobs:
+  setup-env:
+    runs-on: ubuntu-latest
+    outputs:
+      solana-path: "/home/runner/.local/share/solana/install/active_release/bin"
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install Rust Toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+          components: rustfmt, clippy
+
+      - name: Cache Rust dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: Cache and Install Solana CLI
+        id: solana-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/share/solana/
+          key: solana-cli-${{ runner.os }}-${{ env.SOLANA_VERSION }}
+          restore-keys: |
+            solana-cli-${{ runner.os }}-
+
+      - name: Install Solana CLI (if not cached)
+        if: steps.solana-cache.outputs.cache-hit != 'true'
+        run: sh -c "$(curl -sSfL https://release.anza.xyz/v${{ env.SOLANA_VERSION }}/install)"
+
+      - name: Add Solana to PATH
+        run: echo "/home/runner/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
+
+      - name: Install Anchor CLI
+        run: |
+          cargo install --git https://github.com/coral-xyz/anchor avm --locked --force
+          avm install ${{ env.ANCHOR_VERSION }}
+          avm use ${{ env.ANCHOR_VERSION }}
+
+  build:
+    runs-on: ubuntu-latest
+    needs: setup-env
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Restore Cached Dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: Install Node.js Dependencies
+        run: npm install
+
+      - name: Configure Solana
+        run: |
+          solana-keygen new --no-bip39-passphrase
+          solana config set --url ${{ env.SOLANA_NETWORK }}
+
+      - name: Build Anchor Project
+        run: anchor build
+
+      - name: Save Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: anchor-build
+          path: target/deploy/
+
+  test:
+    runs-on: ubuntu-latest
+    needs: build  # Runs only if build succeeds
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Restore Build Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: anchor-build
+          path: target/deploy/
+
+      - name: Run Tests
+        run: anchor test
