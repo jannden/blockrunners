@@ -37,6 +37,5 @@ runs:
       shell: bash
     - name: Install Anchor
       run: |
-        npm uninstall -g @coral-xyz/anchor-cli
         npm i -g @coral-xyz/anchor-cli@${{ inputs.anchor-version }}
       shell: bash
