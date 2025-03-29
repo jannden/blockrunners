@@ -9,7 +9,7 @@ mod state;
 
 use instructions::*;
 
-declare_id!("Eqbd2caPKBYpgwpa55ia7oyPhkNeeDjdmzrexkUocxCJ");
+declare_id!("9BRKKfPZ9kXT8KdMbCmvjnTFqec57ExLRdgUsCNqWU7P");
 
 #[program]
 pub mod blockrunners {

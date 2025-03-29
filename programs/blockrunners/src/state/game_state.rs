@@ -1,5 +1,7 @@
 use anchor_lang::prelude::*;
 
+use crate::{constants::MAX_FEED_EVENTS, state::SocialFeedEvent};
+
 #[account]
 #[derive(InitSpace)]
 pub struct GameState {
@@ -11,4 +13,7 @@ pub struct GameState {
 
     /// The length of the path players need to navigate
     pub path_length: u8,
+
+    #[max_len(MAX_FEED_EVENTS)]
+    pub game_events: Vec<SocialFeedEvent>,
 }

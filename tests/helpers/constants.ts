@@ -18,6 +18,9 @@ export const INITIAL_PRIZE_POOL = Number(
 export const INITIAL_PLAYER_CARDS_AMOUNT = Number(
   constants.find((c) => c.name === "initialPlayerCardsAmount")?.value
 );
+export const MAX_FEED_EVENTS = Number(
+  constants.find((c) => c.name === "maxFeedEvents")?.value
+);
 
 // String constants stored as byte arrays
 export const GAME_STATE_SEED = getStringFromByteArray(
@@ -26,3 +29,6 @@ export const GAME_STATE_SEED = getStringFromByteArray(
 export const PLAYER_STATE_SEED = getStringFromByteArray(
   constants.find((c) => c.name === "playerStateSeed")?.value
 );
+
+// Error codes
+export const CONSTRAINT_SEEDS = "ConstraintSeeds";

@@ -30,10 +30,12 @@ pub fn initialize_player(ctx: Context<InitializePlayer>) -> Result<()> {
     let player_state = &mut ctx.accounts.player_state;
 
     // Initialize player state with default values
+    player_state.player = *ctx.accounts.player.key;
     player_state.ciphers = 0;
     player_state.cards = INITIAL_PLAYER_CARDS_AMOUNT; // Start with 1 card
     player_state.position = 0;
     player_state.bump = ctx.bumps.player_state;
+    player_state.player_events = Vec::new();
 
     msg!("Player initialized");
     Ok(())

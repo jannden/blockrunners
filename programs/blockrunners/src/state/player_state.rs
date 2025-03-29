@@ -1,5 +1,7 @@
 use anchor_lang::prelude::*;
 
+use crate::{constants::MAX_FEED_EVENTS, state::SocialFeedEvent };
+
 #[derive(Clone, Copy, AnchorSerialize, AnchorDeserialize)]
 pub enum PathDirection {
     Left,
@@ -13,6 +15,8 @@ impl Space for PathDirection {
 #[account]
 #[derive(InitSpace)]
 pub struct PlayerState {
+    pub player: Pubkey,
+
     /// Number of ciphers owned
     pub ciphers: u64,
 
@@ -28,4 +32,7 @@ pub struct PlayerState {
 
     /// Store bump to save compute
     pub bump: u8,
+
+    #[max_len(MAX_FEED_EVENTS)]
+    pub player_events: Vec<SocialFeedEvent>,
 }
