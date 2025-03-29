@@ -1,20 +1,70 @@
-name: Run Anchor Tests
+name: Anchor Build
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
   pull_request:
-    branches:
-      - main
+    branches: [ main ]
+
+env:
+  SOLANA_VERSION: "2.2.3"
+  ANCHOR_VERSION: "0.31.0"
+  NODE_VERSION: "18"
 
 jobs:
-  run-anchor-test:
-    runs-on: ubuntu-20.04
+  build-and-test:
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: metadaoproject/anchor-test@v2
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
         with:
-          anchor-version: '0.28.0'
-          solana-cli-version: '1.14.20'
-          node-version: '17.9.1'
+          toolchain: stable
+          override: true
+          components: rustfmt, clippy
+      
+      - name: Cache Rust dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: Install Solana CLI
+        run: |
+          sh -c "$(curl -sSfL https://release.solana.com/v${{ env.SOLANA_VERSION }}/install)"
+          echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
+          solana --version
+      
+      - name: Install Anchor CLI
+        run: |
+          cargo install --git https://github.com/coral-xyz/anchor avm --locked --force
+          avm install ${{ env.ANCHOR_VERSION }}
+          avm use ${{ env.ANCHOR_VERSION }}
+          echo "Anchor version: $(anchor --version)"
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      
+      - name: Install project dependencies
+        run: npm install
+      
+      - name: Solana Config
+        run: |
+          solana-keygen new --no-bip39-passphrase
+          solana config set --url localhost
+      
+      - name: Anchor Build
+        run: anchor build
+      
+      - name: Run Anchor Tests
+        run: anchor test
