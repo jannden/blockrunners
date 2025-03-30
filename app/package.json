@@ -1,7 +1,8 @@
 {
   "name": "blockrunners",
-  "private": true,
-  "version": "0.0.0",
+  "homepage": "https://blockrunners-game.com",
+  "private": false,
+  "version": "0.1.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
