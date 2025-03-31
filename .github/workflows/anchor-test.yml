@@ -57,6 +57,7 @@ jobs:
           components: rustfmt, clippy
 
       - name: Cache Solana CLI tools
+        id: cache-solana
         uses: actions/cache@v4
         with:
           path: |
@@ -66,6 +67,7 @@ jobs:
           key: solana-cli-${{ runner.os }}-build-${{ env.SOLANA_VERSION }}
 
       - name: Install Solana CLI tools
+        if: steps.cache-solana.outputs.cache-hit != 'true'
         run: sh -c "$(curl -sSfL https://release.anza.xyz/v${{ env.SOLANA_VERSION }}/install)"
         shell: bash
 
@@ -84,13 +86,14 @@ jobs:
           key: anchor-cli-${{ runner.os }}-${{ env.ANCHOR_VERSION }}
 
       - name: Install Anchor CLI
+        if: steps.cache-anchor.outputs.cache-hit != 'true'
         run: |
           cargo install --git https://github.com/coral-xyz/anchor avm --locked --force
           avm install ${{ env.ANCHOR_VERSION }}
           avm use ${{ env.ANCHOR_VERSION }}
         shell: bash
 
-      - name: Solana Config
+      - name: Setup Solana Config
         run: |
           # Only generate a new keypair if one doesn't exist
           if [ ! -f ~/.config/solana/id.json ]; then
