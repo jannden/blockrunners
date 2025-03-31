@@ -31,7 +31,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: 'yarn'
           cache-dependency-path: yarn.lock
-      
+
       - name: Install dependencies
         run: |
           yarn install --frozen-lockfile
@@ -42,7 +42,7 @@ jobs:
           toolchain: stable
           override: true
           components: rustfmt, clippy
-      
+
       - name: Cache Rust dependencies
         uses: actions/cache@v4
         with:
@@ -50,7 +50,9 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git
             target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+            ~/.cargo/.crates.toml
+            ~/.cargo/.crates2.json
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock', '**/Cargo.toml') }}
           restore-keys: |
             ${{ runner.os }}-cargo-
 
@@ -60,6 +62,7 @@ jobs:
           path: |
             ~/.cache/solana/
             ~/.local/share/solana/
+            ~/.config/solana/
           key: solana-cli-${{ runner.os }}-build-${{ env.SOLANA_VERSION }}
 
       - name: Install Solana CLI tools
@@ -69,22 +72,45 @@ jobs:
       - name: Update PATH
         run: echo "/home/runner/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
         shell: bash
-      
+
+      - name: Cache Anchor CLI
+        id: cache-anchor
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.avm
+            ~/.cargo/bin/anchor
+            ~/.cargo/bin/avm
+          key: anchor-cli-${{ runner.os }}-${{ env.ANCHOR_VERSION }}
+
       - name: Install Anchor CLI
         run: |
           cargo install --git https://github.com/coral-xyz/anchor avm --locked --force
           avm install ${{ env.ANCHOR_VERSION }}
           avm use ${{ env.ANCHOR_VERSION }}
-          echo "$HOME/.avm/bin" >> $GITHUB_PATH
         shell: bash
-    
+
+      - name: Update PATH for Anchor
+        run: echo "$HOME/.avm/bin" >> $GITHUB_PATH
+        shell: bash
+
       - name: Solana Config
         run: |
           solana-keygen new --no-bip39-passphrase
           solana config set --url localhost
-      
+
+      - name: Cache Anchor Build
+        id: cache-anchor-build
+        uses: actions/cache@v4
+        with:
+          path: |
+            target/deploy/
+            target/idl/
+            target/types/
+          key: anchor-build-${{ runner.os }}-${{ hashFiles('programs/**/*.rs', 'Anchor.toml') }}
+
       - name: Anchor Build
         run: anchor build
-      
+
       - name: Run Anchor Tests
         run: anchor test
