@@ -90,10 +90,6 @@ jobs:
           avm use ${{ env.ANCHOR_VERSION }}
         shell: bash
 
-      - name: Update PATH for Anchor
-        run: echo "$HOME/.avm/bin" >> $GITHUB_PATH
-        shell: bash
-
       - name: Solana Config
         run: |
           # Only generate a new keypair if one doesn't exist
