@@ -26,4 +26,8 @@ pub mod blockrunners {
     pub fn purchase_ciphers(ctx: Context<PurchaseCiphers>, amount: u64) -> Result<()> {
         purchase_ciphers::purchase_ciphers(ctx, amount)
     }
+
+    pub fn make_move(ctx: Context<MakeMove>, params: MakeMoveParams) -> Result<()> {
+        make_move::make_move(ctx, params)
+    }
 }
