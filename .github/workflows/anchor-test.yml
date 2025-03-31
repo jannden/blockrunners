@@ -94,14 +94,15 @@ jobs:
       - name: Install dependencies
         run: yarn install --frozen-lockfile
     
-      - name: Verify Anchor Installation
-        run: |
-          echo "Checking Anchor version..."
-          source $HOME/.cargo/env || true
-          source $HOME/.avm/env || true
-          export PATH="$HOME/.avm/bin:$HOME/.cargo/bin:$PATH"
-          anchor --version
-        shell: bash
+      - name: Cache Anchor CLI
+        id: cache-anchor
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.avm
+            ~/.cargo/bin/anchor
+            ~/.cargo/bin/avm
+          key: anchor-cli-${{ runner.os }}-${{ env.ANCHOR_VERSION }}
 
       - name: Cache Anchor Build
         id: cache-anchor-build
@@ -114,9 +115,7 @@ jobs:
           key: anchor-build-${{ runner.os }}-${{ github.sha }}
 
       - name: Anchor Build
-        run: |
-          export PATH="$HOME/.avm/bin:$HOME/.cargo/bin:$PATH"
-          anchor build
+        run: anchor build
       
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
