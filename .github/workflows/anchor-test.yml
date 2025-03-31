@@ -36,13 +36,6 @@ jobs:
         run: |
           yarn install --frozen-lockfile
 
-      - name: Install Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          override: true
-          components: rustfmt, clippy
-
       - name: Cache Rust dependencies
         uses: actions/cache@v4
         with:
@@ -55,6 +48,13 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock', '**/Cargo.toml') }}
           restore-keys: |
             ${{ runner.os }}-cargo-
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+          components: rustfmt, clippy
 
       - name: Cache Solana CLI tools
         uses: actions/cache@v4
@@ -96,7 +96,13 @@ jobs:
 
       - name: Solana Config
         run: |
-          solana-keygen new --no-bip39-passphrase
+          # Only generate a new keypair if one doesn't exist
+          if [ ! -f ~/.config/solana/id.json ]; then
+            solana-keygen new --no-bip39-passphrase
+          else
+            echo "Keypair already exists, skipping generation"
+          fi
+          # Configure Solana to use localhost cluster
           solana config set --url localhost
 
       - name: Cache Anchor Build
