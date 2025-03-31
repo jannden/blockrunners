@@ -2,39 +2,23 @@ name: Test Anchor Program
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 
 env:
   SOLANA_VERSION: "2.2.3"
   ANCHOR_VERSION: "0.31.0"
+  NODE_VERSION: "22.x"
 
 jobs:
-
-  build-and-test:
-
-    strategy:
-      matrix:
-        node-version: [22.x]
-        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
-
+  setup:
+    name: Setup Environment
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: 'yarn'
-          cache-dependency-path: yarn.lock
-
-      - name: Install dependencies
-        run: |
-          yarn install --frozen-lockfile
 
       - name: Cache Rust dependencies
         uses: actions/cache@v4
@@ -55,6 +39,7 @@ jobs:
           toolchain: stable
           override: true
           components: rustfmt, clippy
+          profile: minimal
 
       - name: Cache Solana CLI tools
         id: cache-solana
@@ -64,15 +49,15 @@ jobs:
             ~/.cache/solana/
             ~/.local/share/solana/
             ~/.config/solana/
-          key: solana-cli-${{ runner.os }}-build-${{ env.SOLANA_VERSION }}
+          key: solana-cli-${{ runner.os }}-${{ env.SOLANA_VERSION }}
 
       - name: Install Solana CLI tools
         if: steps.cache-solana.outputs.cache-hit != 'true'
         run: sh -c "$(curl -sSfL https://release.anza.xyz/v${{ env.SOLANA_VERSION }}/install)"
         shell: bash
 
-      - name: Update PATH
-        run: echo "/home/runner/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
+      - name: Update PATH for Solana
+        run: echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
         shell: bash
 
       - name: Cache Anchor CLI
@@ -93,16 +78,21 @@ jobs:
           avm use ${{ env.ANCHOR_VERSION }}
         shell: bash
 
-      - name: Setup Solana Config
-        run: |
-          # Only generate a new keypair if one doesn't exist
-          if [ ! -f ~/.config/solana/id.json ]; then
-            solana-keygen new --no-bip39-passphrase
-          else
-            echo "Keypair already exists, skipping generation"
-          fi
-          # Configure Solana to use localhost cluster
-          solana config set --url localhost
+      - name: Update PATH for Anchor
+        run: echo "$HOME/.avm/bin" >> $GITHUB_PATH
+        shell: bash
+
+  build:
+    name: Build Anchor Program
+    needs: setup
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
 
       - name: Cache Anchor Build
         id: cache-anchor-build
@@ -112,10 +102,46 @@ jobs:
             target/deploy/
             target/idl/
             target/types/
-          key: anchor-build-${{ runner.os }}-${{ hashFiles('programs/**/*.rs', 'Anchor.toml') }}
+          key: anchor-build-${{ runner.os }}-${{ github.sha }}
 
       - name: Anchor Build
         run: anchor build
+      
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: anchor-build-artifacts
+          path: |
+            target/deploy/
+            target/idl/
+            target/types/
+
+  test:
+    name: Test Anchor Program
+    needs: [setup, build]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: anchor-build-artifacts
+          path: .
+
+      - name: Setup Solana Config
+        run: |
+          if [ ! -f ~/.config/solana/id.json ]; then
+            solana-keygen new --no-bip39-passphrase
+          else
+            echo "Keypair already exists, skipping generation"
+          fi
+          solana config set --url localhost
 
       - name: Run Anchor Tests
         run: anchor test
