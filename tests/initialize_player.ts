@@ -90,7 +90,7 @@ describe("Initialize Player", () => {
         .signers([playerKeypair])
         .rpc();
     } catch (error) {
-      expect(error.transactionLogs[3]).to.include("already in use111");
+      expect(error.transactionLogs[3]).to.include("already in use");
     }
   });
 });

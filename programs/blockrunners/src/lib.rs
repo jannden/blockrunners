@@ -16,7 +16,7 @@ pub mod blockrunners {
     use super::*;
 
     pub fn initialize_game(ctx: Context<InitializeGame>) -> Result<()> {
-        initialize_game::initialize_game(ctx)
+        initialize_game::initialize_game1(ctx)
     }
 
     pub fn initialize_player(ctx: Context<InitializePlayer>) -> Result<()> {
