@@ -71,12 +71,22 @@ jobs:
           key: anchor-cli-${{ runner.os }}-${{ env.ANCHOR_VERSION }}
 
       - name: Install Anchor CLI
-        if: steps.cache-anchor.outputs.cache-hit != 'true'
         run: |
+          echo "Installing AVM & Anchor..."
           cargo install --git https://github.com/coral-xyz/anchor avm --locked --force
+          export PATH="$HOME/.cargo/bin:$PATH"
           avm install ${{ env.ANCHOR_VERSION }}
           avm use ${{ env.ANCHOR_VERSION }}
+      
+          echo "Installing cargo-build-sbf..."
+          cargo install --git https://github.com/solana-labs/cargo-build-sbf --locked --force
+      
+          echo "Verifying Anchor Installation..."
+          export PATH="$HOME/.avm/bin:$HOME/.cargo/bin:$PATH"
+          which anchor || echo "Anchor not found!"
+          anchor --version
         shell: bash
+        
 
       - name: Update PATH for Anchor
         run: echo "$HOME/.avm/bin" >> $GITHUB_PATH
