@@ -30,7 +30,11 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'yarn'
-          cache-dependency-path: app/yarn.lock
+          cache-dependency-path: yarn.lock
+      
+      - name: Install dependencies
+        run: |
+          yarn install --frozen-lockfile
 
       - name: Install Rust
         uses: actions-rs/toolchain@v1
@@ -73,11 +77,6 @@ jobs:
           avm use ${{ env.ANCHOR_VERSION }}
           echo "$HOME/.avm/bin" >> $GITHUB_PATH
         shell: bash
-      
-      - name: Install dependencies
-        run: |
-          cd app
-          yarn install --frozen-lockfile
     
       - name: Solana Config
         run: |
