@@ -9,158 +9,101 @@ on:
 env:
   SOLANA_VERSION: "2.2.3"
   ANCHOR_VERSION: "0.31.0"
-  NODE_VERSION: "22.x"
 
 jobs:
-  setup:
-    name: Setup Environment
+  build:
+    name: Build Anchor Program
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Cache Rust dependencies
-        uses: actions/cache@v4
+      - name: Use Node.js 22.x
+        uses: actions/setup-node@v4
         with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-            ~/.cargo/.crates.toml
-            ~/.cargo/.crates2.json
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock', '**/Cargo.toml') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-
+          node-version: 22.x
+          cache: 'yarn'
+          cache-dependency-path: yarn.lock
 
-      - name: Install Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          override: true
-          components: rustfmt, clippy
-          profile: minimal
+      - name: Install frontend dependencies
+        run: yarn install --frozen-lockfile
 
-      - name: Cache Solana CLI tools
-        id: cache-solana
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cache/solana/
-            ~/.local/share/solana/
-            ~/.config/solana/
-          key: solana-cli-${{ runner.os }}-${{ env.SOLANA_VERSION }}
+      - name: Install Rust and Dependencies
+        run: |
+          rustup show || curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+          rustup default stable
+          rustup component add rustfmt clippy
+          cargo --version
+          rustc --version
 
-      - name: Install Solana CLI tools
-        if: steps.cache-solana.outputs.cache-hit != 'true'
-        run: sh -c "$(curl -sSfL https://release.anza.xyz/v${{ env.SOLANA_VERSION }}/install)"
-        shell: bash
-
-      - name: Update PATH for Solana
-        run: echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
-        shell: bash
-
-      - name: Cache Anchor CLI
-        id: cache-anchor
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.avm
-            ~/.cargo/bin/anchor
-            ~/.cargo/bin/avm
-          key: anchor-cli-${{ runner.os }}-${{ env.ANCHOR_VERSION }}
+      - name: Install Solana CLI
+        run: |
+          sh -c "$(curl -sSfL https://release.anza.xyz/v${{ env.SOLANA_VERSION }}/install)"
+          echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
+          solana --version
 
       - name: Install Anchor CLI
         run: |
-          echo "Installing AVM & Anchor..."
           cargo install --git https://github.com/coral-xyz/anchor avm --locked --force
-          export PATH="$HOME/.cargo/bin:$PATH"
           avm install ${{ env.ANCHOR_VERSION }}
           avm use ${{ env.ANCHOR_VERSION }}
-      
-          echo "Installing cargo-build-sbf..."
-          cargo install --git https://github.com/solana-labs/cargo-build-sbf --locked --force
-      
-          echo "Verifying Anchor Installation..."
-          export PATH="$HOME/.avm/bin:$HOME/.cargo/bin:$PATH"
-          which anchor || echo "Anchor not found!"
+          echo "$HOME/.avm/bin" >> $GITHUB_PATH
           anchor --version
-        shell: bash
-        
 
-      - name: Update PATH for Anchor
-        run: echo "$HOME/.avm/bin" >> $GITHUB_PATH
-        shell: bash
-
-  build:
-    name: Build Anchor Program
-    needs: setup
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Install dependencies
-        run: yarn install --frozen-lockfile
-    
-      - name: Cache Anchor CLI
-        id: cache-anchor
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.avm
-            ~/.cargo/bin/anchor
-            ~/.cargo/bin/avm
-          key: anchor-cli-${{ runner.os }}-${{ env.ANCHOR_VERSION }}
-
-      - name: Cache Anchor Build
-        id: cache-anchor-build
-        uses: actions/cache@v4
-        with:
-          path: |
-            target/deploy/
-            target/idl/
-            target/types/
-          key: anchor-build-${{ runner.os }}-${{ github.sha }}
-
-      - name: Anchor Build
+      - name: Build Anchor Program
         run: anchor build
-      
-      - name: Upload build artifacts
+
+      - name: Upload build and dependencies
         uses: actions/upload-artifact@v4
         with:
-          name: anchor-build-artifacts
+          name: build-dependencies
           path: |
+            ~/.cargo/
+            ~/.config/solana/
+            ~/.avm/
             target/deploy/
             target/idl/
             target/types/
+          retention-days: 1
 
   test:
     name: Test Anchor Program
-    needs: [setup, build]
+    needs: build
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+      
+      - name: Use Node.js 22.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: 'yarn'
+          cache-dependency-path: yarn.lock
 
       - name: Install dependencies
         run: yarn install --frozen-lockfile
-
-      - name: Download build artifacts
+      
+      - name: Download build and dependencies
         uses: actions/download-artifact@v4
         with:
-          name: anchor-build-artifacts
-          path: .
+          name: build-dependencies
+          path: ~/
 
+      - name: Set PATH variables
+        run: |
+          echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
+          echo "$HOME/.avm/bin" >> $GITHUB_PATH
+
+      - name: Verify Installations
+        run: |
+          rustc --version
+          solana --version
+          anchor --version
+      
       - name: Setup Solana Config
         run: |
-          if [ ! -f ~/.config/solana/id.json ]; then
-            solana-keygen new --no-bip39-passphrase
-          else
-            echo "Keypair already exists, skipping generation"
-          fi
+          solana address || solana-keygen new --no-bip39-passphrase
           solana config set --url localhost
 
       - name: Run Anchor Tests
