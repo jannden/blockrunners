@@ -2,7 +2,7 @@ use anchor_lang::prelude::*;
 
 use crate::{constants::MAX_FEED_EVENTS, state::SocialFeedEvent };
 
-#[derive(Clone, Copy, AnchorSerialize, AnchorDeserialize)]
+#[derive(Clone, Copy, AnchorSerialize, AnchorDeserialize, PartialEq)]
 pub enum PathDirection {
     Left,
     Right,

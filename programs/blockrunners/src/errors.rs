@@ -8,6 +8,9 @@ pub enum BlockrunnersError {
     #[msg("Player tries to purchase ciphers with a negative amount")]
     NegativeCiphersAmount,
 
+    #[msg("Player has already completed the path")]
+    PathAlreadyCompleted,
+
     #[msg("Unknown Error")]
     UnknownError,
 }

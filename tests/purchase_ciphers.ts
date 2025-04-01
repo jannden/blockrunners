@@ -72,6 +72,10 @@ describe("Purchase ciphers", () => {
     const expectedCost = ciphersToPurchase * CIPHER_COST;
     const solCost = expectedCost / LAMPORTS_PER_SOL;
 
+    // Get states before purchase
+    const gameStateBefore = await program.account.gameState.fetch(gameStatePda);
+    const playerStateBefore = await program.account.playerState.fetch(playerStatePda);
+
     // Get balances before purchase
     const playerBalanceBefore = await provider.connection.getBalance(playerKeypair.publicKey);
     const gameBalanceBefore = await provider.connection.getBalance(gameStatePda);
@@ -92,32 +96,42 @@ describe("Purchase ciphers", () => {
     const gameBalanceAfter = await provider.connection.getBalance(gameStatePda);
 
     // Fetch player state to verify
-    const playerState = await program.account.playerState.fetch(playerStatePda);
+    const playerStateAfter = await program.account.playerState.fetch(playerStatePda);
 
     // Fetch game state to verify
-    const gameState = await program.account.gameState.fetch(gameStatePda);
+    const gameStateAfter = await program.account.gameState.fetch(gameStatePda);
 
     // Log balance changes for debugging
     console.log("Player balance change:", playerBalanceBefore - playerBalanceAfter);
     console.log("Game balance change:", gameBalanceAfter - gameBalanceBefore);
+    console.log("Prize pool before:", gameStateBefore.prizePool.toNumber());
+    console.log("Prize pool after:", gameStateAfter.prizePool.toNumber());
 
     // Verify balance was reduced by the cost
     expect(playerBalanceBefore - playerBalanceAfter).to.equal(expectedCost);
 
-    // Verify prize pool contains the expected amount
-    expect(gameState.prizePool.toNumber()).to.equal(expectedCost);
+    // Verify prize pool was increased by the expected amount
+    expect(gameStateAfter.prizePool.toNumber()).to.equal(
+      gameStateBefore.prizePool.toNumber() + expectedCost
+    );
 
-    // Verify player has the correct number of ciphers
-    expect(playerState.ciphers.toNumber()).to.equal(ciphersToPurchase);
+    // Verify ciphers were increased by the correct amount
+    expect(playerStateAfter.ciphers.toNumber()).to.equal(
+      playerStateBefore.ciphers.toNumber() + ciphersToPurchase
+    );
 
     // Verify player has the correct path length
-    expect(playerState.path.length).to.equal(INITIAL_PATH_LENGTH);
+    expect(playerStateAfter.path.length).to.equal(INITIAL_PATH_LENGTH);
 
-    // Verify player events were stored
-    expect(playerState.playerEvents.length).to.equal(1);
+    // Verify player events were increased
+    expect(playerStateAfter.playerEvents.length).to.equal(
+      playerStateBefore.playerEvents.length + 1
+    );
 
-    // Verify game events were stored
-    expect(gameState.gameEvents.length).to.equal(1);
+    // Verify game events were increased
+    expect(gameStateAfter.gameEvents.length).to.equal(
+      gameStateBefore.gameEvents.length + 1
+    );
 
     // Remove listener
     await program.removeEventListener(socialFeedEventListener);
@@ -171,10 +185,14 @@ describe("Purchase ciphers", () => {
     expect(gameBalanceAfter - gameBalanceBefore).to.equal(expectedCost);
 
     // Verify the amount of player events increased
-    expect(playerStateAfter.playerEvents.length).to.equal(2);
+    expect(playerStateAfter.playerEvents.length).to.equal(
+      playerStateBefore.playerEvents.length + 1
+    );
 
-    // Verify the amount of player events didn't increase
-    expect(gameStateAfter.gameEvents.length).to.equal(1);
+    // Verify the amount of game events didn't increase
+    expect(gameStateAfter.gameEvents.length).to.equal(
+      gameStateBefore.gameEvents.length
+    );
   });
 
   it("Allows second player to purchase ciphers", async () => {
@@ -230,8 +248,9 @@ describe("Purchase ciphers", () => {
     console.log("Game balance change:", gameBalanceAfter - gameBalanceBefore);
 
     // Verify player2 has the correct number of ciphers
-    const player2State = await program.account.playerState.fetch(player2StatePda);
-    expect(player2State.ciphers.toNumber()).to.equal(ciphersToPurchase);
+    // (should be ciphersToPurchase since this is a new player)
+    const player2StateAfter = await program.account.playerState.fetch(player2StatePda);
+    expect(player2StateAfter.ciphers.toNumber()).to.equal(ciphersToPurchase);
 
     // Verify prize pool was increased by the correct amount
     expect(gameStateAfter.prizePool.toNumber()).to.equal(
@@ -245,7 +264,7 @@ describe("Purchase ciphers", () => {
     expect(gameBalanceAfter - gameBalanceBefore).to.equal(expectedCost);
 
     // Verify player has the correct path length
-    expect(player2State.path.length).to.equal(INITIAL_PATH_LENGTH);
+    expect(player2StateAfter.path.length).to.equal(INITIAL_PATH_LENGTH);
   });
 
   it("Fails if player doesn't have enough balance", async () => {
