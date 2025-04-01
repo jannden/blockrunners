@@ -10,7 +10,7 @@ pub fn save_and_emit_event (
     event_type: SocialFeedEventType,
     message: String,
 ) -> Result<()> {
-     let clock = Clock::get()?; // Get the current timestamp
+     let clock = Clock::get()?; 
 
     // Limit the feed to the latest 20 events
     if events.len() >= usize::from(MAX_FEED_EVENTS) {
