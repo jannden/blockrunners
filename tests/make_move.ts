@@ -121,9 +121,17 @@ describe("Make Move", () => {
         console.log(`Correct direction: ${JSON.stringify(correctDirection)}`);
         
         // Choose the wrong direction (opposite of the correct one)
-        const wrongDirection = correctDirection.left !== undefined 
-            ? { right: {} } 
-            : { left: {} };
+        let wrongDirection;
+        if (correctDirection.left !== undefined) {
+            wrongDirection = { right: {} };
+        }
+        else if (correctDirection.right !== undefined) {
+            wrongDirection = { left: {} };
+        }
+        else {
+            // Handle other direction types or throw an error
+            throw new Error("Unexpected direction type: " + JSON.stringify(correctDirection));
+        }
         console.log(`Wrong direction chosen: ${JSON.stringify(wrongDirection)}`);
 
         // Make the wrong move
