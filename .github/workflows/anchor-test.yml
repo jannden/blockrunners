@@ -1,0 +1,115 @@
+name: Test Anchor Program
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  SOLANA_VERSION: "2.2.3"
+  ANCHOR_VERSION: "0.31.0"
+
+jobs:
+
+  test:
+
+    strategy:
+      matrix:
+        node-version: [22.x]
+        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'yarn'
+          cache-dependency-path: yarn.lock
+
+      - name: Install dependencies
+        run: |
+          yarn install --frozen-lockfile
+
+      - name: Cache Rust dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+            ~/.cargo/.crates.toml
+            ~/.cargo/.crates2.json
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock', '**/Cargo.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+          components: rustfmt, clippy
+
+      - name: Cache Solana CLI tools
+        id: cache-solana
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/solana/
+            ~/.local/share/solana/
+            ~/.config/solana/
+          key: solana-cli-${{ runner.os }}-build-${{ env.SOLANA_VERSION }}
+
+      - name: Install Solana CLI tools
+        if: steps.cache-solana.outputs.cache-hit != 'true'
+        run: sh -c "$(curl -sSfL https://release.anza.xyz/v${{ env.SOLANA_VERSION }}/install)"
+        shell: bash
+
+      - name: Update PATH
+        run: echo "/home/runner/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
+        shell: bash
+
+      - name: Cache Anchor CLI
+        id: cache-anchor
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.avm
+            ~/.cargo/bin/anchor
+            ~/.cargo/bin/avm
+          key: anchor-cli-${{ runner.os }}-${{ env.ANCHOR_VERSION }}
+
+      - name: Install Anchor CLI
+        if: steps.cache-anchor.outputs.cache-hit != 'true'
+        run: |
+          cargo install --git https://github.com/coral-xyz/anchor avm --locked --force
+          avm install ${{ env.ANCHOR_VERSION }}
+          avm use ${{ env.ANCHOR_VERSION }}
+        shell: bash
+
+      - name: Setup Solana Config
+        run: |
+          solana address || solana-keygen new --no-bip39-passphrase
+          solana config set --url localhost
+
+      - name: Cache Anchor Build
+        id: cache-anchor-build
+        uses: actions/cache@v4
+        with:
+          path: |
+            target/deploy/
+            target/idl/
+            target/types/
+          key: anchor-build-${{ runner.os }}-${{ hashFiles('programs/**/*.rs', 'Anchor.toml') }}
+
+      - name: Anchor Build
+        run: anchor build
+
+      - name: Anchor Tests
+        run: anchor test
