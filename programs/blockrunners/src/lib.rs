@@ -8,6 +8,7 @@ mod instructions;
 mod state;
 
 use instructions::*;
+use state::PathDirection;
 
 declare_id!("9BRKKfPZ9kXT8KdMbCmvjnTFqec57ExLRdgUsCNqWU7P");
 
