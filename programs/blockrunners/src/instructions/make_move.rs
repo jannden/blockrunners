@@ -48,11 +48,11 @@ pub fn make_move(ctx: Context<MakeMove>, direction: PathDirection) -> Result<()>
 
 #[derive(Accounts)]
 pub struct MakeMove<'info> {
-    #[account(mut)]
-    pub player_state: Account<'info, PlayerState>,
-    
     #[account(
         constraint = player_state.player == player.key()
     )]
     pub player: Signer<'info>,
+
+    #[account(mut)]
+    pub player_state: Account<'info, PlayerState>,
 }
