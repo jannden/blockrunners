@@ -1,6 +1,7 @@
 use anchor_lang::prelude::*;
-use crate::state::{PlayerState, PathDirection};
+use crate::state::{PlayerState, PathDirection, SocialFeedEvent, SocialFeedEventType};
 use crate::errors::BlockrunnersError;
+use crate::instructions::save_and_emit_event::save_and_emit_event;
 
 pub fn make_move(ctx: Context<MakeMove>, direction: PathDirection) -> Result<()> {
     let player_state = &mut ctx.accounts.player_state;
@@ -21,10 +22,25 @@ pub fn make_move(ctx: Context<MakeMove>, direction: PathDirection) -> Result<()>
         // Correct move: advance one step
         player_state.position += 1;
         msg!("Correct move! Advanced to position {}", player_state.position);
-    } else {
+
+        // Add social feed event for correct move
+        save_and_emit_event(
+            &mut player_state.player_events,
+            SocialFeedEventType::PlayerMoved,
+            format!("Player made a correct move and advanced to position {}!", player_state.position),
+        )?;
+    }
+    else {
         // Incorrect move: reset to start
         player_state.position = 0;
         msg!("Incorrect move! Reset to start");
+
+        // Add social feed event for incorrect move
+        save_and_emit_event(
+            &mut player_state.player_events,
+            SocialFeedEventType::PlayerMoved,
+            format!("Player made an incorrect move and reset to the start!"),
+        )?;
     }
     
     Ok(())

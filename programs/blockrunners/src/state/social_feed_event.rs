@@ -6,6 +6,7 @@ pub enum SocialFeedEventType {
     CardUsed,
     GameWon,
     CiphersPurchased,
+    PlayerMoved,
 }
 
 impl Space for SocialFeedEventType {
