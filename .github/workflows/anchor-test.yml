@@ -22,6 +22,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Test Anchor
       - uses: actions/checkout@v4
-      - uses: IhorMuliar/test-anchor/
+      
+      - name: Test Anchor
+        uses: IhorMuliar/test-anchor@v1
