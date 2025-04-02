@@ -1,7 +1,18 @@
 use anchor_lang::prelude::*;
-use crate::state::{PlayerState, PathDirection, SocialFeedEventType};
-use crate::errors::BlockrunnersError;
-use crate::instructions::save_and_emit_event::save_and_emit_event;
+
+use crate::{
+    errors::BlockrunnersError, 
+    instructions::{collect_player_card, save_and_emit_event,},
+    state::{PathDirection, PlayerState, SocialFeedEventType}
+};
+
+#[derive(Accounts)]
+pub struct MakeMove<'info> {
+    pub player: Signer<'info>,
+
+    #[account(mut)]
+    pub player_state: Account<'info, PlayerState>,
+}
 
 pub fn make_move(ctx: Context<MakeMove>, direction: PathDirection) -> Result<()> {
     let player_state = &mut ctx.accounts.player_state;
@@ -26,6 +37,8 @@ pub fn make_move(ctx: Context<MakeMove>, direction: PathDirection) -> Result<()>
         // Capture position before mutable borrow
         let new_position = player_state.position;
 
+        collect_player_card(player_state)?;
+
         // Add social feed event for correct move
         save_and_emit_event(
             &mut player_state.player_events,
@@ -47,15 +60,4 @@ pub fn make_move(ctx: Context<MakeMove>, direction: PathDirection) -> Result<()>
     }
     
     Ok(())
-}
-
-#[derive(Accounts)]
-pub struct MakeMove<'info> {
-    pub player: Signer<'info>,
-
-    #[account(
-        mut,
-        has_one = player
-    )]
-    pub player_state: Account<'info, PlayerState>,
 }

@@ -2,6 +2,17 @@ use anchor_lang::prelude::*;
 
 use crate::{constants::MAX_FEED_EVENTS, state::SocialFeedEvent };
 
+#[derive(Clone, Copy, AnchorSerialize, AnchorDeserialize, PartialEq, Debug)]
+pub enum Cards {
+    Shield,
+    Doubler,
+    Swift
+}
+
+impl Space for Cards {
+    const INIT_SPACE: usize = 1;
+}
+
 #[derive(Clone, Copy, AnchorSerialize, AnchorDeserialize, PartialEq)]
 pub enum PathDirection {
     Left,
@@ -20,9 +31,8 @@ pub struct PlayerState {
     /// Number of ciphers owned
     pub ciphers: u64,
 
-    /// Number of cards
-    // TODO: To be changed to a Cards struct
-    pub cards: u64,
+    #[max_len(20)]
+    pub cards: Vec<Cards>,
 
     /// Current block number
     pub position: u8,

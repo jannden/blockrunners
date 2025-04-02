@@ -65,7 +65,7 @@ describe("Purchase ciphers", () => {
 
   it("Allows player to purchase ciphers", async () => {
     const socialFeedEventListener = program.addEventListener("socialFeedEvent", event => {
-      console.log("Event data:", event.message);
+      console.log("Purchase ciphers events:", event.message);
     });
     
     const ciphersToPurchase = 5;
@@ -123,9 +123,14 @@ describe("Purchase ciphers", () => {
     // Verify player has the correct path length
     expect(playerStateAfter.path.length).to.equal(INITIAL_PATH_LENGTH);
 
+    // Verify player cards were increased
+    expect(playerStateAfter.cards.length).to.equal(
+      playerStateBefore.cards.length + 1
+    );
+
     // Verify player events were increased
     expect(playerStateAfter.playerEvents.length).to.equal(
-      playerStateBefore.playerEvents.length + 1
+      playerStateBefore.playerEvents.length + 2
     );
 
     // Verify game events were increased
@@ -183,6 +188,11 @@ describe("Purchase ciphers", () => {
 
     // Verify game balance increased by exactly the cost of the ciphers
     expect(gameBalanceAfter - gameBalanceBefore).to.equal(expectedCost);
+
+    // Verify the amount of cards did not increas
+    expect(playerStateAfter.cards.length).to.equal(
+      playerStateBefore.cards.length
+    );
 
     // Verify the amount of player events increased
     expect(playerStateAfter.playerEvents.length).to.equal(

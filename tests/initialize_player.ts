@@ -76,7 +76,6 @@ describe("Initialize Player", () => {
 
     // Verify player state was initialized correctly
     expect(playerState.ciphers.toNumber()).to.equal(0); // Start with 0 ciphers
-    expect(playerState.cards.toNumber()).to.equal(1); // Start with 1 card
     expect(playerState.position).to.equal(0); // Start at position 0
   });
 

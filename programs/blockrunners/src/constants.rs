@@ -10,9 +10,6 @@ pub const INITIAL_PRIZE_POOL: u64 = 0;
 pub const INITIAL_PATH_LENGTH: u8 = 20;
 
 #[constant]
-pub const INITIAL_PLAYER_CARDS_AMOUNT: u64 = 1;
-
-#[constant]
 pub const CIPHER_COST: u64 = LAMPORTS_PER_SOL / 1000;
 
 #[constant]

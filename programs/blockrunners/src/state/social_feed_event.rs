@@ -2,10 +2,11 @@ use anchor_lang::prelude::*;
 
 #[derive(Clone, Copy, AnchorSerialize, AnchorDeserialize)]
 pub enum SocialFeedEventType {
-    PlayerJoined,
     CardUsed,
-    GameWon,
     CiphersPurchased,
+    GameWon,
+    PlayerCardCollected,
+    PlayerJoined,
     PlayerMoved,
 }
 
