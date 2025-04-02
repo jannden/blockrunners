@@ -31,7 +31,7 @@ pub fn initialize_player(ctx: Context<InitializePlayer>) -> Result<()> {
     // Initialize player state with default values
     player_state.player = *ctx.accounts.player.key;
     player_state.ciphers = 0;
-    player_state.cards = Vec::new(); // Start with 1 card
+    player_state.cards = Vec::new();
     player_state.position = 0;
     player_state.path = Vec::new();
     player_state.bump = ctx.bumps.player_state;

@@ -166,7 +166,7 @@ describe("Make Move", () => {
         // Verify position was reset to 0
         expect(playerStateAfter.position).to.equal(0);
 
-        // Verify player cards did not increas
+        // Verify player cards did not increase
         expect(playerStateAfter.cards.length).to.equal(
             playerStateBefore.cards.length
         );

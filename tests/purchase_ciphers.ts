@@ -189,7 +189,7 @@ describe("Purchase ciphers", () => {
     // Verify game balance increased by exactly the cost of the ciphers
     expect(gameBalanceAfter - gameBalanceBefore).to.equal(expectedCost);
 
-    // Verify the amount of cards did not increas
+    // Verify the amount of cards did not increase
     expect(playerStateAfter.cards.length).to.equal(
       playerStateBefore.cards.length
     );
