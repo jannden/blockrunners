@@ -1,5 +1,4 @@
 import * as anchor from "@coral-xyz/anchor";
-import { LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { Blockrunners } from "../../target/types/blockrunners";
 import { getStringFromByteArray } from "./utils";
 
@@ -15,9 +14,10 @@ export const INITIAL_PATH_LENGTH = Number(
 export const INITIAL_PRIZE_POOL = Number(
   constants.find((c) => c.name === "initialPrizePool")?.value
 );
-export const MAX_FEED_EVENTS = Number(
-  constants.find((c) => c.name === "maxFeedEvents")?.value
+export const INITIAL_PLAYER_CARDS_AMOUNT = Number(
+  constants.find((c) => c.name === "initialPlayerCardsAmount")?.value
 );
+export const MAX_FEED_EVENTS = Number(constants.find((c) => c.name === "maxFeedEvents")?.value);
 
 // String constants stored as byte arrays
 export const GAME_STATE_SEED = getStringFromByteArray(

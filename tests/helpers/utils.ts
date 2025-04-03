@@ -39,7 +39,10 @@ export const airdropSol = async (
  * @param byteArray The byte array to convert encoded as a string
  * @returns The string representation of the byte array
  */
-export function getStringFromByteArray(byteArray: string): string {
+export function getStringFromByteArray(byteArray: string | undefined): string {
+  if (!byteArray) {
+    return "";
+  }
   return Buffer.from(JSON.parse(byteArray)).toString("utf8");
 }
 
