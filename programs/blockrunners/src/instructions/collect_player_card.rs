@@ -34,7 +34,6 @@ pub fn collect_player_card(
     let seed = hash(&combined_seed).to_bytes();
     let mut rng = ChaChaRng::from_seed(seed);
 
-    // TODO: Update cards number
     let random_card_index = rng.next_u32() % Cards::COUNT as u32;
 
     // Select the card based on the random index
