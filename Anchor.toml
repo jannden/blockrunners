@@ -5,9 +5,6 @@ package_manager = "yarn"
 resolution = true
 skip-lint = false
 
-[workspace]
-types = "app/src/types/"
-
 [programs.localnet]
 blockrunners = "BsPD4M38GiLBKuDSNipaw6GCfNeJ3uyRngqYBpsiEXko"
 
@@ -20,6 +17,7 @@ wallet = "~/.config/solana/id.json"
 
 [scripts]
 test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/*.ts"
+copy_idl = "mkdir -p app/src/idl && cp target/idl/blockrunners.json app/src/idl/blockrunners.json"
 frontend = "cd app && yarn dev:localnet"
 frontend_devnet = "cd app && yarn dev:devnet"
 frontend_mainnet = "cd app && yarn dev:mainnet"

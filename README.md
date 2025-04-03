@@ -134,6 +134,9 @@ solana-test-validator
 anchor build
 anchor deploy
 
+# Copy the IDL to the frontend.
+anchor run copy_idl
+
 # Serve your frontend application locally.
 anchor run frontend
 # anchor run frontend_devnet
