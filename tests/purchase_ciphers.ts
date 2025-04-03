@@ -1,7 +1,7 @@
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
 import { Keypair, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
-import { expect } from "chai";
+import { assert, expect } from "chai";
 import { Blockrunners } from "../target/types/blockrunners";
 import { GAME_STATE_SEED, PLAYER_STATE_SEED } from "./helpers/constants";
 import { airdropSol, getMsgLogs } from "./helpers/utils";
@@ -33,7 +33,14 @@ describe("Purchase ciphers", () => {
     program.programId
   );
 
+  let playerLogsSubscription;
+
   before(async () => {
+    // Logs subscription
+    playerLogsSubscription = provider.connection.onLogs(playerKeypair.publicKey, (logs) => {
+      console.log("Player logs:", logs);
+    });
+
     // Airdrop SOL to the admin and player
     await airdropSol(provider, adminKeypair);
     await airdropSol(provider, playerKeypair);
@@ -64,11 +71,15 @@ describe("Purchase ciphers", () => {
     console.log("Player initialization transaction signature", initPlayerTx);
   });
 
+  after(() => {
+    provider.connection.removeOnLogsListener(playerLogsSubscription);
+  });
+
   it("Allows player to purchase ciphers", async () => {
-    const socialFeedEventListener = program.addEventListener("socialFeedEvent", event => {
+    const socialFeedEventListener = program.addEventListener("socialFeedEvent", (event) => {
       console.log("Purchase ciphers events:", event.message);
     });
-    
+
     const ciphersToPurchase = 5;
     const expectedCost = ciphersToPurchase * CIPHER_COST;
     const solCost = expectedCost / LAMPORTS_PER_SOL;
@@ -126,9 +137,7 @@ describe("Purchase ciphers", () => {
     expect(playerStateAfter.inGame).to.equal(true);
 
     // Verify player cards were increased
-    expect(playerStateAfter.cards.length).to.equal(
-      playerStateBefore.cards.length + 1
-    );
+    expect(playerStateAfter.cards.length).to.equal(playerStateBefore.cards.length + 1);
 
     // Verify player events were increased
     expect(playerStateAfter.playerEvents.length).to.equal(
@@ -136,9 +145,7 @@ describe("Purchase ciphers", () => {
     );
 
     // Verify game events were increased
-    expect(gameStateAfter.gameEvents.length).to.equal(
-      gameStateBefore.gameEvents.length + 1
-    );
+    expect(gameStateAfter.gameEvents.length).to.equal(gameStateBefore.gameEvents.length + 1);
 
     // Remove listener
     await program.removeEventListener(socialFeedEventListener);
@@ -195,9 +202,7 @@ describe("Purchase ciphers", () => {
     expect(playerStateAfter.inGame).to.equal(true);
 
     // Verify the amount of cards did not increase
-    expect(playerStateAfter.cards.length).to.equal(
-      playerStateBefore.cards.length
-    );
+    expect(playerStateAfter.cards.length).to.equal(playerStateBefore.cards.length);
 
     // Verify the amount of player events increased
     expect(playerStateAfter.playerEvents.length).to.equal(
@@ -205,9 +210,7 @@ describe("Purchase ciphers", () => {
     );
 
     // Verify the amount of game events didn't increase
-    expect(gameStateAfter.gameEvents.length).to.equal(
-      gameStateBefore.gameEvents.length
-    );
+    expect(gameStateAfter.gameEvents.length).to.equal(gameStateBefore.gameEvents.length);
   });
 
   it("Allows second player to purchase ciphers", async () => {
@@ -280,21 +283,18 @@ describe("Purchase ciphers", () => {
 
     // Verify game balance increased by exactly the cost of the ciphers
     expect(gameBalanceAfter - gameBalanceBefore).to.equal(expectedCost);
-    
+
     // Verify player has joined the game
     expect(player2StateBefore.inGame).to.equal(false);
     expect(player2StateAfter.inGame).to.equal(true);
 
     // Verify player cards were increased
-    expect(player2StateAfter.cards.length).to.equal(
-      player2StateBefore.cards.length + 1
-    );
+    expect(player2StateAfter.cards.length).to.equal(player2StateBefore.cards.length + 1);
   });
 
   it("Fails if player doesn't have enough balance", async () => {
     try {
       const ciphersToPurchase = 1000;
-      const expectedCost = ciphersToPurchase * CIPHER_COST;
 
       const tx = await program.methods
         .purchaseCiphers(new anchor.BN(ciphersToPurchase))
@@ -303,12 +303,11 @@ describe("Purchase ciphers", () => {
         })
         .signers([playerKeypair])
         .rpc();
-
-      const logs = await getMsgLogs(provider, tx);
-      console.log("Purchase ciphers logs -> ", logs);
     } catch (error) {
-      expect(error.error.errorCode.code).to.equal("InsufficientBalance");
+      const anchorError = error as anchor.AnchorError;
+      expect(anchorError.error.errorCode.code).to.equal("InsufficientBalance");
     }
+    expect.fail("Should not reach this point");
   });
 
   it("Fails if player tries to purchase ciphers with a negative amount", async () => {
@@ -406,7 +405,7 @@ describe("Purchase ciphers", () => {
     try { 
       // Generate a random direction for player 1
       const player1Direction = { left: {} };
-      
+
       const move1Tx = await program.methods
         .makeMove(player1Direction, CARD_USAGE_EMPTY_MOCK)
         .accounts({
@@ -416,12 +415,12 @@ describe("Purchase ciphers", () => {
         })
         .signers([player1Keypair])
         .rpc();
-      
+
       console.log("Player 1 made a move");
-      
+
       // Make a move with player 2 (different direction)
       const player2Direction = { right: {} };
-      
+
       const move2Tx = await program.methods
         .makeMove(player2Direction, CARD_USAGE_EMPTY_MOCK)
         .accounts({
@@ -431,16 +430,16 @@ describe("Purchase ciphers", () => {
         })
         .signers([player2Keypair])
         .rpc();
-        
+
       console.log("Player 2 made a move");
     } catch (error) {
       console.log("Error making moves:", error);
     }
-    
+
     // Get updated player states
     const player1StateAfter = await program.account.playerState.fetch(player1StatePda);
     const player2StateAfter = await program.account.playerState.fetch(player2StatePda);
-    
+
     // At this point, the players should have different positions
     // If one player made a correct move and the other didn't, their positions will be different
     // If both made correct or incorrect moves, their positions might be the same
