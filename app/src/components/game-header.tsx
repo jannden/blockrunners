@@ -1,5 +1,6 @@
 import { Plus, Zap, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { WalletButton } from "./wallet/wallet-button";
 
 interface GameHeaderProps {
   ciphers: number;
@@ -25,6 +26,9 @@ export function GameHeader({
         </h1>
 
         <div className="flex items-center space-x-3">
+          {/* Wallet Button */}
+          <WalletButton />
+
           {/* Prize Pool */}
           <div className="flex items-center bg-black/30 rounded-md px-2 py-1 border-2 border-black">
             <Trophy className="w-4 h-4 mr-1 text-[var(--app-primary)]" />
