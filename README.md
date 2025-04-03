@@ -2,9 +2,21 @@
 
 This is a blockchain rogue-lite game built on Solana with Anchor and React.
 
-## How to start
+Play the game here: [https://blockrunners-game.com](https://blockrunners-game.com)
 
-TBD - TODO: Explain how to run locally and where to play a deployed version
+## Quickstart
+
+You can clone the repository and run the game locally.
+
+TODO: The React client is by default connected to the Anchor program deployed on **devnet**. Just start it with:
+
+```bash
+cd app
+yarn install
+yarn dev
+```
+
+See [detailed instructions below](#how-to-run-the-game-locally) for how to make adjustments, deploy your own version of the program and connect to it.
 
 ## About the game
 
@@ -78,3 +90,88 @@ The following notification types keep players engaged:
 6. **Personal Bests** - "You've broken your previous record of 24 steps!"
 7. **Step Price Changes** - "Step price increased to 1500 lamports."
 8. **Winner Announcements** - "WINNER: Runner #208 has recovered a protocol fragment! Prize distributed. Starting a new run..."
+
+## How to run the game locally
+
+### Install dependencies
+
+Follow the installation here: https://www.anchor-lang.com/docs/installation
+
+That should install:
+
+- Rust
+- Solana CLI
+- Anchor CLI
+- Node.js
+- Yarn
+
+### Build and deploy the program
+
+General workflow can look like this:
+
+```bash
+# Make sure you’re on the localnet.
+solana config set --url localhost
+
+# Your Anchor.toml file should point to the localnet cluster:
+# [provider]
+# cluster = "localnet"
+
+# Update the program ID in Anchor and the client.
+anchor build
+anchor keys sync
+
+# Run the tests.
+anchor test
+
+# Airdrop yourself some money if necessary.
+solana airdrop 5
+
+# Build, deploy and start a local ledger.
+anchor localnet
+# Or
+solana-test-validator
+anchor build
+anchor deploy
+
+# Serve your frontend application locally.
+anchor run frontend
+# anchor run frontend_devnet
+# anchor run frontend_mainnet
+```
+
+### Publish the IDL
+To publish your IDL file, all you need to do is run the following in the terminal.
+
+anchor idl init <programId> -f <target/idl/program.json>
+And if your program changes in the future, you can upgrade the published IDL by running:
+
+anchor idl upgrade <programId> -f <target/idl/program.json>
+
+### Project structure
+
+The Anchor project is structured like this:
+- The entry point is in the lib.rs file.
+- The instructions are defined in the instructions folder.
+- The state is defined in the state folder.
+
+So the calls arrive in the lib.rs file and are then forwarded to the instructions.
+The instructions then call the state to get the data and update it.
+
+```shell
+├── src
+│   ├── instructions
+│   │   ├── chop_tree.rs
+│   │   ├── init_player.rs
+│   │   └── update_energy.rs
+│   ├── state
+│   │   ├── game_data.rs
+│   │   ├── mod.rs
+│   │   └── player_data.rs
+│   ├── lib.rs
+│   └── constants.rs
+│   └── errors.rs
+
+```
+
+The project uses session keys (maintained by Magic Block) for auto approving transactions using an expiring token.
