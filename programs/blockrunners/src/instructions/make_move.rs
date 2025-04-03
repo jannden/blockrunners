@@ -43,7 +43,7 @@ pub fn make_move(ctx: Context<MakeMove>, direction: PathDirection) -> Result<()>
         msg!("Generated next direction at position {}", current_position);
     }
 
-    // Now check if the chosen direction matches the path
+    // Check if the chosen direction matches the path
     if direction == player_state.path[current_position] {
         // Correct move: advance one step
         player_state.position += 1;
