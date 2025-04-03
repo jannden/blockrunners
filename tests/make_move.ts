@@ -80,6 +80,10 @@ describe("Make Move", () => {
     });
 
     it("Allows successful player movement with correct choice", async () => {
+        const socialFeedEventListener = program.addEventListener("socialFeedEvent", event => {
+            console.log("Make move events:", event.message);
+        });
+
         // Fetch player state to get the current path and position
         const playerStateBefore = await program.account.playerState.fetch(playerStatePda);
         const initialPosition = playerStateBefore.position;
@@ -108,6 +112,14 @@ describe("Make Move", () => {
 
         // Verify position was incremented
         expect(playerStateAfter.position).to.equal(initialPosition + 1);
+
+        // Verify player cards were increased
+        expect(playerStateAfter.cards.length).to.equal(
+            playerStateBefore.cards.length + 1
+        );
+
+        // Remove listener
+        await program.removeEventListener(socialFeedEventListener);
     });
 
     it("Resets player position with incorrect choice", async () => {
@@ -153,5 +165,10 @@ describe("Make Move", () => {
 
         // Verify position was reset to 0
         expect(playerStateAfter.position).to.equal(0);
+
+        // Verify player cards did not increase
+        expect(playerStateAfter.cards.length).to.equal(
+            playerStateBefore.cards.length
+        );
     });
 });

@@ -27,7 +27,6 @@ pub fn save_and_emit_event (
     emit!(new_event);
 
     events.push(new_event);
-
-    msg!("New social feed event emitted");
+    
     Ok(())
 }
