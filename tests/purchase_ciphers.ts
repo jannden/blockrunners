@@ -1,7 +1,7 @@
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
 import { Keypair, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
-import { expect } from "chai";
+import { assert, expect } from "chai";
 import { Blockrunners } from "../target/types/blockrunners";
 import { GAME_STATE_SEED, INITIAL_PATH_LENGTH, PLAYER_STATE_SEED } from "./helpers/constants";
 import { airdropSol, getMsgLogs } from "./helpers/utils";
@@ -32,7 +32,14 @@ describe("Purchase ciphers", () => {
     program.programId
   );
 
+  let playerLogsSubscription;
+
   before(async () => {
+    // Logs subscription
+    playerLogsSubscription = provider.connection.onLogs(playerKeypair.publicKey, (logs) => {
+      console.log("Player logs:", logs);
+    });
+
     // Airdrop SOL to the admin and player
     await airdropSol(provider, adminKeypair);
     await airdropSol(provider, playerKeypair);
@@ -63,11 +70,15 @@ describe("Purchase ciphers", () => {
     console.log("Player initialization transaction signature", initPlayerTx);
   });
 
+  after(() => {
+    provider.connection.removeOnLogsListener(playerLogsSubscription);
+  });
+
   it("Allows player to purchase ciphers", async () => {
-    const socialFeedEventListener = program.addEventListener("socialFeedEvent", event => {
+    const socialFeedEventListener = program.addEventListener("socialFeedEvent", (event) => {
       console.log("Event data:", event.message);
     });
-    
+
     const ciphersToPurchase = 5;
     const expectedCost = ciphersToPurchase * CIPHER_COST;
     const solCost = expectedCost / LAMPORTS_PER_SOL;
@@ -129,9 +140,7 @@ describe("Purchase ciphers", () => {
     );
 
     // Verify game events were increased
-    expect(gameStateAfter.gameEvents.length).to.equal(
-      gameStateBefore.gameEvents.length + 1
-    );
+    expect(gameStateAfter.gameEvents.length).to.equal(gameStateBefore.gameEvents.length + 1);
 
     // Remove listener
     await program.removeEventListener(socialFeedEventListener);
@@ -190,9 +199,7 @@ describe("Purchase ciphers", () => {
     );
 
     // Verify the amount of game events didn't increase
-    expect(gameStateAfter.gameEvents.length).to.equal(
-      gameStateBefore.gameEvents.length
-    );
+    expect(gameStateAfter.gameEvents.length).to.equal(gameStateBefore.gameEvents.length);
   });
 
   it("Allows second player to purchase ciphers", async () => {
@@ -270,7 +277,6 @@ describe("Purchase ciphers", () => {
   it("Fails if player doesn't have enough balance", async () => {
     try {
       const ciphersToPurchase = 1000;
-      const expectedCost = ciphersToPurchase * CIPHER_COST;
 
       const tx = await program.methods
         .purchaseCiphers(new anchor.BN(ciphersToPurchase))
@@ -279,12 +285,11 @@ describe("Purchase ciphers", () => {
         })
         .signers([playerKeypair])
         .rpc();
-
-      const logs = await getMsgLogs(provider, tx);
-      console.log("Purchase ciphers logs -> ", logs);
     } catch (error) {
-      expect(error.error.errorCode.code).to.equal("InsufficientBalance");
+      const anchorError = error as anchor.AnchorError;
+      expect(anchorError.error.errorCode.code).to.equal("InsufficientBalance");
     }
+    expect.fail("Should not reach this point");
   });
 
   it("Fails if player tries to purchase ciphers with a negative amount", async () => {
