@@ -1,8 +1,9 @@
 use anchor_lang::prelude::*;
+use strum_macros::EnumCount as EnumCountMacro;
 
 use crate::{constants::MAX_FEED_EVENTS, state::SocialFeedEvent };
 
-#[derive(Clone, Copy, AnchorSerialize, AnchorDeserialize, PartialEq, Debug)]
+#[derive(Clone, Copy, AnchorSerialize, AnchorDeserialize, PartialEq, Debug, EnumCountMacro)]
 pub enum Cards {
     Shield,
     Doubler,
@@ -37,7 +38,7 @@ pub struct PlayerState {
     /// Current block number
     pub position: u8,
 
-    #[max_len(20)]
+    #[max_len(40)]
     pub path: Vec<PathDirection>,
 
     /// Store bump to save compute
@@ -45,4 +46,7 @@ pub struct PlayerState {
 
     #[max_len(MAX_FEED_EVENTS)]
     pub player_events: Vec<SocialFeedEvent>,
+
+    /// The player has joined the game or not
+    pub in_game: bool,
 }

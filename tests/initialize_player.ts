@@ -75,8 +75,9 @@ describe("Initialize Player", () => {
     const playerState = await program.account.playerState.fetch(playerStatePda);
 
     // Verify player state was initialized correctly
-    expect(playerState.ciphers.toNumber()).to.equal(0); // Start with 0 ciphers
+    expect(playerState.cards.length).to.equal(0); // Start with 0 ciphers
     expect(playerState.position).to.equal(0); // Start at position 0
+    expect(playerState.inGame).to.equal(false); // Start not in the game
   });
 
   it("Fails if player state account already exists", async () => {

@@ -46,16 +46,16 @@ pub fn purchase_ciphers(ctx: Context<PurchaseCiphers>, amount: u64) -> Result<()
     );
 
     // Check if the player is not already in the game
-    if player_state.ciphers == 0 {
+    if !player_state.in_game {
         generate_player_path(player_state)?;
-
         collect_player_card(player_state)?;
-
         save_and_emit_event(
             &mut game_state.game_events,
             SocialFeedEventType::PlayerJoined,
             format!("Player {} joined the game!", player_state.player.key()), 
         )?;
+
+        player_state.in_game = true;
     }
 
     // Transfer SOL from player to the program

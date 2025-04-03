@@ -7,6 +7,7 @@ pub enum SocialFeedEventType {
     GameWon,
     PlayerCardCollected,
     PlayerJoined,
+    PlayerCardsMaxRange,
     PlayerMoved,
 }
 
