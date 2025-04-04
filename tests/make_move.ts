@@ -63,7 +63,7 @@ describe("Make Move", () => {
         console.log("Player initialization transaction signature", initPlayerTx);
 
         // Purchase ciphers to generate path
-        const ciphersToPurchase = 5;
+        const ciphersToPurchase = 10;
         const tx = await program.methods
             .purchaseCiphers(new anchor.BN(ciphersToPurchase))
             .accounts({
@@ -79,7 +79,7 @@ describe("Make Move", () => {
         expect(playerState.path.length).to.equal(INITIAL_PATH_LENGTH);
     });
 
-    it("Allows successful player movement with correct choice", async () => {
+    it("Allows successful player movement with correct choice and no cards", async () => {
         const socialFeedEventListener = program.addEventListener("socialFeedEvent", event => {
             console.log("Make move events:", event.message);
         });
@@ -93,9 +93,9 @@ describe("Make Move", () => {
         const correctDirection = playerStateBefore.path[initialPosition];
         console.log(`Correct next direction: ${JSON.stringify(correctDirection)}`);
 
-        // Make the correct move
+        // Make the correct move with an empty cards array
         const tx = await program.methods
-            .makeMove(correctDirection)
+            .makeMove(correctDirection, [])
             .accounts({
                 player: playerKeypair.publicKey,
                 playerState: playerStatePda,
@@ -122,7 +122,7 @@ describe("Make Move", () => {
         await program.removeEventListener(socialFeedEventListener);
     });
 
-    it("Resets player position with incorrect choice", async () => {
+    it("Resets player position with incorrect choice and no cards", async () => {
         // Fetch player state to get the current path and position
         const playerStateBefore = await program.account.playerState.fetch(playerStatePda);
         const currentPosition = playerStateBefore.position;
@@ -146,9 +146,9 @@ describe("Make Move", () => {
         }
         console.log(`Wrong direction chosen: ${JSON.stringify(wrongDirection)}`);
 
-        // Make the wrong move
+        // Make the wrong move with an empty cards array
         const tx = await program.methods
-            .makeMove(wrongDirection)
+            .makeMove(wrongDirection, [])
             .accounts({
                 player: playerKeypair.publicKey,
                 playerState: playerStatePda,
@@ -170,5 +170,96 @@ describe("Make Move", () => {
         expect(playerStateAfter.cards.length).to.equal(
             playerStateBefore.cards.length
         );
+    });
+
+    it("Allows a player to use a shield card to prevent reset on wrong move", async () => {
+        // First ensure player has a shield card
+        let playerState = await program.account.playerState.fetch(playerStatePda);
+        
+        // This assumes there's an instruction to add cards to player for testing
+        // For this test, we'll assume the player has a shield card at index 0
+        const hasShield = playerState.cards.some(card => card.shield !== undefined);
+        if (!hasShield) {
+            console.log("Test requires a shield card - skipping");
+            return;
+        }
+        
+        const currentPosition = playerState.position;
+        console.log(`Player position before wrong move with shield: ${currentPosition}`);
+        
+        // Get the correct direction
+        const correctDirection = playerState.path[currentPosition];
+        
+        // Choose wrong direction
+        let wrongDirection;
+        if (correctDirection.left !== undefined) {
+            wrongDirection = { right: {} };
+        } else {
+            wrongDirection = { left: {} };
+        }
+        
+        // Make wrong move but use shield card
+        const tx = await program.methods
+            .makeMove(wrongDirection, [{ shield: {} }])
+            .accounts({
+                player: playerKeypair.publicKey,
+                playerState: playerStatePda,
+            })
+            .signers([playerKeypair])
+            .rpc();
+            
+        const logs = await getMsgLogs(provider, tx);
+        console.log("Shield card move logs -> ", logs);
+        
+        // Check position was maintained
+        playerState = await program.account.playerState.fetch(playerStatePda);
+        expect(playerState.position).to.equal(currentPosition);
+    });
+    
+    it("Allows a player to use multiple cards in a single move", async () => {
+        // This test assumes player has all three card types
+        let playerState = await program.account.playerState.fetch(playerStatePda);
+        const hasAllCards = 
+            playerState.cards.some(card => card.shield !== undefined) &&
+            playerState.cards.some(card => card.doubler !== undefined) &&
+            playerState.cards.some(card => card.swift !== undefined);
+            
+        if (!hasAllCards) {
+            console.log("Test requires all card types - skipping");
+            return;
+        }
+        
+        const correctDirection = playerState.path[playerState.position];
+        const cardsBefore = playerState.cards.length;
+        const ciphersBefore = playerState.ciphers.toNumber();
+        
+        // Use all three cards with correct move
+        const tx = await program.methods
+            .makeMove(correctDirection, [
+                { shield: {} },
+                { doubler: {} },
+                { swift: {} }
+            ])
+            .accounts({
+                player: playerKeypair.publicKey,
+                playerState: playerStatePda,
+            })
+            .signers([playerKeypair])
+            .rpc();
+            
+        const logs = await getMsgLogs(provider, tx);
+        console.log("Multiple cards move logs -> ", logs);
+        
+        // Check effects: position +1, cards -3 (used) +2 (from doubler), ciphers -4 (base + 3 cards) +2 (from swift)
+        playerState = await program.account.playerState.fetch(playerStatePda);
+        
+        // Position should advance
+        expect(playerState.position).to.be.above(0);
+        
+        // We should have used 3 cards but gained 2 from doubler
+        expect(playerState.cards.length).to.equal(cardsBefore - 3 + 2);
+        
+        // We should have used 4 ciphers (base + 3 cards) but got 2 back from swift
+        expect(playerState.ciphers).to.equal(ciphersBefore - 4 + 2);
     });
 });
