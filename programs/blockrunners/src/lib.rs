@@ -8,12 +8,14 @@ mod instructions;
 mod state;
 
 use instructions::*;
-use state::PathDirection;
+use state::{Cards, PathDirection};
 
 declare_id!("9BRKKfPZ9kXT8KdMbCmvjnTFqec57ExLRdgUsCNqWU7P");
 
 #[program]
 pub mod blockrunners {
+    use crate::state::Cards;
+
     use super::*;
 
     pub fn initialize_game(ctx: Context<InitializeGame>) -> Result<()> {
@@ -28,7 +30,7 @@ pub mod blockrunners {
         purchase_ciphers::purchase_ciphers(ctx, amount)
     }
 
-    pub fn make_move(ctx: Context<MakeMove>, direction: PathDirection) -> Result<()> {
-        make_move::make_move(ctx, direction)
+    pub fn make_move(ctx: Context<MakeMove>, direction: PathDirection, card: Vec<Cards>) -> Result<()> {
+        make_move::make_move(ctx, direction, card)
     }
 }
