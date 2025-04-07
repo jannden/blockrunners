@@ -81,6 +81,10 @@ describe("Make Move", () => {
     });
 
     it("Allows successful player movement with correct choice", async () => {
+        const socialFeedEventListener = program.addEventListener("socialFeedEvent", event => {
+            console.log("Make move events:", event.message);
+        });
+
         // Fetch player state to get the current path and position
         const playerStateBefore = await program.account.playerState.fetch(playerStatePda);
         const initialPosition = playerStateBefore.position;
@@ -118,6 +122,14 @@ describe("Make Move", () => {
             // (or the program will generate one when we make the next move)
             console.log(`Path length after move: ${playerStateAfter.path.length}`);
         }
+
+        // Verify player cards were increased
+        expect(playerStateAfter.cards.length).to.equal(
+            playerStateBefore.cards.length + 1
+        );
+
+        // Remove listener
+        await program.removeEventListener(socialFeedEventListener);
     });
 
     it("Makes multiple correct moves", async () => {
@@ -216,7 +228,7 @@ describe("Make Move", () => {
         const tx = await program.methods
             .makeMove(wrongDirection)
             .accounts({
-                player: playerKeypair.publicKey,
+                 player: playerKeypair.publicKey,
                 playerState: playerStatePda,
                 gameState: gameStatePda,
             })
@@ -236,5 +248,10 @@ describe("Make Move", () => {
         
         // Verify a new path was generated with at least one step
         expect(playerStateAfter.path.length).to.be.at.least(1);
+
+        // Verify player cards did not increase
+        expect(playerStateAfter.cards.length).to.equal(
+            playerStateBefore.cards.length
+        );
     });
 });

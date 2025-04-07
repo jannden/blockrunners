@@ -2,10 +2,29 @@ use anchor_lang::prelude::*;
 use anchor_lang::solana_program::hash::hash;
 use rand_chacha::ChaChaRng;
 use rand_core::{RngCore, SeedableRng};
-use crate::state::{PlayerState, PathDirection, SocialFeedEventType, GameState};
-use crate::constants::GAME_STATE_SEED;
-use crate::instructions::save_and_emit_event;
-use crate::errors::BlockrunnersError;
+use crate::{
+    constants::GAME_STATE_SEED,
+    errors::BlockrunnersError,
+    instructions::{collect_player_card, save_and_emit_event},
+    state::{PathDirection, PlayerState, SocialFeedEventType, GameState}
+};
+
+#[derive(Accounts)]
+pub struct MakeMove<'info> {
+    pub player: Signer<'info>,
+
+    #[account(
+        mut,
+        has_one = player
+    )]
+    pub player_state: Account<'info, PlayerState>,
+
+    #[account(
+        seeds = [GAME_STATE_SEED],
+        bump
+    )]
+    pub game_state: Account<'info, GameState>,
+}
 
 // Function to generate a single random direction
 fn generate_next_step(player_state: &Account<PlayerState>) -> PathDirection {
@@ -74,13 +93,15 @@ pub fn make_move(ctx: Context<MakeMove>, direction: PathDirection) -> Result<()>
             // Additional victory logic could be added here (e.g., prize distribution)
         }
         else {
+            collect_player_card(player_state)?;
+
             // Add social feed event for correct move
             save_and_emit_event(
                 &mut player_state.player_events,
                 SocialFeedEventType::PlayerMoved,
                 format!("Player made a correct move and advanced to position {}!", new_position),
             )?;
-        }        
+        }
     }
     else {
         // Incorrect move: reset to start
@@ -104,21 +125,4 @@ pub fn make_move(ctx: Context<MakeMove>, direction: PathDirection) -> Result<()>
     }
     
     Ok(())
-}
-
-#[derive(Accounts)]
-pub struct MakeMove<'info> {
-    pub player: Signer<'info>,
-
-    #[account(
-        mut,
-        has_one = player
-    )]
-    pub player_state: Account<'info, PlayerState>,
-
-    #[account(
-        seeds = [GAME_STATE_SEED],
-        bump
-    )]
-    pub game_state: Account<'info, GameState>,
 }

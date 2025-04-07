@@ -15,9 +15,6 @@ export const INITIAL_PATH_LENGTH = Number(
 export const INITIAL_PRIZE_POOL = Number(
   constants.find((c) => c.name === "initialPrizePool")?.value
 );
-export const INITIAL_PLAYER_CARDS_AMOUNT = Number(
-  constants.find((c) => c.name === "initialPlayerCardsAmount")?.value
-);
 export const MAX_FEED_EVENTS = Number(
   constants.find((c) => c.name === "maxFeedEvents")?.value
 );

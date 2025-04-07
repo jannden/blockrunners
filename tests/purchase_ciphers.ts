@@ -65,7 +65,7 @@ describe("Purchase ciphers", () => {
 
   it("Allows player to purchase ciphers", async () => {
     const socialFeedEventListener = program.addEventListener("socialFeedEvent", event => {
-      console.log("Event data:", event.message);
+      console.log("Purchase ciphers events:", event.message);
     });
     
     const ciphersToPurchase = 5;
@@ -120,14 +120,23 @@ describe("Purchase ciphers", () => {
       playerStateBefore.ciphers.toNumber() + ciphersToPurchase
     );
 
+    // Verify player has joined the game
+    expect(playerStateBefore.inGame).to.equal(false);
+    expect(playerStateAfter.inGame).to.equal(true);
+
     // Verify player has at least 1 step in their path
     // With the new logic, we only generate one step at a time
     expect(playerStateAfter.path.length).to.be.at.least(1);
     console.log("Player path after purchase:", playerStateAfter.path);
 
+    // Verify player cards were increased
+    expect(playerStateAfter.cards.length).to.equal(
+      playerStateBefore.cards.length + 1
+    );
+
     // Verify player events were increased
     expect(playerStateAfter.playerEvents.length).to.equal(
-      playerStateBefore.playerEvents.length + 1
+      playerStateBefore.playerEvents.length + 2
     );
 
     // Verify game events were increased
@@ -186,6 +195,14 @@ describe("Purchase ciphers", () => {
     // Verify game balance increased by exactly the cost of the ciphers
     expect(gameBalanceAfter - gameBalanceBefore).to.equal(expectedCost);
 
+    // Verify player inGame status does not change
+    expect(playerStateAfter.inGame).to.equal(true);
+
+    // Verify the amount of cards did not increase
+    expect(playerStateAfter.cards.length).to.equal(
+      playerStateBefore.cards.length
+    );
+
     // Verify the amount of player events increased
     expect(playerStateAfter.playerEvents.length).to.equal(
       playerStateBefore.playerEvents.length + 1
@@ -221,8 +238,11 @@ describe("Purchase ciphers", () => {
 
     console.log("Player 2 initialization transaction signature", initPlayer2Tx);
 
-    // Store game state before second player's transaction
+    // Get state before second player's transaction
     const gameStateBefore = await program.account.gameState.fetch(gameStatePda);
+    const player2StateBefore = await program.account.playerState.fetch(player2StatePda);
+
+    // Get balances before purchase
     const gameBalanceBefore = await provider.connection.getBalance(gameStatePda);
     const player2BalanceBefore = await provider.connection.getBalance(player2Keypair.publicKey);
 
@@ -264,10 +284,19 @@ describe("Purchase ciphers", () => {
 
     // Verify game balance increased by exactly the cost of the ciphers
     expect(gameBalanceAfter - gameBalanceBefore).to.equal(expectedCost);
+    
+    // Verify player has joined the game
+    expect(player2StateBefore.inGame).to.equal(false);
+    expect(player2StateAfter.inGame).to.equal(true);
 
     // Verify player has at least 1 step in their path (new logic)
     expect(player2StateAfter.path.length).to.be.at.least(1);
     console.log("Player2 path after purchase:", player2StateAfter.path);
+
+    // Verify player cards were increased
+    expect(player2StateAfter.cards.length).to.equal(
+      player2StateBefore.cards.length + 1
+    );
   });
 
   it("Fails if player doesn't have enough balance", async () => {

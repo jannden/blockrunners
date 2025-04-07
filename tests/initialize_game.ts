@@ -14,7 +14,7 @@ describe("Initialize Game", () => {
   const provider = anchor.getProvider() as anchor.AnchorProvider;
 
   // Fixed path length for alpha
-  const PATH_LENGTH = 20;
+  const PATH_LENGTH = 40;
 
   // Keypairs
   const adminKeypair = Keypair.generate();
