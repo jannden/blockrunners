@@ -2,7 +2,7 @@ use anchor_lang::{prelude::*, solana_program::hash::hash};
 use rand_chacha::ChaChaRng;
 use rand_core::{RngCore, SeedableRng};
 
-use crate::{constants::INITIAL_PATH_LENGTH, state::{PathDirection, PlayerState}};
+use crate::state::{PathDirection, PlayerState};
 
 pub fn generate_player_path(
     player: &mut Account<PlayerState>,
@@ -18,16 +18,19 @@ pub fn generate_player_path(
     let seed = hash(&combined_seed).to_bytes();
     let mut rng = ChaChaRng::from_seed(seed);
 
-    let path: Vec<PathDirection> = (0..INITIAL_PATH_LENGTH)
-        .map(|_| match rng.next_u32() % 2 {
-            0 => PathDirection::Left,
-            _ => PathDirection::Right
-        })
-        .collect();
+    // Generate only the first step (not the entire path)
+    let first_direction = match rng.next_u32() % 2 {
+        0 => PathDirection::Left,
+        _ => PathDirection::Right
+    };
 
+    // Initialize path with only the first step
+    let mut path = Vec::new();
+    path.push(first_direction);
+    
     player.path = path;
 
-    msg!("Player path initialized");
+    msg!("Player path initialized with first step only");
 
     Ok(())
 }

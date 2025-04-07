@@ -36,6 +36,7 @@ interface State {
   // Actions
   initializeGame: () => void;
   generatePath: () => void;
+  generateNextStep: () => Direction;
   makeMove: (direction: Direction) => void;
   buyCiphers: (amount: number) => void;
   useCard: (cardId: string) => void;
@@ -117,16 +118,22 @@ export const useStore = create<State>((set, get) => ({
   },
 
   generatePath: () => {
+    // Initialize an empty path array
     const path: Direction[] = [];
-
-    for (let i = 0; i < PATH_LENGTH; i++) {
-      path.push(Math.random() < 0.5 ? "left" : "right");
-    }
+    
+    // Generate only the first step
+    path.push(get().generateNextStep());
 
     set({ playerPath: path });
 
     // Debug information to console
-    console.log("Generated new path:", path);
+    console.log("Generated new path (first step only):", path);
+  },
+
+  generateNextStep: () => {
+    // Generate a random direction
+    const nextDirection: Direction = Math.random() < 0.5 ? "left" : "right";
+    return nextDirection;
   },
 
   makeMove: (direction: Direction) => {
@@ -152,81 +159,102 @@ export const useStore = create<State>((set, get) => ({
     set({ ciphers: ciphers - moveCost });
 
     // Check if the move is correct
-    const isCorrect = playerPath[playerPosition] === direction;
-
-    // Use shield card if selected and move is incorrect
-    const hasShield = selectedCards.some((card) => card.type === "shield");
-
-    if (isCorrect) {
-      // Correct move
-      const newPosition = playerPosition + 1;
-
-      // Check if player has reached the end
-      if (newPosition >= state.pathLength) {
-        // Player wins
-        get().completeGame();
-        return;
-      }
-
-      // Update position
-      set({ playerPosition: newPosition });
-
-      // Add message to feed
-      get().addToFeed(`Moved ${direction}. Correct path! Advanced to position ${newPosition}.`);
-
-      // Check if doubler card was used
-      const hasDoubler = selectedCards.some((card) => card.type === "doubler");
-
-      // Award new card(s)
-      const cardsToAward = hasDoubler ? 2 : 1;
-      get().giveCards(cardsToAward);
+    // If we don't have a direction at current position, it means it's undecided yet
+    // We'll need to generate it now
+    if (playerPosition >= playerPath.length) {
+      // Generate the correct direction for this position
+      const correctDirection = get().generateNextStep();
+      
+      // Add it to the path
+      set((state) => ({
+        playerPath: [...state.playerPath, correctDirection]
+      }));
+      
+      // Now check if the player's move matches the generated direction
+      const isCorrect = correctDirection === direction;
+      handleMoveResult(isCorrect, direction);
     } else {
-      // Incorrect move
-      if (hasShield) {
-        get().addToFeed(
-          `Moved ${direction}. Incorrect path! Shield card protected you from reset.`
-        );
-
-        // Remove shield card
-        const shieldCard = selectedCards.find((card) => card.type === "shield");
-        if (shieldCard) {
-          set((state) => ({
-            cards: state.cards.filter((card) => card.id !== shieldCard.id),
-          }));
-
-          // Force a state resync to ensure all components have the latest state
-          setTimeout(() => {
-            // get().resyncCards();
-          }, 10);
-        }
-      } else {
-        // Reset player to start and regenerate path
-        set({
-          playerPosition: 0,
-          cards: [],
-        });
-
-        // Generate a new random path when player resets
-        get().generatePath();
-
-        // Give some starting cards
-        get().giveCards(1);
-
-        get().addToFeed(`Moved ${direction}. Incorrect path! Reset to position 0 with a new path.`);
-      }
+      // We already have a predefined direction at this position
+      const isCorrect = playerPath[playerPosition] === direction;
+      handleMoveResult(isCorrect, direction);
     }
 
-    // Remove used cards from player's hand
-    const usedCardIds = selectedCards.map((card) => card.id);
-    set((state) => ({
-      cards: state.cards.filter((card) => !usedCardIds.includes(card.id)),
-      selectedCards: [],
-    }));
+    // Function to handle the result of a move
+    function handleMoveResult(isCorrect: boolean, direction: Direction) {
+      // Use shield card if selected and move is incorrect
+      const hasShield = selectedCards.some((card) => card.type === "shield");
 
-    // Force a state resync to ensure all components have the latest state
-    setTimeout(() => {
-      // get().resyncCards();
-    }, 10);
+      if (isCorrect) {
+        // Correct move
+        const newPosition = playerPosition + 1;
+
+        // Check if player has reached the end
+        if (newPosition >= state.pathLength) {
+          // Player wins
+          get().completeGame();
+          return;
+        }
+
+        // Update position
+        set({ playerPosition: newPosition });
+
+        // Add message to feed
+        get().addToFeed(`Moved ${direction}. Correct path! Advanced to position ${newPosition}.`);
+
+        // Check if doubler card was used
+        const hasDoubler = selectedCards.some((card) => card.type === "doubler");
+
+        // Award new card(s)
+        const cardsToAward = hasDoubler ? 2 : 1;
+        get().giveCards(cardsToAward);
+      } else {
+        // Incorrect move
+        if (hasShield) {
+          get().addToFeed(
+            `Moved ${direction}. Incorrect path! Shield card protected you from reset.`
+          );
+
+          // Remove shield card
+          const shieldCard = selectedCards.find((card) => card.type === "shield");
+          if (shieldCard) {
+            set((state) => ({
+              cards: state.cards.filter((card) => card.id !== shieldCard.id),
+            }));
+
+            // Force a state resync to ensure all components have the latest state
+            setTimeout(() => {
+              // get().resyncCards();
+            }, 10);
+          }
+        } else {
+          // Reset player to start and regenerate path
+          set({
+            playerPosition: 0,
+            cards: [],
+          });
+
+          // Generate a new random path when player resets
+          get().generatePath();
+
+          // Give some starting cards
+          get().giveCards(1);
+
+          get().addToFeed(`Moved ${direction}. Incorrect path! Reset to position 0 with a new path.`);
+        }
+      }
+
+      // Remove used cards from player's hand
+      const usedCardIds = selectedCards.map((card) => card.id);
+      set((state) => ({
+        cards: state.cards.filter((card) => !usedCardIds.includes(card.id)),
+        selectedCards: [],
+      }));
+
+      // Force a state resync to ensure all components have the latest state
+      setTimeout(() => {
+        // get().resyncCards();
+      }, 10);
+    }
   },
 
   buyCiphers: (amount: number) => {
