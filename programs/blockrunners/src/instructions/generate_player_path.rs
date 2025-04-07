@@ -21,7 +21,12 @@ pub fn generate_player_path(
     // Generate only the first step (not the entire path)
     let first_direction = match rng.next_u32() % 2 {
         0 => PathDirection::Left,
-        _ => PathDirection::Right
+        1 => PathDirection::Right,
+        _ => {
+            // this should never happen b/c we mod by 2
+            msg!("UNEXPECTED: mod 2 operation produced value other than 0 or 1!");
+            PathDirection::Right // Default to right direction as fallback
+        }
     };
 
     // Initialize path with only the first step

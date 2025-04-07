@@ -24,7 +24,7 @@ interface State {
   ciphers: number;
   cards: AbilityCard[];
 
-  // Path info
+  // Path info - now stores only generated steps, not the entire path
   playerPath: Direction[];
 
   // Social feed
@@ -227,7 +227,7 @@ export const useStore = create<State>((set, get) => ({
             }, 10);
           }
         } else {
-          // Reset player to start and regenerate path
+          // Reset player to start and clear path
           set({
             playerPosition: 0,
             cards: [],
