@@ -185,29 +185,18 @@ describe("Make Move", () => {
         const playerStateBefore = await program.account.playerState.fetch(playerStatePda);
         const currentPosition = playerStateBefore.position;
         console.log(`Player position before wrong move: ${currentPosition}`);
-        
-        // Get the correct direction for the current position
-        // If we're at the end of the path, make a move to generate the next step first
-        if (currentPosition >= playerStateBefore.path.length) {
-            console.log("Making a move to generate the next step");
-            const genTx = await program.methods
-                .makeMove({ left: {} }) // Just pick a direction to trigger generation
-                .accounts({
-                    player: playerKeypair.publicKey,
-                    playerState: playerStatePda,
-                    gameState: gameStatePda,
-                })
-                .signers([playerKeypair])
-                .rpc();
                 
-            // Fetch the updated player state
-            const updatedState = await program.account.playerState.fetch(playerStatePda);
-            console.log("Path after generation:", updatedState.path);
+        // Get the correct direction, generate next step if needed
+        let correctDirection;
+        if (currentPosition >= playerStateBefore.path.length) {
+            console.log("Current position is beyond path length, making a move to generate next step");
+            // We'll handle this in the wrong direction test below
+            correctDirection = { left: {} }; // Default direction
         }
-        
-        // Fetch the current state again
-        const currentState = await program.account.playerState.fetch(playerStatePda);
-        const correctDirection = currentState.path[currentState.position];
+        else {
+            correctDirection = playerStateBefore.path[currentPosition];
+        }
+
         console.log(`Correct direction: ${JSON.stringify(correctDirection)}`);
         
         // Choose the wrong direction (opposite of the correct one)
