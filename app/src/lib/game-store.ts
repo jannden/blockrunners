@@ -1,13 +1,10 @@
 import { create } from "zustand";
 import { CardType, AbilityCard, FeedMessage, Direction } from "@/types/game";
-import { useWalletStore } from "./wallet-store";
-import {
-  CIPHER_COST,
-  INITIAL_PATH_LENGTH,
-  INITIAL_PLAYER_CARDS_AMOUNT,
-  MAX_FEED_EVENTS,
-} from "./constants";
-import { getProgram, getWalletState, toBN, handleError } from "./program-utils";
+
+// Constants
+const PATH_LENGTH = 20;
+const STARTING_CIPHERS = 5;
+const CIPHER_COST = 1;
 
 // Random ID generator
 const generateId = () => Math.random().toString(36).substring(2, 11);
@@ -57,7 +54,7 @@ export const useStore = create<State>((set, get) => ({
   // Initial game state
   isInitialized: false,
   prizePool: 0,
-  pathLength: INITIAL_PATH_LENGTH,
+  pathLength: PATH_LENGTH,
   gameCompleted: false,
   winner: null,
 
@@ -65,7 +62,7 @@ export const useStore = create<State>((set, get) => ({
   playerId: generateId(),
   playerName: `Runner #${Math.floor(Math.random() * 1000)}`,
   playerPosition: 0,
-  ciphers: 0,
+  ciphers: STARTING_CIPHERS,
   cards: [],
 
   // Path info
@@ -94,7 +91,7 @@ export const useStore = create<State>((set, get) => ({
         gameCompleted: false,
         winner: null,
         playerPosition: 0,
-        ciphers: 0,
+        ciphers: STARTING_CIPHERS,
         cards: [],
         socialFeed: [
           ...state.socialFeed,
@@ -122,7 +119,7 @@ export const useStore = create<State>((set, get) => ({
   generatePath: () => {
     const path: Direction[] = [];
 
-    for (let i = 0; i < INITIAL_PATH_LENGTH; i++) {
+    for (let i = 0; i < PATH_LENGTH; i++) {
       path.push(Math.random() < 0.5 ? "left" : "right");
     }
 
@@ -132,7 +129,7 @@ export const useStore = create<State>((set, get) => ({
     console.log("Generated new path:", path);
   },
 
-  makeMove: async (direction: Direction) => {
+  makeMove: (direction: Direction) => {
     const state = get();
     const { playerPosition, playerPath, ciphers, selectedCards } = state;
 
@@ -149,31 +146,6 @@ export const useStore = create<State>((set, get) => ({
     if (ciphers < moveCost) {
       get().addToFeed(`Not enough ciphers for this move!`);
       return;
-    }
-
-    // Get wallet connection status and program
-    const { connected, publicKey } = getWalletState();
-    const program = getProgram();
-
-    // If wallet is connected and program is available, try to make an on-chain move
-    if (connected && publicKey && program) {
-      try {
-        get().addToFeed(`Making move on-chain...`);
-
-        // Call the make_move instruction
-        const tx = await program.methods
-          .makeMove(direction === "left" ? { left: {} } : { right: {} })
-          .rpc();
-
-        console.log("Made move with tx:", tx);
-        get().addToFeed(`Move confirmed on-chain! Transaction: ${tx.substring(0, 8)}...`);
-      } catch (error) {
-        console.error("Failed to make move on-chain:", error);
-        get().addToFeed(`Failed to make move on-chain: ${handleError(error)}`);
-
-        // Continue with offline move to keep game playable even if on-chain fails
-        get().addToFeed(`Continuing with offline move...`);
-      }
     }
 
     // Consume ciphers
@@ -257,61 +229,11 @@ export const useStore = create<State>((set, get) => ({
     }, 10);
   },
 
-  buyCiphers: async (amount: number) => {
+  buyCiphers: (amount: number) => {
     const state = get();
     const cost = amount * CIPHER_COST;
 
-    // Get wallet state
-    const { connected, publicKey } = getWalletState();
-    const { balance } = useWalletStore.getState();
-    const program = getProgram();
-
-    // Check if wallet is connected
-    if (!connected) {
-      get().addToFeed(`Please connect your wallet to purchase ciphers.`);
-      return;
-    }
-
-    // Check if wallet has enough balance
-    if (balance < cost) {
-      get().addToFeed(`Not enough SOL to purchase ${amount} ciphers.`);
-      return;
-    }
-
-    // If program is available, attempt to purchase ciphers on-chain
-    if (publicKey && program) {
-      try {
-        get().addToFeed(`Purchasing ciphers on-chain...`);
-
-        // Call the purchase_ciphers instruction
-        const tx = await program.methods
-          .purchaseCiphers(toBN(amount))
-          .accounts({
-            player: publicKey,
-          })
-          .rpc();
-
-        console.log("Purchased ciphers with tx:", tx);
-        get().addToFeed(`Ciphers purchased on-chain! Transaction: ${tx.substring(0, 8)}...`);
-
-        // On successful purchase, we'd normally fetch the new state from chain
-        // Here we simulate it by updating the local state
-        set({
-          ciphers: state.ciphers + amount,
-          prizePool: state.prizePool + cost * 0.4, // 40% goes to prize pool
-        });
-
-        return;
-      } catch (error) {
-        console.error("Failed to purchase ciphers on-chain:", error);
-        get().addToFeed(`Failed to purchase ciphers on-chain: ${handleError(error)}`);
-
-        // Continue with offline purchase to keep game playable
-        get().addToFeed(`Continuing with offline purchase...`);
-      }
-    }
-
-    // Simulate payment and increase prize pool (offline fallback)
+    // Simulate payment and increase prize pool
     set({
       ciphers: state.ciphers + amount,
       prizePool: state.prizePool + cost * 0.4, // 40% goes to prize pool as per README
@@ -364,8 +286,9 @@ export const useStore = create<State>((set, get) => ({
       { id: generateId(), message, timestamp: Date.now(), isNew: true },
     ];
 
-    if (newFeed.length > MAX_FEED_EVENTS) {
-      newFeed.splice(0, newFeed.length - MAX_FEED_EVENTS);
+    // Keep only the last 20 messages
+    if (newFeed.length > 20) {
+      newFeed.splice(0, newFeed.length - 20);
     }
 
     set({ socialFeed: newFeed });
@@ -376,9 +299,7 @@ export const useStore = create<State>((set, get) => ({
     const newCards: AbilityCard[] = [];
     const cardTypes: CardType[] = ["shield", "doubler", "swift"];
 
-    const cardsToAward = count || INITIAL_PLAYER_CARDS_AMOUNT;
-
-    for (let i = 0; i < cardsToAward; i++) {
+    for (let i = 0; i < count; i++) {
       const randomType = cardTypes[Math.floor(Math.random() * cardTypes.length)];
       const newCard: AbilityCard = {
         id: generateId(),

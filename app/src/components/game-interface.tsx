@@ -1,4 +1,13 @@
 import { useEffect, useState } from "react";
+
+import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { useBlockrunners } from "@/hooks/useBlockrunners";
+
+import { InitGameButton } from "./init-game-button";
+import { InitPlayerButton } from "./init-player-button";
+import { AirdropButton } from "./airdrop-button";
+
 import { GameHeader } from "./game-header";
 import { GameFeed } from "./game-feed";
 import { AbilityCards } from "./ability-cards";
@@ -10,7 +19,10 @@ import { useStore } from "@/lib/game-store";
 import { AbilityCard } from "@/types/game";
 import { DebugOverlay } from "./debug-overlay";
 
-export default function GameInterface() {
+export function GameInterface() {
+  const { connected } = useWallet();
+  const { playerState } = useBlockrunners();
+
   // State from store
   const {
     ciphers,
@@ -87,13 +99,22 @@ export default function GameInterface() {
           />
         </div>
 
-        <GameControls
-          onMove={handleMakeMove}
-          nextMoveCost={nextMoveCost}
-          disabled={ciphers < nextMoveCost}
-          onCostInfoClick={() => setCostInfoModalOpen(true)}
-          progress={progress}
-        />
+        <div className="flex flex-row justify-center gap-2">
+          <WalletMultiButton />
+          {connected && <AirdropButton />}
+          {connected && <InitGameButton />}
+          {connected && <InitPlayerButton />}
+        </div>
+
+        {connected && playerState && (
+          <GameControls
+            onMove={handleMakeMove}
+            nextMoveCost={nextMoveCost}
+            disabled={ciphers < nextMoveCost}
+            onCostInfoClick={() => setCostInfoModalOpen(true)}
+            progress={progress}
+          />
+        )}
       </div>
 
       <InfoModal open={infoModalOpen} onClose={() => setInfoModalOpen(false)} />

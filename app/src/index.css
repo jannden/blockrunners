@@ -1,7 +1,13 @@
+@import url('https://fonts.googleapis.com/css2?family=Archivo:wght@100..900&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  html {
+    font-family: 'Archivo', sans-serif;
+  }
+}
 /* Custom scrollbar styles */
 .custom-scrollbar::-webkit-scrollbar {
   width: 6px;
@@ -48,6 +54,7 @@
     background-position: 0 100%;
   }
 }
+
 :root {
   /* Base theme colors */
   --app-primary: #FFDC58;

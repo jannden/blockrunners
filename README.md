@@ -117,9 +117,14 @@ solana config set --url localhost
 # [provider]
 # cluster = "localnet"
 
-# Update the program ID in Anchor and the client.
+# Run an initial build.
 anchor build
+
+# Update the program ID in Anchor.
 anchor keys sync
+
+# Copy the IDL to the frontend.
+anchor run copy_idl
 
 # Run the tests.
 anchor test
@@ -129,13 +134,6 @@ solana airdrop 5
 
 # Build, deploy and start a local ledger.
 anchor localnet
-# Or
-solana-test-validator
-anchor build
-anchor deploy
-
-# Copy the IDL to the frontend.
-anchor run copy_idl
 
 # Serve your frontend application locally.
 anchor run frontend

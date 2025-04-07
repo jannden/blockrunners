@@ -1,5 +1,10 @@
 import * as anchor from "@coral-xyz/anchor";
 import { Keypair, LAMPORTS_PER_SOL } from "@solana/web3.js";
+import { Blockrunners } from "../../target/types/blockrunners";
+
+// Access constants from IDL
+const program = anchor.workspace.blockrunners as anchor.Program<Blockrunners>;
+const IDL = program.idl;
 
 /**
  * Airdrops SOL to a given wallet
@@ -30,6 +35,19 @@ export const airdropSol = async (
     console.error("Airdrop failed:", error);
     throw error;
   }
+};
+
+/**
+ * Get a constant from the IDL or throw an error if it's not found
+ * @param name The name of the constant
+ * @returns The value of the constant
+ */
+export const getConstantOrThrow = (name: string) => {
+  const constant = IDL.constants.find((c) => c.name === name)?.value;
+  if (constant === undefined) {
+    throw new Error(`${name} not found in IDL constants`);
+  }
+  return constant;
 };
 
 /**
