@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 
-import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useBlockrunners } from "@/hooks/useBlockrunners";
 
@@ -17,7 +16,6 @@ import { BuyCiphersModal } from "./buy-ciphers-modal";
 import { CostInfoModal } from "./cost-info-modal";
 import { useStore } from "@/lib/game-store";
 import { AbilityCard } from "@/types/game";
-import { DebugOverlay } from "./debug-overlay";
 
 export function GameInterface() {
   const { connected } = useWallet();
@@ -99,12 +97,13 @@ export function GameInterface() {
           />
         </div>
 
-        <div className="flex flex-row justify-center gap-2">
-          <WalletMultiButton />
-          {connected && <AirdropButton />}
-          {connected && <InitGameButton />}
-          {connected && <InitPlayerButton />}
-        </div>
+        {!playerState && (
+          <div className="flex flex-row justify-center gap-2">
+            {connected && <AirdropButton />}
+            {connected && <InitGameButton />}
+            {connected && <InitPlayerButton />}
+          </div>
+        )}
 
         {connected && playerState && (
           <GameControls
@@ -129,8 +128,6 @@ export function GameInterface() {
         baseCost={1}
         selectedCardsCount={selectedCards.length}
       />
-
-      <DebugOverlay />
     </div>
   );
 }

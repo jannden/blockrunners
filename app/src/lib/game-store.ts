@@ -125,7 +125,6 @@ export const useStore = create<State>((set, get) => ({
 
     set({ playerPath: path });
 
-    // Debug information to console
     console.log("Generated new path:", path);
   },
 
