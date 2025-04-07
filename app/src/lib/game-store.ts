@@ -1,6 +1,5 @@
 import { create } from "zustand";
 import { CardType, AbilityCard, FeedMessage, Direction } from "@/types/game";
-import { ReactNode } from "react";
 
 // Constants
 const PATH_LENGTH = 20;
@@ -30,13 +29,9 @@ interface State {
 
   // Social feed
   socialFeed: FeedMessage[];
-  feedMessages: string[];
 
   // UI state
   selectedCards: AbilityCard[];
-  isDialogOpen: boolean;
-  dialogContent: ReactNode | null;
-  dialogTitle: string;
 
   // Actions
   initializeGame: () => void;
@@ -90,34 +85,36 @@ export const useStore = create<State>((set, get) => ({
 
   // Actions
   initializeGame: () => {
-    // Initialize game state
-    set({
-      isInitialized: true,
-      gameCompleted: false,
-      winner: null,
-      playerPath: [],
-      playerPosition: 0,
-      ciphers: STARTING_CIPHERS,
-      cards: [],
-      selectedCards: [],
-      isDialogOpen: false,
-      dialogContent: null,
-      dialogTitle: "",
-      pathLength: PATH_LENGTH, // Use the PATH_LENGTH constant (20)
-      feedMessages: [],
-      socialFeed: [
-        { id: generateId(), message: "Welcome to Blockrunners!", timestamp: Date.now(), isNew: false },
-      ],
-    });
+    const state = get();
+    if (!state.isInitialized) {
+      set({
+        isInitialized: true,
+        gameCompleted: false,
+        winner: null,
+        playerPosition: 0,
+        ciphers: STARTING_CIPHERS,
+        cards: [],
+        socialFeed: [
+          ...state.socialFeed,
+          {
+            id: generateId(),
+            message: `${state.playerName} has joined the game!`,
+            timestamp: Date.now(),
+            isNew: true,
+          },
+        ],
+      });
 
-    // Generate the first step of the path
-    get().generatePath();
+      get().generatePath();
 
-    // Give player initial cards
-    get().giveCards(3);
+      // Give initial cards to the player
+      get().giveCards(1);
 
-    // Add welcome message
-    get().addToFeed("Welcome to Block Runners! Let's begin your journey!");
+      // Force a state resync to ensure all components have the latest state
+      setTimeout(() => {
+        // get().resyncCards();
+      }, 10);
+    }
   },
 
   generatePath: () => {
@@ -141,13 +138,7 @@ export const useStore = create<State>((set, get) => ({
 
   makeMove: (direction: Direction) => {
     const state = get();
-    const { playerPosition, playerPath, ciphers, selectedCards, pathLength } = state;
-
-    // Check if player has already completed the path
-    if (playerPosition >= pathLength) {
-      get().addToFeed(`You have already reached the end of the path and won!`);
-      return;
-    }
+    const { playerPosition, playerPath, ciphers, selectedCards } = state;
 
     // Calculate cost with selected cards
     // Base cost is 1 + number of selected cards
@@ -198,9 +189,8 @@ export const useStore = create<State>((set, get) => ({
         const newPosition = playerPosition + 1;
 
         // Check if player has reached the end
-        if (newPosition >= pathLength) {
+        if (newPosition >= state.pathLength) {
           // Player wins
-          get().addToFeed(`Congratulations! You completed the path with ${newPosition} correct moves!`);
           get().completeGame();
           return;
         }
@@ -230,6 +220,11 @@ export const useStore = create<State>((set, get) => ({
             set((state) => ({
               cards: state.cards.filter((card) => card.id !== shieldCard.id),
             }));
+
+            // Force a state resync to ensure all components have the latest state
+            setTimeout(() => {
+              // get().resyncCards();
+            }, 10);
           }
         } else {
           // Reset player to start and clear path
@@ -254,6 +249,11 @@ export const useStore = create<State>((set, get) => ({
         cards: state.cards.filter((card) => !usedCardIds.includes(card.id)),
         selectedCards: [],
       }));
+
+      // Force a state resync to ensure all components have the latest state
+      setTimeout(() => {
+        // get().resyncCards();
+      }, 10);
     }
   },
 
