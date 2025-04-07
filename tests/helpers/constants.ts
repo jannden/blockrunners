@@ -1,31 +1,24 @@
 import * as anchor from "@coral-xyz/anchor";
 import { Blockrunners } from "../../target/types/blockrunners";
-import { getStringFromByteArray } from "./utils";
+import { getStringFromByteArray, getConstantOrThrow } from "./utils";
+import { LAMPORTS_PER_SOL } from "@solana/web3.js";
+import { BN } from "@coral-xyz/anchor";
 
 // Access constants from IDL
 const program = anchor.workspace.blockrunners as anchor.Program<Blockrunners>;
-const constants = program.idl.constants;
+const IDL = program.idl;
 
-// Numeric constants
-export const CIPHER_COST = Number(constants.find((c) => c.name === "cipherCost")?.value);
-export const INITIAL_PATH_LENGTH = Number(
-  constants.find((c) => c.name === "initialPathLength")?.value
-);
-export const INITIAL_PRIZE_POOL = Number(
-  constants.find((c) => c.name === "initialPrizePool")?.value
-);
-export const INITIAL_PLAYER_CARDS_AMOUNT = Number(
-  constants.find((c) => c.name === "initialPlayerCardsAmount")?.value
-);
-export const MAX_FEED_EVENTS = Number(constants.find((c) => c.name === "maxFeedEvents")?.value);
+// Number constants
+export const CIPHER_COST = new BN(getConstantOrThrow("CIPHER_COST")).toNumber() / LAMPORTS_PER_SOL;
+export const INITIAL_PATH_LENGTH = Number(getConstantOrThrow("INITIAL_PATH_LENGTH"));
+export const INITIAL_PLAYER_CARDS_AMOUNT = Number(getConstantOrThrow("INITIAL_PLAYER_CARDS_AMOUNT"));
+export const MAX_FEED_EVENTS = Number(getConstantOrThrow("MAX_FEED_EVENTS"));
+export const INITIAL_PRIZE_POOL =
+  new BN(getConstantOrThrow("INITIAL_PRIZE_POOL")).toNumber() / LAMPORTS_PER_SOL;
 
 // String constants stored as byte arrays
-export const GAME_STATE_SEED = getStringFromByteArray(
-  constants.find((c) => c.name === "gameStateSeed")?.value
-);
-export const PLAYER_STATE_SEED = getStringFromByteArray(
-  constants.find((c) => c.name === "playerStateSeed")?.value
-);
+export const GAME_STATE_SEED = getStringFromByteArray(getConstantOrThrow("gameStateSeed"));
+export const PLAYER_STATE_SEED = getStringFromByteArray(getConstantOrThrow("playerStateSeed"));
 
 // Error codes
 export const CONSTRAINT_SEEDS = "ConstraintSeeds";
