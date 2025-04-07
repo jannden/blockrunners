@@ -96,6 +96,7 @@ describe("Make Move", () => {
             .accounts({
                 player: playerKeypair.publicKey,
                 playerState: playerStatePda,
+                gameState: gameStatePda,
             })
             .signers([playerKeypair])
             .rpc();
@@ -146,6 +147,7 @@ describe("Make Move", () => {
                 .accounts({
                     player: playerKeypair.publicKey,
                     playerState: playerStatePda,
+                    gameState: gameStatePda,
                 })
                 .signers([playerKeypair])
                 .rpc();
@@ -181,6 +183,7 @@ describe("Make Move", () => {
                 .accounts({
                     player: playerKeypair.publicKey,
                     playerState: playerStatePda,
+                    gameState: gameStatePda,
                 })
                 .signers([playerKeypair])
                 .rpc();
@@ -215,6 +218,7 @@ describe("Make Move", () => {
             .accounts({
                 player: playerKeypair.publicKey,
                 playerState: playerStatePda,
+                gameState: gameStatePda,
             })
             .signers([playerKeypair])
             .rpc();

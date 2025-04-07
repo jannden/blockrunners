@@ -138,7 +138,14 @@ export const useStore = create<State>((set, get) => ({
 
   makeMove: (direction: Direction) => {
     const state = get();
-    const { playerPosition, playerPath, ciphers, selectedCards } = state;
+    const { playerPosition, playerPath, ciphers, selectedCards, pathLength } = state;
+
+    // Check if player has already completed the path
+    if (playerPosition >= pathLength) {
+      get().addToFeed(`You have already reached the end of the path and won!`);
+      return;
+    }
+
 
     // Calculate cost with selected cards
     // Base cost is 1 + number of selected cards
@@ -189,8 +196,9 @@ export const useStore = create<State>((set, get) => ({
         const newPosition = playerPosition + 1;
 
         // Check if player has reached the end
-        if (newPosition >= state.pathLength) {
+        if (newPosition >= pathLength) {
           // Player wins
+          get().addToFeed(`Congratulations! You completed the path with ${newPosition} correct moves!`);
           get().completeGame();
           return;
         }
