@@ -3,7 +3,9 @@ use anchor_lang::solana_program::hash::hash;
 use rand_chacha::ChaChaRng;
 use rand_core::{RngCore, SeedableRng};
 use crate::state::{PlayerState, PathDirection, SocialFeedEventType, GameState};
-use crate::instructions::save_and_emit_event::save_and_emit_event;
+use crate::constants::GAME_STATE_SEED;
+use crate::instructions::save_and_emit_event;
+use crate::errors::BlockrunnersError;
 
 // Function to generate a single random direction
 fn generate_next_step(player_state: &Account<PlayerState>) -> PathDirection {
@@ -36,19 +38,11 @@ pub fn make_move(ctx: Context<MakeMove>, direction: PathDirection) -> Result<()>
 
     let current_position = player_state.position as usize;
 
-    // Check if player has already reached the target path length (victory condition)
-    if player_state.position >= game_state.path_length {
-        // Player has already won, no need to make more moves
-        msg!("Player has already reached the end of the path and won!");
-
-        save_and_emit_event(
-            &mut player_state.player_events,
-            SocialFeedEventType::GameWon,
-            format!("Player has already completed the path and won!"),
-        )?;
-
-        return Ok(());
-    }
+    // Check if player has already completed the path
+    require!(
+        player_state.position < game_state.path_length,
+        BlockrunnersError::PathAlreadyCompleted
+    );
     
     // If we need to generate the next step in the path
     if current_position >= player_state.path.len() {
@@ -121,4 +115,10 @@ pub struct MakeMove<'info> {
         has_one = player
     )]
     pub player_state: Account<'info, PlayerState>,
+
+    #[account(
+        seeds = [GAME_STATE_SEED],
+        bump
+    )]
+    pub game_state: Account<'info, GameState>,
 }
