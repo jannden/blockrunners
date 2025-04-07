@@ -131,8 +131,12 @@ export const useStore = create<State>((set, get) => ({
   },
 
   generateNextStep: () => {
-    // Generate a random direction
-    const nextDirection: Direction = Math.random() < 0.5 ? "left" : "right";
+    // Generate a random direction using cryptographically secure random number generation
+    // Web Crypto API is used to ensure tamper-proof randomness for blockchain applications
+    const array = new Uint8Array(1);
+    window.crypto.getRandomValues(array);
+    // Use the first byte modulo 2 to determine direction (0 = left, 1 = right)
+    const nextDirection: Direction = array[0] % 2 === 0 ? "left" : "right";
     return nextDirection;
   },
 
