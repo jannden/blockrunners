@@ -2,7 +2,8 @@ use anchor_lang::prelude::*;
 use anchor_lang::solana_program::hash::hash;
 use rand_chacha::ChaChaRng;
 use rand_core::{RngCore, SeedableRng};
-use crate::state::{PlayerState, PathDirection, SocialFeedEventType};
+use crate::state::{PlayerState, PathDirection, SocialFeedEventType, GameState};
+use crate::constants::GAME_STATE_SEED;
 use crate::instructions::save_and_emit_event::save_and_emit_event;
 
 // Function to generate a single random direction
@@ -32,8 +33,23 @@ fn generate_next_step(player_state: &Account<PlayerState>) -> PathDirection {
 
 pub fn make_move(ctx: Context<MakeMove>, direction: PathDirection) -> Result<()> {
     let player_state = &mut ctx.accounts.player_state;
+    let game_state = &ctx.accounts.game_state;
     
     let current_position = player_state.position as usize;
+    
+    // Check if player has already reached the target path length (victory condition)
+    if player_state.position >= game_state.path_length {
+        // Player has already won, no need to make more moves
+        msg!("Player has already reached the end of the path and won!");
+        
+        save_and_emit_event(
+            &mut player_state.player_events,
+            SocialFeedEventType::PlayerMoved,
+            format!("Player has already completed the path and won!"),
+        )?;
+        
+        return Ok(());
+    }
     
     // If we need to generate the next step in the path
     if current_position >= player_state.path.len() {
@@ -52,12 +68,25 @@ pub fn make_move(ctx: Context<MakeMove>, direction: PathDirection) -> Result<()>
         // Capture position before mutable borrow
         let new_position = player_state.position;
 
-        // Add social feed event for correct move
-        save_and_emit_event(
-            &mut player_state.player_events,
-            SocialFeedEventType::PlayerMoved,
-            format!("Player made a correct move and advanced to position {}!", new_position),
-        )?;
+        // Check if player has reached the end of the path (victory condition)
+        if new_position >= game_state.path_length {
+            msg!("Congratulations! Player has reached the end of the path and won!");
+            
+            save_and_emit_event(
+                &mut player_state.player_events,
+                SocialFeedEventType::PlayerMoved,
+                format!("Player has completed the path and won with {} correct moves!", new_position),
+            )?;
+            
+            // Additional victory logic could be added here (e.g., prize distribution)
+        } else {
+            // Add social feed event for correct move
+            save_and_emit_event(
+                &mut player_state.player_events,
+                SocialFeedEventType::PlayerMoved,
+                format!("Player made a correct move and advanced to position {}!", new_position),
+            )?;
+        }
     }
     else {
         // Incorrect move: reset to start
@@ -92,4 +121,10 @@ pub struct MakeMove<'info> {
         has_one = player
     )]
     pub player_state: Account<'info, PlayerState>,
+    
+    #[account(
+        seeds = [GAME_STATE_SEED],
+        bump
+    )]
+    pub game_state: Account<'info, GameState>,
 }
