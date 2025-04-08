@@ -40,11 +40,7 @@ fn generate_next_step(player_state: &Account<PlayerState>) -> PathDirection {
     match rng.next_u32() % 2 {
         0 => PathDirection::Left,
         1 => PathDirection::Right,
-        _ => {
-            // this should never happen b/c we mod by 2
-            msg!("UNEXPECTED: mod 2 operation produced value other than 0 or 1!");
-            PathDirection::Right // Default to right direction as fallback
-        }
+        _ => unreachable!("We should never reach here because i % 2 is always 0 or 1."),
     }
 }
 
