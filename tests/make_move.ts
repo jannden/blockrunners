@@ -3,7 +3,7 @@ import { Program } from "@coral-xyz/anchor";
 import { Keypair, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import { expect } from "chai";
 import { Blockrunners } from "../target/types/blockrunners";
-import { GAME_STATE_SEED, INITIAL_PATH_LENGTH, PLAYER_STATE_SEED } from "./helpers/constants";
+import { GAME_STATE_SEED, PLAYER_STATE_SEED } from "./helpers/constants";
 import { airdropSol, getMsgLogs } from "./helpers/utils";
 
 describe("Make Move", () => {
@@ -62,7 +62,7 @@ describe("Make Move", () => {
 
         console.log("Player initialization transaction signature", initPlayerTx);
 
-        // Purchase ciphers to generate path
+        // Purchase ciphers to join the game
         const ciphersToPurchase = 5;
         const tx = await program.methods
             .purchaseCiphers(new anchor.BN(ciphersToPurchase))
@@ -72,11 +72,7 @@ describe("Make Move", () => {
             .signers([playerKeypair])
             .rpc();
             
-        console.log("Path generated for player");
-
-        // Verify player has a path
-        const playerState = await program.account.playerState.fetch(playerStatePda);
-        expect(playerState.path.length).to.equal(INITIAL_PATH_LENGTH);
+        console.log("Player joined the game");
     });
 
     it("Allows successful player movement with correct choice", async () => {
@@ -84,21 +80,22 @@ describe("Make Move", () => {
             console.log("Make move events:", event.message);
         });
 
-        // Fetch player state to get the current path and position
+        // Fetch player state to get the current position
         const playerStateBefore = await program.account.playerState.fetch(playerStatePda);
         const initialPosition = playerStateBefore.position;
         console.log(`Player position before move: ${initialPosition}`);
         
-        // Get the correct direction for the current position
-        const correctDirection = playerStateBefore.path[initialPosition];
-        console.log(`Correct next direction: ${JSON.stringify(correctDirection)}`);
+        // Make a move (direction doesn't matter, the program will generate the correct direction)
+        const direction = { left: {} }; // Just pick a direction
+        console.log(`Direction chosen: ${JSON.stringify(direction)}`);
 
-        // Make the correct move
+        // Make the move
         const tx = await program.methods
-            .makeMove(correctDirection)
+            .makeMove(direction)
             .accounts({
                 player: playerKeypair.publicKey,
                 playerState: playerStatePda,
+                gameState: gameStatePda,
             })
             .signers([playerKeypair])
             .rpc();
@@ -108,67 +105,121 @@ describe("Make Move", () => {
 
         // Fetch player state after the move
         const playerStateAfter = await program.account.playerState.fetch(playerStatePda);
-        console.log(`Player position after correct move: ${playerStateAfter.position}`);
+        console.log(`Player position after move: ${playerStateAfter.position}`);
 
-        // Verify position was incremented
-        expect(playerStateAfter.position).to.equal(initialPosition + 1);
-
-        // Verify player cards were increased
-        expect(playerStateAfter.cards.length).to.equal(
-            playerStateBefore.cards.length + 1
-        );
+        // If the position increased, it was a correct move
+        if (playerStateAfter.position > initialPosition) {
+            console.log("Correct move! Position increased.");
+            
+            // Verify position was incremented
+            expect(playerStateAfter.position).to.equal(initialPosition + 1);
+            
+            // Verify player cards were increased
+            expect(playerStateAfter.cards.length).to.equal(
+                playerStateBefore.cards.length + 1
+            );
+        } else {
+            console.log("Incorrect move! Position reset to 0.");
+            
+            // Verify position was reset to 0
+            expect(playerStateAfter.position).to.equal(0);
+            
+            // Verify player cards did not increase
+            expect(playerStateAfter.cards.length).to.equal(
+                playerStateBefore.cards.length
+            );
+        }
 
         // Remove listener
         await program.removeEventListener(socialFeedEventListener);
     });
 
-    it("Resets player position with incorrect choice", async () => {
-        // Fetch player state to get the current path and position
+    it("Makes multiple moves", async () => {
+        // Make three more moves to test the game logic
+        for (let i = 0; i < 3; i++) {
+            // Fetch player state to get the current position
+            const playerStateBefore = await program.account.playerState.fetch(playerStatePda);
+            const currentPosition = playerStateBefore.position;
+            console.log(`Move ${i+1}: Player position before move: ${currentPosition}`);
+            
+            // Make a move (direction doesn't matter, the program will generate the correct direction)
+            const direction = { left: {} }; // Just pick a direction
+            console.log(`Move ${i+1}: Direction chosen: ${JSON.stringify(direction)}`);
+
+            // Make the move
+            const tx = await program.methods
+                .makeMove(direction)
+                .accounts({
+                    player: playerKeypair.publicKey,
+                    playerState: playerStatePda,
+                    gameState: gameStatePda,
+                })
+                .signers([playerKeypair])
+                .rpc();
+
+            // Fetch player state after the move
+            const playerStateAfter = await program.account.playerState.fetch(playerStatePda);
+            
+            // If the position changed, it was correct
+            if (playerStateAfter.position > currentPosition) {
+                console.log(`Move ${i+1}: Correct! Advanced to position ${playerStateAfter.position}`);
+            } else {
+                console.log(`Move ${i+1}: Incorrect. Reset to position ${playerStateAfter.position}`);
+                // Break the loop if we got reset
+                break;
+            }
+        }
+    });
+
+    it("Tests incorrect move behavior", async () => {
+        // Fetch player state to get the current position
         const playerStateBefore = await program.account.playerState.fetch(playerStatePda);
         const currentPosition = playerStateBefore.position;
-        console.log(`Player position before wrong move: ${currentPosition}`);
+        console.log(`Player position before move: ${currentPosition}`);
         
-        // Get the correct direction for the current position
-        const correctDirection = playerStateBefore.path[currentPosition];
-        console.log(`Correct direction: ${JSON.stringify(correctDirection)}`);
-        
-        // Choose the wrong direction (opposite of the correct one)
-        let wrongDirection;
-        if (correctDirection.left !== undefined) {
-            wrongDirection = { right: {} };
-        }
-        else if (correctDirection.right !== undefined) {
-            wrongDirection = { left: {} };
-        }
-        else {
-            // Handle other direction types or throw an error
-            throw new Error("Unexpected direction type: " + JSON.stringify(correctDirection));
-        }
-        console.log(`Wrong direction chosen: ${JSON.stringify(wrongDirection)}`);
+        // Make a move (direction doesn't matter, the program will generate the correct direction)
+        const direction = { right: {} }; // Just pick a direction
+        console.log(`Direction chosen: ${JSON.stringify(direction)}`);
 
-        // Make the wrong move
+        // Make the move
         const tx = await program.methods
-            .makeMove(wrongDirection)
+            .makeMove(direction)
             .accounts({
                 player: playerKeypair.publicKey,
                 playerState: playerStatePda,
+                gameState: gameStatePda,
             })
             .signers([playerKeypair])
             .rpc();
 
         const logs = await getMsgLogs(provider, tx);
-        console.log("Make wrong move logs -> ", logs);
+        console.log("Make move logs -> ", logs);
 
         // Fetch player state after the move
         const playerStateAfter = await program.account.playerState.fetch(playerStatePda);
-        console.log(`Player position after wrong move: ${playerStateAfter.position}`);
+        console.log(`Player position after move: ${playerStateAfter.position}`);
 
-        // Verify position was reset to 0
-        expect(playerStateAfter.position).to.equal(0);
-
-        // Verify player cards did not increase
-        expect(playerStateAfter.cards.length).to.equal(
-            playerStateBefore.cards.length
-        );
+        // If the position didn't increase, it was an incorrect move
+        if (playerStateAfter.position <= currentPosition) {
+            console.log("Incorrect move! Position reset to 0.");
+            
+            // Verify position was reset to 0
+            expect(playerStateAfter.position).to.equal(0);
+            
+            // Verify player cards did not increase
+            expect(playerStateAfter.cards.length).to.equal(
+                playerStateBefore.cards.length
+            );
+        } else {
+            console.log("Correct move! Position increased.");
+            
+            // Verify position was incremented
+            expect(playerStateAfter.position).to.equal(currentPosition + 1);
+            
+            // Verify player cards were increased
+            expect(playerStateAfter.cards.length).to.equal(
+                playerStateBefore.cards.length + 1
+            );
+        }
     });
 });
