@@ -24,8 +24,6 @@ pub fn make_move(ctx: Context<MakeMove>, direction: PathDirection) -> Result<()>
     let player_state = &mut ctx.accounts.player_state;
     let game_state = &ctx.accounts.game_state;
 
-    let current_position = player_state.position as usize;
-
     // Check if player has already completed the path
     require!(
         player_state.position < game_state.path_length,
