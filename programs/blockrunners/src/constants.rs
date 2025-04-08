@@ -23,3 +23,4 @@ pub const MAX_TOTAL_CARDS: u8 = 40;
 
 #[constant]
 pub const PLAYER_STATE_SEED: &[u8] = b"player_state";
+
