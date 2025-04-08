@@ -43,7 +43,7 @@ pub fn make_move(
 
     require!(
         player_state.position < game_state.path_length,
-        BlockrunnersError::PathAlreadCompleted
+        BlockrunnersError::PathAlreadyCompleted
     );
 
     // Base cost for a move
@@ -53,7 +53,10 @@ pub fn make_move(
     // Process card usage - validate and apply effects
     let card_usage = process_cards(player_state, &cards)?;
 
-    if direction == player_state.path[current_position] {
+    // Generate the correct direction for the current position
+    let correct_direction = generate_next_direction_for_path(player_state);
+
+    if direction == correct_direction {
         handle_correct_move(player_state, card_usage)?;
     } else {
         handle_incorrect_move(player_state, card_usage, current_position)?;
