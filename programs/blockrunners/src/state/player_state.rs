@@ -41,10 +41,6 @@ pub struct PlayerState {
     /// Current block number
     pub position: u8,
 
-    // Path now stores only generated steps, no longer the entire path
-    #[max_len(20)]
-    pub path: Vec<PathDirection>,
-
     /// Store bump to save compute
     pub bump: u8,
 

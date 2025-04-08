@@ -3,7 +3,7 @@ use anchor_lang::{prelude::*, system_program};
 use crate::{
     constants::{CIPHER_COST, GAME_STATE_SEED, PLAYER_STATE_SEED}, 
     errors::BlockrunnersError, 
-    instructions::{collect_player_card, generate_player_path, save_and_emit_event}, 
+    instructions::{collect_player_card, save_and_emit_event}, 
     state::{GameState, PlayerState, SocialFeedEventType}
 };
 
@@ -47,7 +47,6 @@ pub fn purchase_ciphers(ctx: Context<PurchaseCiphers>, amount: u64) -> Result<()
 
     // Check if the player is not already in the game
     if !player_state.in_game {
-        generate_player_path(player_state)?;
         collect_player_card(player_state)?;
         save_and_emit_event(
             &mut game_state.game_events,

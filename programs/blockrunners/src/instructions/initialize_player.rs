@@ -33,7 +33,6 @@ pub fn initialize_player(ctx: Context<InitializePlayer>) -> Result<()> {
     player_state.ciphers = 0;
     player_state.cards = Vec::new();
     player_state.position = 0;
-    player_state.path = Vec::new();
     player_state.bump = ctx.bumps.player_state;
     player_state.player_events = Vec::new();
     player_state.in_game = false;

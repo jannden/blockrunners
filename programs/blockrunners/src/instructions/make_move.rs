@@ -1,11 +1,8 @@
 use anchor_lang::prelude::*;
-use anchor_lang::solana_program::hash::hash;
-use rand_chacha::ChaChaRng;
-use rand_core::{RngCore, SeedableRng};
 use crate::{
     constants::GAME_STATE_SEED,
     errors::BlockrunnersError,
-    instructions::{collect_player_card, save_and_emit_event},
+    instructions::{collect_player_card, save_and_emit_event, generate_next_direction_for_path},
     state::{PathDirection, PlayerState, SocialFeedEventType, GameState}
 };
 
@@ -23,27 +20,6 @@ pub struct MakeMove<'info> {
     pub game_state: Account<'info, GameState>,
 }
 
-// Function to generate a single random direction
-fn generate_next_step(player_state: &Account<PlayerState>) -> PathDirection {
-    // Use recent block hash, timestamp, and player's key as sources of randomness
-    let recent_slothash = Clock::get().unwrap().slot;
-    let recent_timestamp = Clock::get().unwrap().unix_timestamp;
-    let mut combined_seed = player_state.key().to_bytes().to_vec();
-    combined_seed.extend_from_slice(&recent_slothash.to_le_bytes());
-    combined_seed.extend_from_slice(&recent_timestamp.to_le_bytes());
-    
-    // Hash the combined seed to get a fixed-length seed
-    let seed = hash(&combined_seed).to_bytes();
-    let mut rng = ChaChaRng::from_seed(seed);
-
-    // Generate a random direction
-    match rng.next_u32() % 2 {
-        0 => PathDirection::Left,
-        1 => PathDirection::Right,
-        _ => unreachable!("We should never reach here because i % 2 is always 0 or 1."),
-    }
-}
-
 pub fn make_move(ctx: Context<MakeMove>, direction: PathDirection) -> Result<()> {
     let player_state = &mut ctx.accounts.player_state;
     let game_state = &ctx.accounts.game_state;
@@ -56,16 +32,11 @@ pub fn make_move(ctx: Context<MakeMove>, direction: PathDirection) -> Result<()>
         BlockrunnersError::PathAlreadyCompleted
     );
     
-    // If we need to generate the next step in the path
-    if current_position >= player_state.path.len() {
-        // Generate the next direction and add it to the path
-        let next_direction = generate_next_step(player_state);
-        player_state.path.push(next_direction);
-        msg!("Generated next direction at position {}", current_position);
-    }
-
-    // Check if the chosen direction matches the path
-    if direction == player_state.path[current_position] {
+    // Generate the correct direction for the current position
+    let correct_direction = generate_next_direction_for_path(player_state);
+    
+    // Check if the chosen direction matches the correct direction
+    if direction == correct_direction {
         // Correct move: advance one step
         player_state.position += 1;
         msg!("Correct move! Advanced to position {}", player_state.position);
@@ -82,8 +53,6 @@ pub fn make_move(ctx: Context<MakeMove>, direction: PathDirection) -> Result<()>
                 SocialFeedEventType::GameWon,
                 format!("Player has completed the path and won with {} correct moves!", new_position),
             )?;
-
-            // Additional victory logic could be added here (e.g., prize distribution)
         }
         else {
             collect_player_card(player_state)?;
@@ -98,22 +67,15 @@ pub fn make_move(ctx: Context<MakeMove>, direction: PathDirection) -> Result<()>
     }
     else {
         // Incorrect move: reset to start
-        //   (we should also clear the path,
-        //    otherwise the player can just try again and choose the opposite direction)
         player_state.position = 0;
-        player_state.path.clear();  // Clear the entire path to start fresh
         
-        // Generate just the first step for the new path
-        let first_direction = generate_next_step(player_state);
-        player_state.path.push(first_direction);
-        
-        msg!("Incorrect move! Reset to start with a new path");
+        msg!("Incorrect move! Reset to start");
         
         // Add social feed event for incorrect move
         save_and_emit_event(
             &mut player_state.player_events,
             SocialFeedEventType::PlayerMoved,
-            format!("Player made an incorrect move and reset to the start with a new path!"),
+            format!("Player made an incorrect move and reset to the start!"),
         )?;
     }
     
