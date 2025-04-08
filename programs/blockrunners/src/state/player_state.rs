@@ -1,13 +1,16 @@
 use anchor_lang::prelude::*;
 use strum_macros::EnumCount as EnumCountMacro;
 
-use crate::{constants::MAX_FEED_EVENTS, state::SocialFeedEvent };
+use crate::{
+    constants::{MAX_FEED_EVENTS, MAX_TOTAL_CARDS},
+    state::SocialFeedEvent,
+};
 
 #[derive(Clone, Copy, AnchorSerialize, AnchorDeserialize, PartialEq, Debug, EnumCountMacro)]
 pub enum Cards {
     Shield,
     Doubler,
-    Swift
+    Swift,
 }
 
 impl Space for Cards {
@@ -32,14 +35,11 @@ pub struct PlayerState {
     /// Number of ciphers owned
     pub ciphers: u64,
 
-    #[max_len(20)]
+    #[max_len(MAX_TOTAL_CARDS)]
     pub cards: Vec<Cards>,
 
     /// Current block number
     pub position: u8,
-
-    #[max_len(40)]
-    pub path: Vec<PathDirection>,
 
     /// Store bump to save compute
     pub bump: u8,

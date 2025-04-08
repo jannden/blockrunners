@@ -4,7 +4,11 @@ use strum::EnumCount;
 use crate::{
     errors::BlockrunnersError, 
     instructions::{collect_player_card, save_and_emit_event},
-    state::{Cards, PathDirection, PlayerState, SocialFeedEventType}
+    state::{Cards, PathDirection, PlayerState, SocialFeedEventType}};
+use crate::{
+    constants::GAME_STATE_SEED,
+    instructions::{generate_next_direction_for_path},
+    state::{GameState}
 };
 
 #[derive(Accounts)]
@@ -13,6 +17,12 @@ pub struct MakeMove<'info> {
 
     #[account(mut)]
     pub player_state: Account<'info, PlayerState>,
+
+    #[account(
+        seeds = [GAME_STATE_SEED],
+        bump
+    )]
+    pub game_state: Account<'info, GameState>,
 }
 
 #[derive(Clone, Debug)]
@@ -29,10 +39,11 @@ pub fn make_move(
 ) -> Result<()> {
     let player_state = &mut ctx.accounts.player_state;
     let current_position = player_state.position as usize;
+    let game_state = &ctx.accounts.game_state;
 
     require!(
-        current_position < player_state.path.len(),
-        BlockrunnersError::PathAlreadyCompleted
+        player_state.position < game_state.path_length,
+        BlockrunnersError::PathAlreadCompleted
     );
 
     // Base cost for a move
