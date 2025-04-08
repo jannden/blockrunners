@@ -13,10 +13,7 @@ use crate::{
 pub struct MakeMove<'info> {
     pub player: Signer<'info>,
 
-    #[account(
-        mut,
-        has_one = player
-    )]
+    #[account(mut)]
     pub player_state: Account<'info, PlayerState>,
 
     #[account(
