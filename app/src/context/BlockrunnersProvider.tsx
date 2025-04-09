@@ -11,7 +11,6 @@ function BlockrunnersProvider({ children }: { children: ReactNode }) {
   const { connection } = useConnection();
   const wallet = useAnchorWallet();
 
-  const [isGameLoaded, setIsGameLoaded] = useState(false);
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [playerState, setPlayerState] = useState<PlayerState | null>(null);
   const [playerStatePDA, setPlayerStatePDA] = useState<PublicKey | null>(null);
@@ -21,17 +20,6 @@ function BlockrunnersProvider({ children }: { children: ReactNode }) {
 
   // Get GameState on load
   useEffect(() => {
-    // Fetch GameState PDA initially
-    program.account.gameState
-      .fetch(gameStatePDA)
-      .then((data) => {
-        setGameState(data);
-        setIsGameLoaded(true);
-      })
-      .catch((error) => {
-        console.error("GameState PDA fetch error:", error);
-      });
-
     // Set up subscription to GameState PDA
     const gameSubscriptionId = connection.onAccountChange(gameStatePDA, (accountInfo) => {
       setGameState(program.coder.accounts.decode<GameState>("gameState", accountInfo.data));
@@ -46,6 +34,16 @@ function BlockrunnersProvider({ children }: { children: ReactNode }) {
       }
     );
 
+    // Fetch GameState PDA initially
+    program.account.gameState
+      .fetch(gameStatePDA)
+      .then((data) => {
+        setGameState(data);
+      })
+      .catch((error) => {
+        console.error("GameState PDA fetch error:", error);
+      });
+
     return () => {
       connection.removeAccountChangeListener(gameSubscriptionId);
       program.removeEventListener(emitLogSubscriptionId);
@@ -55,11 +53,10 @@ function BlockrunnersProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // Get PlayerState upon public key change
-  // TODO: This is doing race condition with the game state
   useEffect(() => {
     setPlayerState(null);
 
-    if (!wallet?.publicKey || !isGameLoaded) return;
+    if (!wallet?.publicKey || !gameState) return;
 
     if (!gameState) {
       console.error("PlayerState: GameState not found");
@@ -69,6 +66,11 @@ function BlockrunnersProvider({ children }: { children: ReactNode }) {
     // Determine PlayerState PDA address
     const pda = getPlayerStatePDA(wallet.publicKey);
     setPlayerStatePDA(pda);
+
+    // Set up subscription to PlayerState PDA
+    const playerSubscriptionId = connection.onAccountChange(pda, (accountInfo) => {
+      setPlayerState(program.coder.accounts.decode<PlayerState>("playerState", accountInfo.data));
+    });
 
     // Fetch PlayerState PDA initially
     program.account.playerState
@@ -80,18 +82,13 @@ function BlockrunnersProvider({ children }: { children: ReactNode }) {
         console.error("PlayerState PDA fetch error:", error);
       });
 
-    // Set up subscription to PlayerState PDA
-    const playerSubscriptionId = connection.onAccountChange(pda, (accountInfo) => {
-      setPlayerState(program.coder.accounts.decode<PlayerState>("playerState", accountInfo.data));
-    });
-
     // Cleanup subscriptions
     return () => {
       connection.removeAccountChangeListener(playerSubscriptionId);
     };
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [wallet?.publicKey, isGameLoaded]);
+  }, [gameState, wallet?.publicKey]);
 
   // Instruction: Initialize game
   const initializeGame = async () => {
@@ -121,6 +118,8 @@ function BlockrunnersProvider({ children }: { children: ReactNode }) {
 
   // Instruction: Initialize player
   const initializePlayer = async () => {
+    console.log("Initialize player: Wallet", wallet?.publicKey);
+    console.log("Initialize player: PlayerStatePDA", playerStatePDA);
     if (!wallet?.publicKey || !playerStatePDA) {
       console.error("Initialize player: Wallet or PlayerStatePDA not found");
       return;

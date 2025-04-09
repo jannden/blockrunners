@@ -59,7 +59,7 @@ export const AirdropButton = () => {
     <>
       {publicKey && (
         <Button onClick={handleAirdrop} disabled={isLoading}>
-          {isLoading ? "Loading..." : `${balance.toFixed(4)} SOL`}
+          {isLoading ? "Loading..." : `Airdrop (now ${balance.toFixed(1)} SOL)`}
         </Button>
       )}
     </>
