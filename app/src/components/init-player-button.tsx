@@ -24,8 +24,8 @@ export const InitPlayerButton = () => {
 
   return (
     <>
-      {gameState && publicKey && !playerState && (
-        <Button onClick={handleInitPlayer} disabled={isLoading}>
+      {publicKey && !playerState && (
+        <Button onClick={handleInitPlayer} disabled={isLoading || !gameState}>
           {isLoading ? "Loading..." : "Init Player"}
         </Button>
       )}

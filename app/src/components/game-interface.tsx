@@ -1,11 +1,6 @@
 import { useEffect, useState } from "react";
 
 import { useWallet } from "@solana/wallet-adapter-react";
-import { useBlockrunners } from "@/hooks/useBlockrunners";
-
-import { InitGameButton } from "./init-game-button";
-import { InitPlayerButton } from "./init-player-button";
-import { AirdropButton } from "./airdrop-button";
 
 import { GameHeader } from "./game-header";
 import { GameFeed } from "./game-feed";
@@ -19,7 +14,6 @@ import { AbilityCard } from "@/types/game";
 
 export function GameInterface() {
   const { connected } = useWallet();
-  const { playerState } = useBlockrunners();
 
   // State from store
   const {
@@ -86,48 +80,48 @@ export function GameInterface() {
         onBuyCiphersClick={() => setBuyCiphersModalOpen(true)}
       />
 
-      <div className="flex-1 overflow-hidden flex flex-col py-4 pr-1 gap-4">
-        <GameFeed messages={socialFeed} />
-
-        <div className="flex flex-col justify-center">
-          <AbilityCards
-            cards={cards}
-            selectedCards={selectedCards}
-            onCardSelect={handleToggleCardSelection}
-          />
+      {!connected && (
+        <div className="flex flex-col justify-center items-center h-full">
+          <p className="text-center text-gray-500">Connect your wallet to play</p>
         </div>
+      )}
 
-        {!playerState && (
-          <div className="flex flex-row justify-center gap-2">
-            {connected && <AirdropButton />}
-            {connected && <InitGameButton />}
-            {connected && <InitPlayerButton />}
+      {connected && (
+        <>
+          <div className="flex-1 overflow-hidden flex flex-col py-4 pr-1 gap-4">
+            <GameFeed messages={socialFeed} />
+
+            <div className="flex flex-col justify-center">
+              <AbilityCards
+                cards={cards}
+                selectedCards={selectedCards}
+                onCardSelect={handleToggleCardSelection}
+              />
+            </div>
+
+            <GameControls
+              onMove={handleMakeMove}
+              nextMoveCost={nextMoveCost}
+              disabled={ciphers < nextMoveCost}
+              onCostInfoClick={() => setCostInfoModalOpen(true)}
+              progress={progress}
+            />
           </div>
-        )}
 
-        {connected && playerState && (
-          <GameControls
-            onMove={handleMakeMove}
-            nextMoveCost={nextMoveCost}
-            disabled={ciphers < nextMoveCost}
-            onCostInfoClick={() => setCostInfoModalOpen(true)}
-            progress={progress}
+          <InfoModal open={infoModalOpen} onClose={() => setInfoModalOpen(false)} />
+          <BuyCiphersModal
+            open={buyCiphersModalOpen}
+            onClose={() => setBuyCiphersModalOpen(false)}
+            onBuy={handleBuyMoreCiphers}
           />
-        )}
-      </div>
-
-      <InfoModal open={infoModalOpen} onClose={() => setInfoModalOpen(false)} />
-      <BuyCiphersModal
-        open={buyCiphersModalOpen}
-        onClose={() => setBuyCiphersModalOpen(false)}
-        onBuy={handleBuyMoreCiphers}
-      />
-      <CostInfoModal
-        open={costInfoModalOpen}
-        onClose={() => setCostInfoModalOpen(false)}
-        baseCost={1}
-        selectedCardsCount={selectedCards.length}
-      />
+          <CostInfoModal
+            open={costInfoModalOpen}
+            onClose={() => setCostInfoModalOpen(false)}
+            baseCost={1}
+            selectedCardsCount={selectedCards.length}
+          />
+        </>
+      )}
     </div>
   );
 }

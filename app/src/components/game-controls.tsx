@@ -3,6 +3,11 @@
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { RoundButton } from "./ui/round-button";
+import { AirdropButton } from "./airdrop-button";
+import { InitGameButton } from "./init-game-button";
+import { InitPlayerButton } from "./init-player-button";
+import { useBlockrunners } from "@/hooks/useBlockrunners";
+import { useWallet } from "@solana/wallet-adapter-react";
 
 interface GameControlsProps {
   onMove: (direction: "left" | "right") => void;
@@ -19,23 +24,39 @@ export function GameControls({
   onCostInfoClick,
   progress,
 }: GameControlsProps) {
+  const { connected } = useWallet();
+  const { playerState } = useBlockrunners();
+
   return (
     <div className="border-4 border-black rounded-lg shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] bg-white dark:bg-[#1e1e1e] overflow-hidden">
-      <div className="flex items-center justify-between p-4">
-        <Button onClick={() => onMove("left")} disabled={disabled} variant="primary">
-          <ArrowLeft className="h-8 w-8 mr-2" />
-          <span className="font-bold text-lg">LEFT</span>
-        </Button>
+      {!playerState && (
+        <div className="flex flex-row justify-center gap-2 p-4">
+          {connected && <AirdropButton />}
+          {connected && <InitGameButton />}
+          {connected && <InitPlayerButton />}
+        </div>
+      )}
 
-        <RoundButton onClick={onCostInfoClick}>{nextMoveCost}</RoundButton>
+      {playerState && (
+        <>
+          {/* Game controls */}
+          <div className="flex items-center justify-between p-4">
+            <Button onClick={() => onMove("left")} disabled={disabled} variant="primary">
+              <ArrowLeft className="h-8 w-8 mr-2" />
+              <span className="font-bold text-lg">LEFT</span>
+            </Button>
 
-        <Button onClick={() => onMove("right")} disabled={disabled} variant="primary">
-          <span className="font-bold text-lg">RIGHT</span>
-          <ArrowRight className="h-8 w-8 ml-2" />
-        </Button>
-      </div>
+            <RoundButton onClick={onCostInfoClick}>{nextMoveCost}</RoundButton>
 
-      {/* Progress bar with cyberpunk neobrutalism style */}
+            <Button onClick={() => onMove("right")} disabled={disabled} variant="primary">
+              <span className="font-bold text-lg">RIGHT</span>
+              <ArrowRight className="h-8 w-8 ml-2" />
+            </Button>
+          </div>
+        </>
+      )}
+
+      {/* Progress bar */}
       <div className="relative h-4 bg-black">
         <div
           className="absolute inset-0 bg-[var(--app-primary)] border-t-2 border-black"
