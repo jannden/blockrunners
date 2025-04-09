@@ -22,10 +22,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Checkout code<D-s>
         uses: actions/checkout@v4
       
       - name: Test Anchor
-        uses: IhorMuliar/test-anchor@v1
+        uses: IhorMuliar/test-anchor@v1.1
         with:
           features: test
