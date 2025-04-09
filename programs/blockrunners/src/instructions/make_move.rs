@@ -5,7 +5,7 @@ use crate::{
     constants::GAME_STATE_SEED,
     errors::BlockrunnersError,
     instructions::{collect_player_card, generate_next_direction_for_path, save_and_emit_event},
-    state::{Cards, GameState, PathDirection, PlayerState, SocialFeedEventType},
+    state::{Card, GameState, PathDirection, PlayerState, SocialFeedEventType},
 };
 
 #[derive(Accounts)]
@@ -32,7 +32,7 @@ pub struct CardUsage {
 pub fn make_move(
     ctx: Context<MakeMove>,
     direction: PathDirection,
-    cards: Vec<Cards>,
+    cards: Vec<Card>,
 ) -> Result<()> {
     let game_state = &ctx.accounts.game_state;
     let player_state = &mut ctx.accounts.player_state;
@@ -65,10 +65,10 @@ pub fn make_move(
     Ok(())
 }
 
-fn process_cards(player_state: &mut PlayerState, cards: &Vec<Cards>) -> Result<CardUsage> {
+fn process_cards(player_state: &mut PlayerState, cards: &Vec<Card>) -> Result<CardUsage> {
     // Check if the number of cards is valid
     require!(
-        cards.len() <= Cards::COUNT,
+        cards.len() <= Card::COUNT,
         BlockrunnersError::ExceedsMaxCards
     );
 
@@ -105,9 +105,9 @@ fn process_cards(player_state: &mut PlayerState, cards: &Vec<Cards>) -> Result<C
 
             // Apply card effect
             match card_type {
-                Cards::Shield => card_usage.shield = true,
-                Cards::Doubler => card_usage.doubler = true,
-                Cards::Swift => {
+                Card::Shield => card_usage.shield = true,
+                Card::Doubler => card_usage.doubler = true,
+                Card::Swift => {
                     card_usage.swift = true;
                     // Swift card refunds up to 2 ciphers
                     let refund = player_state.ciphers.min(2);

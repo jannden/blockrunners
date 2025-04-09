@@ -8,7 +8,7 @@ mod instructions;
 mod state;
 
 use instructions::*;
-use state::{Cards, PathDirection};
+use state::{Card, PathDirection};
 
 declare_id!("9BRKKfPZ9kXT8KdMbCmvjnTFqec57ExLRdgUsCNqWU7P");
 
@@ -31,8 +31,8 @@ pub mod blockrunners {
     pub fn make_move(
         ctx: Context<MakeMove>,
         direction: PathDirection,
-        card: Vec<Cards>,
+        cards: Vec<Card>,
     ) -> Result<()> {
-        make_move::make_move(ctx, direction, card)
+        make_move::make_move(ctx, direction, cards)
     }
 }

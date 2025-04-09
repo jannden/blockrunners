@@ -7,13 +7,13 @@ use crate::{
 };
 
 #[derive(Clone, Copy, AnchorSerialize, AnchorDeserialize, PartialEq, Debug, EnumCountMacro)]
-pub enum Cards {
+pub enum Card {
     Shield,
     Doubler,
     Swift,
 }
 
-impl Space for Cards {
+impl Space for Card {
     const INIT_SPACE: usize = 1;
 }
 
@@ -36,7 +36,7 @@ pub struct PlayerState {
     pub ciphers: u64,
 
     #[max_len(MAX_TOTAL_CARDS)]
-    pub cards: Vec<Cards>,
+    pub cards: Vec<Card>,
 
     /// Current block number
     pub position: u8,
