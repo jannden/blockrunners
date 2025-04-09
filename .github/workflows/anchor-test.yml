@@ -27,3 +27,5 @@ jobs:
       
       - name: Test Anchor
         uses: IhorMuliar/test-anchor@v1
+        with:
+          features: test
