@@ -4,7 +4,8 @@ import { Keypair, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import { expect } from "chai";
 import { Blockrunners } from "../target/types/blockrunners";
 import { GAME_STATE_SEED, PLAYER_STATE_SEED } from "./helpers/constants";
-import { airdropSol, getMsgLogs } from "./helpers/utils";
+import { airdropSol, getMsgLogs, giveCard } from "./helpers/utils";
+import { CARD_USAGE_EMPTY_MOCK } from "./mocks/card-usage";
 
 describe("Make Move", () => {
     // Configure the client to use the local cluster.
@@ -91,7 +92,7 @@ describe("Make Move", () => {
 
         // Make the move
         const tx = await program.methods
-            .makeMove(direction, [])
+            .makeMove(direction, CARD_USAGE_EMPTY_MOCK)
             .accounts({
                 player: playerKeypair.publicKey,
                 playerState: playerStatePda,
@@ -148,7 +149,7 @@ describe("Make Move", () => {
 
             // Make the move
             const tx = await program.methods
-                .makeMove(direction, [])
+                .makeMove(direction, CARD_USAGE_EMPTY_MOCK)
                 .accounts({
                     player: playerKeypair.publicKey,
                     playerState: playerStatePda,
@@ -183,7 +184,7 @@ describe("Make Move", () => {
 
         // Make the move
         const tx = await program.methods
-            .makeMove(direction, [])
+            .makeMove(direction, CARD_USAGE_EMPTY_MOCK)
             .accounts({
                 player: playerKeypair.publicKey,
                 playerState: playerStatePda,
@@ -221,5 +222,59 @@ describe("Make Move", () => {
                 playerStateBefore.cards.length + 1
             );
         }
-    }); 
+    });
+
+    it("Applies card effects correctly on valid move", async () => {
+        // Give all three types of cards
+        await giveCard(program, playerKeypair, playerStatePda, { shield: {} });
+        await giveCard(program, playerKeypair, playerStatePda, { doubler: {} });
+        await giveCard(program, playerKeypair, playerStatePda, { swift: {} });
+
+        // Fetch player state before move
+        let stateBefore = await program.account.playerState.fetch(playerStatePda);
+        const cipherBefore = stateBefore.ciphers.toNumber();
+        const cardsBefore = [...stateBefore.cards];
+        
+        // Case 1: Correct move with Doubler and Swift
+        const correctDirection = { right: {} }; // irrelevant, we assume random matches
+        const cards = { shield: false, doubler: true, swift: true }; // Doubler and Swift
+        const moveTx = await program.methods
+            .makeMove(correctDirection, cards)
+            .accounts({
+                player: playerKeypair.publicKey,
+                playerState: playerStatePda,
+                gameState: gameStatePda,
+            })
+            .signers([playerKeypair])
+            .rpc();
+
+        const logs = await getMsgLogs(provider, moveTx);
+        console.log("Correct move with cards ->", logs);
+
+        const afterMove = await program.account.playerState.fetch(playerStatePda);
+        expect(afterMove.position).to.be.greaterThan(stateBefore.position); // moved forward
+        expect(afterMove.cards.length).to.be.greaterThan(cardsBefore.length); // doubler effect
+    });
+
+    
+    it("Applies card effects correctly on invalid move", async () => {
+        let stateBefore = await program.account.playerState.fetch(playerStatePda);
+        await giveCard(program, playerKeypair, playerStatePda, { shield: {} }); // Add shield again
+
+        const badMoveTx = await program.methods
+            .makeMove({ left: {} }, { shield: true, doubler: false, swift: false }) // Incorrect direction, Shield
+            .accounts({
+                player: playerKeypair.publicKey,
+                playerState: playerStatePda,
+                gameState: gameStatePda,
+            })
+            .signers([playerKeypair])
+            .rpc();
+
+        const logs2 = await getMsgLogs(provider, badMoveTx);
+        console.log("Incorrect move with Shield ->", logs2);
+
+        const stateAfterBad = await program.account.playerState.fetch(playerStatePda);
+        expect(stateAfterBad.position).to.equal(stateBefore.position); // no reset
+    });
 });

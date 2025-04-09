@@ -10,12 +10,12 @@ name = "blockrunners"
 
 [features]
 default = []
+test = []
 cpi = ["no-entrypoint"]
 no-entrypoint = []
 no-idl = []
 no-log-ix-name = []
 idl-build = ["anchor-lang/idl-build"]
-
 
 [dependencies]
 anchor-lang = "0.31.0"

@@ -80,3 +80,26 @@ export const getMsgLogs = async (
     return null;
   }
 };
+
+/**
+ * Gives a card to a player in the test environment.
+ * @param program Anchor program client.
+ * @param playerKeypair Player's keypair.
+ * @param playerStatePda PDA for player's state.
+ * @param card Card object (e.g., { shield: {} }).
+ */
+export const giveCard = async (
+  program: anchor.Program, 
+  playerKeypair: Keypair, 
+  playerStatePda: anchor.web3.PublicKey, 
+  card: any
+) => {
+  await program.methods
+    .debugGiveCard(card) // assumes debug-only method for test env
+    .accounts({
+        player: playerKeypair.publicKey,
+        playerState: playerStatePda,
+    })
+    .signers([playerKeypair])
+    .rpc();
+};

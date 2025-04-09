@@ -1,11 +1,10 @@
 use anchor_lang::prelude::*;
-use strum::EnumCount;
 
 use crate::{
     constants::GAME_STATE_SEED,
     errors::BlockrunnersError,
     instructions::{collect_player_card, generate_next_direction_for_path, save_and_emit_event},
-    state::{Card, GameState, PathDirection, PlayerState, SocialFeedEventType},
+    state::{GameState, PathDirection, PlayerState, SocialFeedEventType},
 };
 
 #[derive(Accounts)]
@@ -22,7 +21,7 @@ pub struct MakeMove<'info> {
     pub game_state: Account<'info, GameState>,
 }
 
-#[derive(Clone, Debug)]
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug)]
 pub struct CardUsage {
     pub shield: bool,
     pub doubler: bool,
@@ -32,7 +31,7 @@ pub struct CardUsage {
 pub fn make_move(
     ctx: Context<MakeMove>,
     direction: PathDirection,
-    cards: Vec<Card>,
+    card_usage: CardUsage,
 ) -> Result<()> {
     let game_state = &ctx.accounts.game_state;
     let player_state = &mut ctx.accounts.player_state;
@@ -51,7 +50,7 @@ pub fn make_move(
     player_state.ciphers -= 1;
 
     // Process card usage - validate and apply effects
-    let card_usage = process_cards(player_state, &cards)?;
+    process_cards(player_state, &card_usage)?;
 
     // Generate the correct direction for the current position
     let correct_direction = generate_next_direction_for_path(player_state);
@@ -65,64 +64,24 @@ pub fn make_move(
     Ok(())
 }
 
-fn process_cards(player_state: &mut PlayerState, cards: &Vec<Card>) -> Result<CardUsage> {
-    // Check if the number of cards is valid
-    require!(
-        cards.len() <= Card::COUNT,
-        BlockrunnersError::ExceedsMaxCards
-    );
-
-    let mut card_usage = CardUsage {
-        shield: false,
-        doubler: false,
-        swift: false,
-    };
-
-    // Track used card types to prevent duplicates
-    let mut used_card_types = Vec::new();
-
-    for &card_type in cards {
-        // Check if this card type has already been used in this move
-        if used_card_types.contains(&card_type) {
-            Err(error!(BlockrunnersError::DuplicateCard))?
-        }
-
-        // Find the card in player's inventory
-        if let Some(index) = player_state
-            .cards
-            .iter()
-            .position(|&card| card == card_type)
-        {
-            // Remove the card from inventory
-            player_state.cards.swap_remove(index);
-
-            // Using a card costs an additional cipher
-            require!(
-                player_state.ciphers >= 1,
-                BlockrunnersError::InsufficientBalance
-            );
-            player_state.ciphers -= 1;
-
-            // Apply card effect
-            match card_type {
-                Card::Shield => card_usage.shield = true,
-                Card::Doubler => card_usage.doubler = true,
-                Card::Swift => {
-                    card_usage.swift = true;
-                    // Swift card refunds up to 2 ciphers
-                    let refund = player_state.ciphers.min(2);
-                    player_state.ciphers += refund;
-                }
-            }
-
-            // Mark this card type as used
-            used_card_types.push(card_type);
-        } else {
-            Err(error!(BlockrunnersError::InsufficientCards))?
-        }
+fn process_cards(player_state: &mut PlayerState, card_usage: &CardUsage) -> Result<()> {
+    // Using a card costs an additional cipher
+    if card_usage.shield || card_usage.doubler || card_usage.swift {
+        // At least one is true
+        require!(
+            player_state.ciphers >= 1,
+            BlockrunnersError::InsufficientBalance
+        );
+        player_state.ciphers -= 1;
     }
 
-    Ok(card_usage)
+    // Swift card refunds up to 2 ciphers
+    if card_usage.swift {
+        let refund = player_state.ciphers.min(2);
+        player_state.ciphers += refund;
+    }
+
+    Ok(())
 }
 
 fn handle_correct_move(
@@ -144,40 +103,42 @@ fn handle_correct_move(
                 new_position
             ),
         )?;
-    } else {
-        // Base message
-        let mut event_message = format!("Player advanced to position {}!", new_position);
 
-        // Apply doubler effect
-        let collect_cards_count = if card_usage.doubler { 2 } else { 1 };
-
-        // Collect cards based on success and doubler
-        for _ in 0..collect_cards_count {
-            collect_player_card(player_state)?;
-        }
-
-        // Build event message
-        let mut card_effects = Vec::new();
-        if card_usage.doubler {
-            card_effects.push("Doubler (2 cards collected)");
-        }
-        if card_usage.shield {
-            card_effects.push("Shield");
-        }
-        if card_usage.swift {
-            card_effects.push("Swift (cipher refund)");
-        }
-
-        if !card_effects.is_empty() {
-            event_message = format!("{}! Cards used: {}", event_message, card_effects.join(", "));
-        }
-
-        save_and_emit_event(
-            &mut player_state.player_events,
-            SocialFeedEventType::PlayerMoved,
-            event_message,
-        )?;
+        return Ok(());
     }
+
+    // Base message
+    let mut event_message = format!("Player advanced to position {}!", new_position);
+
+    // Apply doubler effect
+    let collect_cards_count = if card_usage.doubler { 2 } else { 1 };
+
+    // Collect cards based on success and doubler
+    for _ in 0..collect_cards_count {
+        collect_player_card(player_state)?;
+    }
+
+    // Build event message
+    let mut card_effects = Vec::new();
+    if card_usage.doubler {
+        card_effects.push("Doubler (2 cards collected)");
+    }
+    if card_usage.shield {
+        card_effects.push("Shield");
+    }
+    if card_usage.swift {
+        card_effects.push("Swift (cipher refund)");
+    }
+
+    if !card_effects.is_empty() {
+        event_message = format!("{}! Cards used: {}", event_message, card_effects.join(", "));
+    }
+
+    save_and_emit_event(
+        &mut player_state.player_events,
+        SocialFeedEventType::PlayerMoved,
+        event_message,
+    )?;
 
     Ok(())
 }

@@ -31,8 +31,13 @@ pub mod blockrunners {
     pub fn make_move(
         ctx: Context<MakeMove>,
         direction: PathDirection,
-        cards: Vec<Card>,
+        card_usage: CardUsage,
     ) -> Result<()> {
-        make_move::make_move(ctx, direction, cards)
+        make_move::make_move(ctx, direction, card_usage)
+    }
+
+    #[cfg(feature = "test")]
+    pub fn debug_give_card(ctx: Context<DebugGiveCard>, card: Card) -> Result<()> {
+        debug_give_card::debug_give_card(ctx, card)
     }
 }
