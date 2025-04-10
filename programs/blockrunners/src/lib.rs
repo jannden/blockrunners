@@ -8,9 +8,7 @@ mod instructions;
 mod state;
 
 use instructions::*;
-#[cfg(feature = "test")]
-use state::Card;
-use state::PathDirection;
+use state::{Card, PathDirection};
 
 declare_id!("9BRKKfPZ9kXT8KdMbCmvjnTFqec57ExLRdgUsCNqWU7P");
 
