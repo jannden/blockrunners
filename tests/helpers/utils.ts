@@ -1,5 +1,7 @@
 import * as anchor from "@coral-xyz/anchor";
+import { Program } from "@coral-xyz/anchor";
 import { Keypair, LAMPORTS_PER_SOL } from "@solana/web3.js";
+import { Blockrunners } from "../../target/types/blockrunners";
 
 /**
  * Airdrops SOL to a given wallet
@@ -79,4 +81,27 @@ export const getMsgLogs = async (
     console.error("Failed to get transaction logs:", error);
     return null;
   }
+};
+
+/**
+ * Gives a card to a player in the test environment.
+ * @param program Anchor program client.
+ * @param playerKeypair Player's keypair.
+ * @param playerStatePda PDA for player's state.
+ * @param card Card object (e.g., { shield: {} }).
+ */
+export const giveCard = async (
+  program: Program<Blockrunners>, 
+  playerKeypair: Keypair, 
+  playerStatePda: anchor.web3.PublicKey, 
+  card: any
+) => {
+  await program.methods
+    .debugGiveCard(card) // assumes debug-only method for test env
+    .accounts({
+        player: playerKeypair.publicKey,
+        playerState: playerStatePda,
+    })
+    .signers([playerKeypair])
+    .rpc();
 };

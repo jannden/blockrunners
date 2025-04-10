@@ -7,7 +7,7 @@ use crate::{
     constants::MAX_TOTAL_CARDS, 
     errors::BlockrunnersError,
     instructions::save_and_emit_event, 
-    state::{Cards, PlayerState, SocialFeedEventType}
+    state::{Card, PlayerState, SocialFeedEventType}
 };
 
 pub fn collect_player_card(
@@ -34,13 +34,13 @@ pub fn collect_player_card(
     let seed = hash(&combined_seed).to_bytes();
     let mut rng = ChaChaRng::from_seed(seed);
 
-    let random_card_index = rng.next_u32() % Cards::COUNT as u32;
+    let random_card_index = rng.next_u32() % Card::COUNT as u32;
 
     // Select the card based on the random index
     let new_card = match random_card_index {
-        0 => Cards::Shield,
-        1 => Cards::Doubler,
-        2 => Cards::Swift,
+        0 => Card::Shield,
+        1 => Card::Doubler,
+        2 => Card::Swift,
         _ => Err(error!(BlockrunnersError::InvalidCardIndex))?,
     };
 

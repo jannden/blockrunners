@@ -26,4 +26,6 @@ jobs:
         uses: actions/checkout@v4
       
       - name: Test Anchor
-        uses: IhorMuliar/test-anchor@v1
+        uses: IhorMuliar/test-anchor@v1.1
+        with:
+          features: test

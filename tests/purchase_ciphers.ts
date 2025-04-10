@@ -5,6 +5,7 @@ import { expect } from "chai";
 import { Blockrunners } from "../target/types/blockrunners";
 import { GAME_STATE_SEED, PLAYER_STATE_SEED } from "./helpers/constants";
 import { airdropSol, getMsgLogs } from "./helpers/utils";
+import { CARD_USAGE_EMPTY_MOCK } from "./mocks/card-usage";
 
 describe("Purchase ciphers", () => {
   // Configure the client to use the local cluster.
@@ -402,12 +403,12 @@ describe("Purchase ciphers", () => {
 
     // Try to make a move with each player
     // Make a move with player 1
-    try {
+    try { 
       // Generate a random direction for player 1
       const player1Direction = { left: {} };
       
       const move1Tx = await program.methods
-        .makeMove(player1Direction)
+        .makeMove(player1Direction, CARD_USAGE_EMPTY_MOCK)
         .accounts({
           player: player1Keypair.publicKey,
           playerState: player1StatePda,
@@ -422,7 +423,7 @@ describe("Purchase ciphers", () => {
       const player2Direction = { right: {} };
       
       const move2Tx = await program.methods
-        .makeMove(player2Direction)
+        .makeMove(player2Direction, CARD_USAGE_EMPTY_MOCK)
         .accounts({
           player: player2Keypair.publicKey,
           playerState: player2StatePda,
