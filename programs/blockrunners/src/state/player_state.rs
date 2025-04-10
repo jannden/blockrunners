@@ -6,7 +6,7 @@ use crate::{
     state::SocialFeedEvent,
 };
 
-#[derive(Clone, Copy, AnchorSerialize, AnchorDeserialize, PartialEq, Debug, EnumCountMacro)]
+#[derive(Clone, Copy, AnchorSerialize, AnchorDeserialize, PartialEq, Debug, EnumCountMacro, Hash, Eq)]
 pub enum Card {
     Shield,
     Doubler,

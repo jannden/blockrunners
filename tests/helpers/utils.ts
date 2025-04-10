@@ -1,5 +1,7 @@
 import * as anchor from "@coral-xyz/anchor";
+import { Program } from "@coral-xyz/anchor";
 import { Keypair, LAMPORTS_PER_SOL } from "@solana/web3.js";
+import { Blockrunners } from "../../target/types/blockrunners";
 
 /**
  * Airdrops SOL to a given wallet
@@ -89,7 +91,7 @@ export const getMsgLogs = async (
  * @param card Card object (e.g., { shield: {} }).
  */
 export const giveCard = async (
-  program: anchor.Program, 
+  program: Program<Blockrunners>, 
   playerKeypair: Keypair, 
   playerStatePda: anchor.web3.PublicKey, 
   card: any

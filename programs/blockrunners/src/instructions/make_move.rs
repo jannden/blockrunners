@@ -4,7 +4,7 @@ use crate::{
     constants::GAME_STATE_SEED,
     errors::BlockrunnersError,
     instructions::{collect_player_card, generate_next_direction_for_path, save_and_emit_event},
-    state::{GameState, PathDirection, PlayerState, SocialFeedEventType},
+    state::{Card, GameState, PathDirection, PlayerState, SocialFeedEventType},
 };
 
 #[derive(Accounts)]
@@ -65,21 +65,61 @@ pub fn make_move(
 }
 
 fn process_cards(player_state: &mut PlayerState, card_usage: &CardUsage) -> Result<()> {
-    // Using a card costs an additional cipher
-    if card_usage.shield || card_usage.doubler || card_usage.swift {
-        // At least one is true
-        require!(
-            player_state.ciphers >= 1,
-            BlockrunnersError::InsufficientBalance
-        );
-        player_state.ciphers -= 1;
+    // Get card usage flags
+    let cards_to_use = vec![
+        (Card::Shield, card_usage.shield),
+        (Card::Doubler, card_usage.doubler),
+        (Card::Swift, card_usage.swift),
+    ];
+
+    // Early exit if no cards used
+    if !cards_to_use.iter().any(|(_, is_used)| *is_used) {
+        return Ok(());
     }
 
-    // Swift card refunds up to 2 ciphers
-    if card_usage.swift {
-        let refund = player_state.ciphers.min(2);
-        player_state.ciphers += refund;
+    // Count required cards and calculate cost
+    let needed_cards: Vec<Card> = cards_to_use
+        .iter()
+        .filter_map(|(card, is_used)| if *is_used { Some(card.clone()) } else { None })
+        .collect();
+    
+    let total_cost = needed_cards.len() as u64;
+    
+    // Check cipher balance
+    require!(
+        player_state.ciphers >= total_cost,
+        BlockrunnersError::InsufficientBalance
+    );
+
+    // Count player's cards
+    let mut card_counts = std::collections::HashMap::new();
+    for card in &player_state.cards {
+        *card_counts.entry(card).or_insert(0) += 1;
     }
+
+    // Ensure player has all required cards
+    for card in &needed_cards {
+        let count = card_counts.get(card).unwrap_or(&0);
+        require!(*count > 0, BlockrunnersError::InsufficientCards);
+    }
+
+    // Apply card effects
+    player_state.ciphers -= total_cost;
+    
+    if card_usage.swift {
+        player_state.ciphers += 2;
+    }
+
+    // Remove used cards from inventory
+    let mut cards_to_remove = needed_cards.clone();
+    player_state.cards.retain(|card| {
+        if let Some(pos) = cards_to_remove.iter().position(|c| c == card) {
+            cards_to_remove.remove(pos);
+            false
+        } else {
+            true
+        }
+    });
 
     Ok(())
 }
