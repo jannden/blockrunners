@@ -1,7 +1,7 @@
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
 import { Keypair, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
-import { assert, expect } from "chai";
+import { expect } from "chai";
 import { Blockrunners } from "../target/types/blockrunners";
 import { GAME_STATE_SEED, PLAYER_STATE_SEED, CIPHER_COST } from "./helpers/constants";
 import { airdropSol, getMsgLogs } from "./helpers/utils";
@@ -79,7 +79,6 @@ describe("Purchase ciphers", () => {
 
     const ciphersToPurchase = 5;
     const expectedCost = ciphersToPurchase * CIPHER_COST;
-    const solCost = expectedCost / LAMPORTS_PER_SOL;
 
     // Get states before purchase
     const gameStateBefore = await program.account.gameState.fetch(gameStatePda);
@@ -291,7 +290,7 @@ describe("Purchase ciphers", () => {
 
   it("Fails if player doesn't have enough balance", async () => {
     try {
-      const ciphersToPurchase = 1000;
+      const ciphersToPurchase = LAMPORTS_PER_SOL / CIPHER_COST + 1;
 
       const tx = await program.methods
         .purchaseCiphers(new anchor.BN(ciphersToPurchase))
@@ -301,16 +300,15 @@ describe("Purchase ciphers", () => {
         .signers([playerKeypair])
         .rpc();
     } catch (error) {
-      const anchorError = error as anchor.AnchorError;
-      expect(anchorError.error.errorCode.code).to.equal("InsufficientBalance");
+      expect(error.error.errorCode.code).to.equal("InsufficientBalance");
       return;
     }
     expect.fail("Should not reach this point");
   });
 
-  it("Fails if player tries to purchase ciphers with a negative amount", async () => {
+  it("Fails if player tries to purchase ciphers with a zero amount", async () => {
     try {
-      const ciphersToPurchase = -1;
+      const ciphersToPurchase = 0;
 
       const tx = await program.methods
         .purchaseCiphers(new anchor.BN(ciphersToPurchase))
@@ -413,7 +411,6 @@ describe("Purchase ciphers", () => {
         .accounts({
           player: player1Keypair.publicKey,
           playerState: player1StatePda,
-          gameState: gameStatePda,
         })
         .signers([player1Keypair])
         .rpc();
@@ -428,7 +425,6 @@ describe("Purchase ciphers", () => {
         .accounts({
           player: player2Keypair.publicKey,
           playerState: player2StatePda,
-          gameState: gameStatePda,
         })
         .signers([player2Keypair])
         .rpc();

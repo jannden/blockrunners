@@ -1,6 +1,6 @@
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
-import { Keypair, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
+import { Keypair, PublicKey } from "@solana/web3.js";
 import { expect } from "chai";
 import { Blockrunners } from "../target/types/blockrunners";
 import { GAME_STATE_SEED, PLAYER_STATE_SEED } from "./helpers/constants";
@@ -13,9 +13,6 @@ describe("Make Move", () => {
 
   const program = anchor.workspace.blockrunners as Program<Blockrunners>;
   const provider = anchor.getProvider() as anchor.AnchorProvider;
-
-  // Fixed cipher cost for alpha
-  const CIPHER_COST = LAMPORTS_PER_SOL / 1000;
 
   // Keypairs
   const adminKeypair = Keypair.generate();
@@ -96,7 +93,6 @@ describe("Make Move", () => {
       .accounts({
         player: playerKeypair.publicKey,
         playerState: playerStatePda,
-        gameState: gameStatePda,
       })
       .signers([playerKeypair])
       .rpc();
@@ -149,7 +145,6 @@ describe("Make Move", () => {
         .accounts({
           player: playerKeypair.publicKey,
           playerState: playerStatePda,
-          gameState: gameStatePda,
         })
         .signers([playerKeypair])
         .rpc();
@@ -184,7 +179,6 @@ describe("Make Move", () => {
       .accounts({
         player: playerKeypair.publicKey,
         playerState: playerStatePda,
-        gameState: gameStatePda,
       })
       .signers([playerKeypair])
       .rpc();

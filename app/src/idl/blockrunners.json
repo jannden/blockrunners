@@ -124,14 +124,33 @@
       "accounts": [
         {
           "name": "player",
-          "signer": true,
-          "relations": [
-            "player_state"
-          ]
+          "signer": true
         },
         {
           "name": "player_state",
           "writable": true
+        },
+        {
+          "name": "game_state",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  103,
+                  97,
+                  109,
+                  101,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  101
+                ]
+              }
+            ]
+          }
         }
       ],
       "args": [
@@ -140,6 +159,14 @@
           "type": {
             "defined": {
               "name": "PathDirection"
+            }
+          }
+        },
+        {
+          "name": "card_usage",
+          "type": {
+            "defined": {
+              "name": "CardUsage"
             }
           }
         }
@@ -274,26 +301,83 @@
   "errors": [
     {
       "code": 6000,
+      "name": "ExceedsMaxCards",
+      "msg": "Player used too many cards"
+    },
+    {
+      "code": 6001,
+      "name": "DuplicateCard",
+      "msg": "Player used duplicate card"
+    },
+    {
+      "code": 6002,
       "name": "InsufficientBalance",
       "msg": "Player has insufficient balance to pay for ciphers"
     },
     {
-      "code": 6001,
+      "code": 6003,
+      "name": "InsufficientCards",
+      "msg": "Player tried to use a card they don't have"
+    },
+    {
+      "code": 6004,
+      "name": "InvalidCardIndex",
+      "msg": "Invalid card index generated"
+    },
+    {
+      "code": 6005,
       "name": "NegativeCiphersAmount",
       "msg": "Player tries to purchase ciphers with a negative amount"
     },
     {
-      "code": 6002,
+      "code": 6006,
       "name": "PathAlreadyCompleted",
       "msg": "Player has already completed the path"
     },
     {
-      "code": 6003,
+      "code": 6007,
       "name": "UnknownError",
       "msg": "Unknown Error"
     }
   ],
   "types": [
+    {
+      "name": "Card",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Shield"
+          },
+          {
+            "name": "Doubler"
+          },
+          {
+            "name": "Swift"
+          }
+        ]
+      }
+    },
+    {
+      "name": "CardUsage",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "shield",
+            "type": "bool"
+          },
+          {
+            "name": "doubler",
+            "type": "bool"
+          },
+          {
+            "name": "swift",
+            "type": "bool"
+          }
+        ]
+      }
+    },
     {
       "name": "GameState",
       "type": {
@@ -365,10 +449,13 @@
           },
           {
             "name": "cards",
-            "docs": [
-              "Number of cards"
-            ],
-            "type": "u64"
+            "type": {
+              "vec": {
+                "defined": {
+                  "name": "Card"
+                }
+              }
+            }
           },
           {
             "name": "position",
@@ -376,16 +463,6 @@
               "Current block number"
             ],
             "type": "u8"
-          },
-          {
-            "name": "path",
-            "type": {
-              "vec": {
-                "defined": {
-                  "name": "PathDirection"
-                }
-              }
-            }
           },
           {
             "name": "bump",
@@ -403,6 +480,13 @@
                 }
               }
             }
+          },
+          {
+            "name": "in_game",
+            "docs": [
+              "The player has joined the game or not"
+            ],
+            "type": "bool"
           }
         ]
       }
@@ -437,16 +521,22 @@
         "kind": "enum",
         "variants": [
           {
-            "name": "PlayerJoined"
+            "name": "CardUsed"
           },
           {
-            "name": "CardUsed"
+            "name": "CiphersPurchased"
           },
           {
             "name": "GameWon"
           },
           {
-            "name": "CiphersPurchased"
+            "name": "PlayerCardCollected"
+          },
+          {
+            "name": "PlayerJoined"
+          },
+          {
+            "name": "PlayerCardsMaxRange"
           },
           {
             "name": "PlayerMoved"
@@ -459,7 +549,7 @@
     {
       "name": "CIPHER_COST",
       "type": "u64",
-      "value": "1000000"
+      "value": "1000"
     },
     {
       "name": "DISCRIMINATOR_SIZE",
@@ -477,11 +567,6 @@
       "value": "20"
     },
     {
-      "name": "INITIAL_PLAYER_CARDS_AMOUNT",
-      "type": "u64",
-      "value": "1"
-    },
-    {
       "name": "INITIAL_PRIZE_POOL",
       "type": "u64",
       "value": "0"
@@ -490,6 +575,11 @@
       "name": "MAX_FEED_EVENTS",
       "type": "u8",
       "value": "20"
+    },
+    {
+      "name": "MAX_TOTAL_CARDS",
+      "type": "u8",
+      "value": "40"
     },
     {
       "name": "PLAYER_STATE_SEED",

@@ -126,8 +126,8 @@ anchor keys sync
 # Copy the IDL to the frontend.
 anchor run copy_idl
 
-# Run the tests.
-anchor test
+# Run the tests including the "test" feature.
+anchor test -- --features test
 
 # Airdrop yourself some money if necessary.
 solana airdrop 5

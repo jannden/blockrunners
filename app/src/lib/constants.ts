@@ -1,5 +1,5 @@
 import { getConstantOrThrow, getStringFromByteArray } from "@/lib/utils";
-import { Connection, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
+import { Connection, PublicKey } from "@solana/web3.js";
 import { AnchorProvider, BN, Program } from "@coral-xyz/anchor";
 import IDL from "@/idl/blockrunners.json";
 import { Blockrunners } from "@/idl/blockrunners";
@@ -16,12 +16,10 @@ export const getProgram = (connection: Connection, provider: AnchorProvider | nu
 };
 
 // Number constants from IDL
-export const CIPHER_COST = new BN(getConstantOrThrow("CIPHER_COST")).toNumber() / LAMPORTS_PER_SOL;
+export const CIPHER_COST = new BN(getConstantOrThrow("CIPHER_COST")).toNumber();
 export const INITIAL_PATH_LENGTH = Number(getConstantOrThrow("INITIAL_PATH_LENGTH"));
-export const INITIAL_PLAYER_CARDS_AMOUNT = Number(getConstantOrThrow("INITIAL_PLAYER_CARDS_AMOUNT"));
 export const MAX_FEED_EVENTS = Number(getConstantOrThrow("MAX_FEED_EVENTS"));
-export const INITIAL_PRIZE_POOL =
-  new BN(getConstantOrThrow("INITIAL_PRIZE_POOL")).toNumber() / LAMPORTS_PER_SOL;
+export const INITIAL_PRIZE_POOL = new BN(getConstantOrThrow("INITIAL_PRIZE_POOL")).toNumber();
 
 // String constants from IDL stored as byte arrays
 export const GAME_STATE_SEED = getStringFromByteArray(getConstantOrThrow("GAME_STATE_SEED"));

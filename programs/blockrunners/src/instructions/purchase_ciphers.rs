@@ -1,10 +1,10 @@
 use anchor_lang::{prelude::*, system_program};
 
 use crate::{
-    constants::{CIPHER_COST, GAME_STATE_SEED, PLAYER_STATE_SEED}, 
-    errors::BlockrunnersError, 
-    instructions::{collect_player_card, save_and_emit_event}, 
-    state::{GameState, PlayerState, SocialFeedEventType}
+    constants::{CIPHER_COST, GAME_STATE_SEED, PLAYER_STATE_SEED},
+    errors::BlockrunnersError,
+    instructions::{collect_player_card, save_and_emit_event},
+    state::{GameState, PlayerState, SocialFeedEventType},
 };
 
 #[derive(Accounts)]
@@ -51,7 +51,7 @@ pub fn purchase_ciphers(ctx: Context<PurchaseCiphers>, amount: u64) -> Result<()
         save_and_emit_event(
             &mut game_state.game_events,
             SocialFeedEventType::PlayerJoined,
-            format!("Player {} joined the game!", player_state.player.key()), 
+            format!("Player {} joined the game!", player_state.player.key()),
         )?;
 
         player_state.in_game = true;
@@ -84,7 +84,7 @@ pub fn purchase_ciphers(ctx: Context<PurchaseCiphers>, amount: u64) -> Result<()
         SocialFeedEventType::CiphersPurchased,
         format!("You have successfully purchased {} for {}!", amount, cost),
     )?;
-    
+
     msg!("Purchased {} ciphers for {} lamports", amount, cost);
     Ok(())
 }

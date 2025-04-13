@@ -1,7 +1,7 @@
-use anchor_lang::{constant, solana_program::native_token::LAMPORTS_PER_SOL};
+use anchor_lang::constant;
 
 #[constant]
-pub const CIPHER_COST: u64 = LAMPORTS_PER_SOL / 1000;
+pub const CIPHER_COST: u64 = 1_000;
 
 #[constant]
 pub const DISCRIMINATOR_SIZE: u8 = 8;
@@ -23,4 +23,3 @@ pub const MAX_TOTAL_CARDS: u8 = 40;
 
 #[constant]
 pub const PLAYER_STATE_SEED: &[u8] = b"player_state";
-
