@@ -7,14 +7,12 @@ import { GameInterface } from "./components/game-interface";
 function App() {
   return (
     <ConnectionWalletProvider>
-      {/* <SessionProvider> */}
       <BalanceProvider>
         <BlockrunnersProvider>
           <GameInterface />
           <Toaster />
         </BlockrunnersProvider>
       </BalanceProvider>
-      {/* </SessionProvider> */}
     </ConnectionWalletProvider>
   );
 }

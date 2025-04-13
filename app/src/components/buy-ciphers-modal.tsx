@@ -13,6 +13,8 @@ import { Button } from "@/components/ui/button"
 import { Zap } from "lucide-react"
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useBalance } from "@/hooks/useBalance";
+import { CIPHER_COST } from "@/lib/constants";
+
 interface BuyCiphersModalProps {
   open: boolean;
   onClose: () => void;
@@ -23,9 +25,6 @@ export function BuyCiphersModal({ open, onClose, onBuy }: BuyCiphersModalProps) 
   const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
   const { connected } = useWallet();
   const { balance } = useBalance();
-
-  // Fixed cipher cost in SOL
-  const CIPHER_COST = 0.001;
 
   const cipherPackages = [
     {

@@ -3,7 +3,7 @@ import { Program } from "@coral-xyz/anchor";
 import { Keypair, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import { assert, expect } from "chai";
 import { Blockrunners } from "../target/types/blockrunners";
-import { GAME_STATE_SEED, PLAYER_STATE_SEED } from "./helpers/constants";
+import { GAME_STATE_SEED, PLAYER_STATE_SEED, CIPHER_COST } from "./helpers/constants";
 import { airdropSol, getMsgLogs } from "./helpers/utils";
 import { CARD_USAGE_EMPTY_MOCK } from "./mocks/card-usage";
 
@@ -13,9 +13,6 @@ describe("Purchase ciphers", () => {
 
   const program = anchor.workspace.blockrunners as Program<Blockrunners>;
   const provider = anchor.getProvider() as anchor.AnchorProvider;
-
-  // Fixed cipher cost for alpha
-  const CIPHER_COST = LAMPORTS_PER_SOL / 1000;
 
   // Keypairs
   const adminKeypair = Keypair.generate();
@@ -306,6 +303,7 @@ describe("Purchase ciphers", () => {
     } catch (error) {
       const anchorError = error as anchor.AnchorError;
       expect(anchorError.error.errorCode.code).to.equal("InsufficientBalance");
+      return;
     }
     expect.fail("Should not reach this point");
   });
@@ -323,7 +321,9 @@ describe("Purchase ciphers", () => {
         .rpc();
     } catch (error) {
       expect(error.error.errorCode.code).to.equal("NegativeCiphersAmount");
+      return;
     }
+    expect.fail("Should not reach this point");
   });
 
   it("Fails if player without player state account tries to purchase ciphers", async () => {
@@ -341,7 +341,9 @@ describe("Purchase ciphers", () => {
         .rpc();
     } catch (error) {
       expect(error.error.errorCode.code).to.equal("AccountNotInitialized");
+      return;
     }
+    expect.fail("Should not reach this point");
   });
 
   it("Verifies different players have their own paths", async () => {

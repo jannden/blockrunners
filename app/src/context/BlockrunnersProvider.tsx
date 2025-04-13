@@ -16,10 +16,12 @@ function BlockrunnersProvider({ children }: { children: ReactNode }) {
   const [playerStatePDA, setPlayerStatePDA] = useState<PublicKey | null>(null);
 
   const provider = useAnchorProvider();
-  const program = getProgram(provider);
+  const program = getProgram(connection, provider);
 
   // Get GameState on load
   useEffect(() => {
+    if (!program) return;
+
     // Set up subscription to GameState PDA
     const gameSubscriptionId = connection.onAccountChange(gameStatePDA, (accountInfo) => {
       setGameState(program.coder.accounts.decode<GameState>("gameState", accountInfo.data));
@@ -48,13 +50,14 @@ function BlockrunnersProvider({ children }: { children: ReactNode }) {
       connection.removeAccountChangeListener(gameSubscriptionId);
       program.removeEventListener(emitLogSubscriptionId);
     };
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [connection, program]);
 
   // Get PlayerState upon public key change
   useEffect(() => {
     setPlayerState(null);
+    setPlayerStatePDA(null);
+
+    if (!program) return;
 
     if (!wallet?.publicKey || !gameState) return;
 
@@ -92,6 +95,7 @@ function BlockrunnersProvider({ children }: { children: ReactNode }) {
 
   // Instruction: Initialize game
   const initializeGame = async () => {
+    if (!program) return;
     if (gameState) {
       console.error("Initialize game: GameState already exists");
       return;
@@ -118,6 +122,8 @@ function BlockrunnersProvider({ children }: { children: ReactNode }) {
 
   // Instruction: Initialize player
   const initializePlayer = async () => {
+    if (!program) return;
+
     console.log("Initialize player: Wallet", wallet?.publicKey);
     console.log("Initialize player: PlayerStatePDA", playerStatePDA);
     if (!wallet?.publicKey || !playerStatePDA) {
@@ -141,6 +147,8 @@ function BlockrunnersProvider({ children }: { children: ReactNode }) {
 
   // Instruction: Purchase ciphers
   const purchaseCiphers = async (amount: number) => {
+    if (!program) return;
+
     if (!wallet?.publicKey || !playerStatePDA) {
       console.error("Purchase ciphers: Wallet or PlayerStatePDA not found");
       return;
@@ -162,6 +170,7 @@ function BlockrunnersProvider({ children }: { children: ReactNode }) {
 
   // Instruction: Make a move
   const makeMove = async (direction: Direction) => {
+    if (!program) return;
     if (!wallet?.publicKey || !playerStatePDA) {
       console.error("Make move: Wallet or PlayerStatePDA not found");
       return;

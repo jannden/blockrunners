@@ -18,7 +18,7 @@
   },
   "dependencies": {
     "@magicblock-labs/gum-react-sdk": "^3.0.8",
-    "@project-serum/anchor": "^0.26.0",
+    "@coral-xyz/anchor": "^0.29.0",
     "@radix-ui/react-dialog": "^1.1.6",
     "@radix-ui/react-scroll-area": "^1.2.3",
     "@radix-ui/react-slot": "^1.1.2",

@@ -24,7 +24,7 @@ export const AirdropButton = () => {
     }, 10000);
 
     return () => {
-      clearTimeout(interval);
+      clearInterval(interval);
     };
 
     // eslint-disable-next-line react-hooks/exhaustive-deps

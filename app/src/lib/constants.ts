@@ -1,5 +1,5 @@
 import { getConstantOrThrow, getStringFromByteArray } from "@/lib/utils";
-import { LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
+import { Connection, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import { AnchorProvider, BN, Program } from "@coral-xyz/anchor";
 import IDL from "@/idl/blockrunners.json";
 import { Blockrunners } from "@/idl/blockrunners";
@@ -8,8 +8,11 @@ import { Blockrunners } from "@/idl/blockrunners";
 export const PROGRAM_ID = new PublicKey(IDL.address);
 
 // Program
-export const getProgram = (provider: AnchorProvider) => {
-  return new Program<Blockrunners>(IDL as Blockrunners, provider);
+export const getProgram = (connection: Connection, provider: AnchorProvider | null) => {
+  return new Program<Blockrunners>(IDL as Blockrunners, {
+    connection,
+    publicKey: provider?.publicKey,
+  });
 };
 
 // Number constants from IDL
