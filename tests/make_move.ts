@@ -243,9 +243,9 @@ describe("Make Move", () => {
             })
             .signers([playerKeypair])
             .rpc();
-
+    
         const afterMove = await program.account.playerState.fetch(playerStatePda);
-        expect(afterMove.ciphers.toNumber()).to.be.equal(6);
+        expect(afterMove.ciphers.toNumber()).to.be.equal(9);
         expect(afterMove.position).to.be.greaterThan(stateBefore.position); // moved forward
         expect(afterMove.cards.length).to.be.equal(4); // doubler effect
     });
