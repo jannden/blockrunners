@@ -21,11 +21,6 @@ pub struct DebugGiveCard<'info> {
 }
 
 pub fn debug_give_card(ctx: Context<DebugGiveCard>, card: Card) -> Result<()> {
-    require!(
-        (card as usize) < Card::COUNT,
-        BlockrunnersError::InvalidCardIndex,
-    );
-
     let player_state = &mut ctx.accounts.player_state;
     player_state.cards.push(card);
 

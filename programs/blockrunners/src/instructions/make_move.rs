@@ -42,15 +42,13 @@ pub fn make_move(
         BlockrunnersError::PathAlreadyCompleted
     );
 
-    // Base cost for a move
+    // Process card usage - validate and apply effects
+    let total_cost = process_cards(player_state, &card_usage)?;
     require!(
-        player_state.ciphers >= 1,
+        player_state.ciphers >= total_cost,
         BlockrunnersError::InsufficientBalance
     );
-    player_state.ciphers -= 1;
-
-    // Process card usage - validate and apply effects
-    process_cards(player_state, &card_usage)?;
+    player_state.ciphers -= total_cost;
 
     // Generate the correct direction for the current position
     let correct_direction = generate_next_direction_for_path(player_state);
@@ -64,7 +62,7 @@ pub fn make_move(
     Ok(())
 }
 
-fn process_cards(player_state: &mut PlayerState, card_usage: &CardUsage) -> Result<()> {
+fn process_cards(player_state: &mut PlayerState, card_usage: &CardUsage) -> Result<u64> {
     // Get card usage flags
     let cards_to_use = vec![
         (Card::Shield, card_usage.shield),
@@ -74,7 +72,7 @@ fn process_cards(player_state: &mut PlayerState, card_usage: &CardUsage) -> Resu
 
     // Early exit if no cards used
     if !cards_to_use.iter().any(|(_, is_used)| *is_used) {
-        return Ok(());
+        return Ok(0);
     }
 
     // Count required cards and calculate cost
@@ -82,14 +80,7 @@ fn process_cards(player_state: &mut PlayerState, card_usage: &CardUsage) -> Resu
         .iter()
         .filter_map(|(card, is_used)| if *is_used { Some(card.clone()) } else { None })
         .collect();
-    
-    let total_cost = needed_cards.len() as u64;
-    
-    // Check cipher balance
-    require!(
-        player_state.ciphers >= total_cost,
-        BlockrunnersError::InsufficientBalance
-    );
+    let mut total_cost = needed_cards.len() as u64;
 
     // Count player's cards
     let mut card_counts = std::collections::HashMap::new();
@@ -104,10 +95,8 @@ fn process_cards(player_state: &mut PlayerState, card_usage: &CardUsage) -> Resu
     }
 
     // Apply card effects
-    player_state.ciphers -= total_cost;
-    
     if card_usage.swift {
-        player_state.ciphers += 2;
+        total_cost -= 2;
     }
 
     // Remove used cards from inventory
@@ -121,7 +110,10 @@ fn process_cards(player_state: &mut PlayerState, card_usage: &CardUsage) -> Resu
         }
     });
 
-    Ok(())
+    // Base cost for move
+    total_cost += 1;
+
+    Ok(total_cost)
 }
 
 fn handle_correct_move(
