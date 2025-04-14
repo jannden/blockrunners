@@ -37,7 +37,7 @@ interface State {
   initializeGame: () => void;
   generatePath: () => void;
   makeMove: (direction: Direction) => void;
-  buyCiphers: (amount: number) => void;
+  purchaseCiphers: (amount: number) => void;
   useCard: (cardId: string) => void;
   selectCard: (card: AbilityCard) => void;
   deselectCard: (cardId: string) => void;
@@ -70,7 +70,12 @@ export const useStore = create<State>((set, get) => ({
 
   // Social feed
   socialFeed: [
-    { id: generateId(), message: "Welcome to Blockrunners!", timestamp: Date.now(), isNew: false },
+    {
+      id: generateId(),
+      message: "Welcome to Blockrunners!",
+      timestamp: Date.now(),
+      isNew: false,
+    },
     {
       id: generateId(),
       message: "Use cards wisely to navigate through the blockchain.",
@@ -171,7 +176,9 @@ export const useStore = create<State>((set, get) => ({
       set({ playerPosition: newPosition });
 
       // Add message to feed
-      get().addToFeed(`Moved ${direction}. Correct path! Advanced to position ${newPosition}.`);
+      get().addToFeed(
+        `Moved ${direction}. Correct path! Advanced to position ${newPosition}.`
+      );
 
       // Check if doubler card was used
       const hasDoubler = selectedCards.some((card) => card.type === "doubler");
@@ -211,7 +218,9 @@ export const useStore = create<State>((set, get) => ({
         // Give some starting cards
         get().giveCards(1);
 
-        get().addToFeed(`Moved ${direction}. Incorrect path! Reset to position 0 with a new path.`);
+        get().addToFeed(
+          `Moved ${direction}. Incorrect path! Reset to position 0 with a new path.`
+        );
       }
     }
 
@@ -228,17 +237,20 @@ export const useStore = create<State>((set, get) => ({
     }, 10);
   },
 
-  buyCiphers: (amount: number) => {
+  purchaseCiphers: (amount: number) => {
     const state = get();
-    const cost = amount * CIPHER_COST;
-
-    // Simulate payment and increase prize pool
     set({
       ciphers: state.ciphers + amount,
-      prizePool: state.prizePool + cost * 0.4, // 40% goes to prize pool as per README
+      socialFeed: [
+        ...state.socialFeed,
+        {
+          id: generateId(),
+          message: `${state.playerName} purchased ${amount} ciphers!`,
+          timestamp: Date.now(),
+          isNew: true,
+        },
+      ],
     });
-
-    get().addToFeed(`Purchased ${amount} ciphers for ${cost} SOL.`);
   },
 
   useCard: (cardId: string) => {
@@ -254,7 +266,9 @@ export const useStore = create<State>((set, get) => ({
 
     // Mark card as used
     set((state) => ({
-      cards: state.cards.map((c) => (c.id === cardId ? { ...c, used: true, result: "" } : c)),
+      cards: state.cards.map((c) =>
+        c.id === cardId ? { ...c, used: true, result: "" } : c
+      ),
     }));
   },
 
@@ -299,7 +313,8 @@ export const useStore = create<State>((set, get) => ({
     const cardTypes: CardType[] = ["shield", "doubler", "swift"];
 
     for (let i = 0; i < count; i++) {
-      const randomType = cardTypes[Math.floor(Math.random() * cardTypes.length)];
+      const randomType =
+        cardTypes[Math.floor(Math.random() * cardTypes.length)];
       const newCard: AbilityCard = {
         id: generateId(),
         type: randomType,
@@ -343,7 +358,9 @@ export const useStore = create<State>((set, get) => ({
       winner: state.playerName,
     });
 
-    get().addToFeed(`${state.playerName} has won the game and claimed ${state.prizePool} SOL!`);
+    get().addToFeed(
+      `${state.playerName} has won the game and claimed ${state.prizePool} SOL!`
+    );
 
     // Reset the game after a delay
     setTimeout(() => {

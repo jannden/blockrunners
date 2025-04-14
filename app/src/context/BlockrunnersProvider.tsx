@@ -23,9 +23,17 @@ function BlockrunnersProvider({ children }: { children: ReactNode }) {
     if (!program) return;
 
     // Set up subscription to GameState PDA
-    const gameSubscriptionId = connection.onAccountChange(gameStatePDA, (accountInfo) => {
-      setGameState(program.coder.accounts.decode<GameState>("gameState", accountInfo.data));
-    });
+    const gameSubscriptionId = connection.onAccountChange(
+      gameStatePDA,
+      (accountInfo) => {
+        setGameState(
+          program.coder.accounts.decode<GameState>(
+            "gameState",
+            accountInfo.data
+          )
+        );
+      }
+    );
 
     // Set up subscription to SocialFeed PDA
     const emitLogSubscriptionId = program.addEventListener(
@@ -71,9 +79,17 @@ function BlockrunnersProvider({ children }: { children: ReactNode }) {
     setPlayerStatePDA(pda);
 
     // Set up subscription to PlayerState PDA
-    const playerSubscriptionId = connection.onAccountChange(pda, (accountInfo) => {
-      setPlayerState(program.coder.accounts.decode<PlayerState>("playerState", accountInfo.data));
-    });
+    const playerSubscriptionId = connection.onAccountChange(
+      pda,
+      (accountInfo) => {
+        setPlayerState(
+          program.coder.accounts.decode<PlayerState>(
+            "playerState",
+            accountInfo.data
+          )
+        );
+      }
+    );
 
     // Fetch PlayerState PDA initially
     program.account.playerState
@@ -154,18 +170,19 @@ function BlockrunnersProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    program.methods
-      .purchaseCiphers(new BN(amount))
-      .accounts({
-        player: wallet.publicKey,
-      })
-      .rpc()
-      .then((tx) => {
-        console.log("Purchase ciphers: Transaction sent", tx);
-      })
-      .catch((err) => {
-        console.error("Purchase ciphers:", err);
-      });
+    try {
+      const tx = await program.methods
+        .purchaseCiphers(new BN(amount))
+        .accounts({
+          player: wallet.publicKey,
+          playerState: playerStatePDA,
+        })
+        .rpc();
+
+      console.log("Purchase ciphers: Transaction sent", tx);
+    } catch (err) {
+      console.error("Purchase ciphers:", err);
+    }
   };
 
   // Instruction: Make a move
@@ -199,7 +216,11 @@ function BlockrunnersProvider({ children }: { children: ReactNode }) {
     makeMove,
   };
 
-  return <BlockrunnersContext.Provider value={value}>{children}</BlockrunnersContext.Provider>;
+  return (
+    <BlockrunnersContext.Provider value={value}>
+      {children}
+    </BlockrunnersContext.Provider>
+  );
 }
 
 export default BlockrunnersProvider;

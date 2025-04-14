@@ -26,7 +26,7 @@ export function GameInterface() {
     selectedCards,
     initializeGame,
     makeMove,
-    buyCiphers,
+    purchaseCiphers,
     selectCard,
     deselectCard,
   } = useStore();
@@ -55,7 +55,7 @@ export function GameInterface() {
 
   // Game actions
   const handleBuyMoreCiphers = (amount: number) => {
-    buyCiphers(amount);
+    purchaseCiphers(amount);
     setBuyCiphersModalOpen(false);
   };
 
@@ -82,7 +82,9 @@ export function GameInterface() {
 
       {!connected && (
         <div className="flex flex-col justify-center items-center h-full">
-          <p className="text-center text-gray-500">Connect your wallet to play</p>
+          <p className="text-center text-gray-500">
+            Connect your wallet to play
+          </p>
         </div>
       )}
 
@@ -108,7 +110,10 @@ export function GameInterface() {
             />
           </div>
 
-          <InfoModal open={infoModalOpen} onClose={() => setInfoModalOpen(false)} />
+          <InfoModal
+            open={infoModalOpen}
+            onClose={() => setInfoModalOpen(false)}
+          />
           <BuyCiphersModal
             open={buyCiphersModalOpen}
             onClose={() => setBuyCiphersModalOpen(false)}
