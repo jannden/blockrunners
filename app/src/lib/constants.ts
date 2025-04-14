@@ -7,14 +7,6 @@ import { Blockrunners } from "@/idl/blockrunners";
 // Program ID
 export const PROGRAM_ID = new PublicKey(IDL.address);
 
-// Program
-export const getProgram = (connection: Connection, provider: AnchorProvider | null) => {
-  return new Program<Blockrunners>(IDL as Blockrunners, {
-    connection,
-    publicKey: provider?.publicKey,
-  });
-};
-
 // Number constants from IDL
 export const CIPHER_COST = new BN(getConstantOrThrow("CIPHER_COST")).toNumber();
 export const INITIAL_PATH_LENGTH = Number(getConstantOrThrow("INITIAL_PATH_LENGTH"));

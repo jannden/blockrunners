@@ -2,10 +2,10 @@ import { useState, useEffect, ReactNode } from "react";
 import { useConnection, useAnchorWallet } from "@solana/wallet-adapter-react";
 import { BN } from "@coral-xyz/anchor";
 import { PublicKey } from "@solana/web3.js";
-import { gameStatePDA, getPlayerStatePDA, getProgram } from "../lib/constants";
+import { gameStatePDA, getPlayerStatePDA } from "../lib/constants";
 import type { Direction, GameState, PlayerState } from "../types/types";
-import { useAnchorProvider } from "../hooks/useAnchorProvider";
 import { BlockrunnersContext } from "../hooks/useBlockrunners";
+import { useProgram } from "@/hooks/useProgram";
 
 function BlockrunnersProvider({ children }: { children: ReactNode }) {
   const { connection } = useConnection();
@@ -15,8 +15,7 @@ function BlockrunnersProvider({ children }: { children: ReactNode }) {
   const [playerState, setPlayerState] = useState<PlayerState | null>(null);
   const [playerStatePDA, setPlayerStatePDA] = useState<PublicKey | null>(null);
 
-  const provider = useAnchorProvider();
-  const program = getProgram(connection, provider);
+  const program = useProgram();
 
   // Get GameState on load
   useEffect(() => {
@@ -38,33 +37,32 @@ function BlockrunnersProvider({ children }: { children: ReactNode }) {
 
     // Fetch GameState PDA initially
     program.account.gameState
-      .fetch(gameStatePDA)
+      .fetchNullable(gameStatePDA)
       .then((data) => {
-        setGameState(data);
+        if (data) {
+          setGameState(data);
+        } else {
+          console.log("GameState does not exist yet - may need initialization");
+        }
       })
       .catch((error) => {
-        console.error("GameState PDA fetch error:", error);
+        console.log("GameState fetch error", error.message);
       });
 
     return () => {
       connection.removeAccountChangeListener(gameSubscriptionId);
       program.removeEventListener(emitLogSubscriptionId);
     };
-  }, [connection, program]);
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [connection]);
 
   // Get PlayerState upon public key change
   useEffect(() => {
     setPlayerState(null);
     setPlayerStatePDA(null);
 
-    if (!program) return;
-
-    if (!wallet?.publicKey || !gameState) return;
-
-    if (!gameState) {
-      console.error("PlayerState: GameState not found");
-      return;
-    }
+    if (!program || !wallet?.publicKey) return;
 
     // Determine PlayerState PDA address
     const pda = getPlayerStatePDA(wallet.publicKey);
@@ -77,12 +75,16 @@ function BlockrunnersProvider({ children }: { children: ReactNode }) {
 
     // Fetch PlayerState PDA initially
     program.account.playerState
-      .fetch(pda)
+      .fetchNullable(pda)
       .then((data) => {
-        setPlayerState(data);
+        if (data) {
+          setPlayerState(data);
+        } else {
+          console.log("PlayerState does not exist yet - may need initialization");
+        }
       })
       .catch((error) => {
-        console.error("PlayerState PDA fetch error:", error);
+        console.log("PlayerState fetch error", error.message);
       });
 
     // Cleanup subscriptions
@@ -91,7 +93,7 @@ function BlockrunnersProvider({ children }: { children: ReactNode }) {
     };
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gameState, wallet?.publicKey]);
+  }, [connection, wallet?.publicKey]);
 
   // Instruction: Initialize game
   const initializeGame = async () => {
