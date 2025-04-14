@@ -22,42 +22,49 @@ function BlockrunnersProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!program) return;
 
-    // Set up subscription to GameState PDA
-    const gameSubscriptionId = connection.onAccountChange(
-      gameStatePDA,
-      (accountInfo) => {
-        setGameState(
-          program.coder.accounts.decode<GameState>(
-            "gameState",
-            accountInfo.data
-          )
-        );
-      }
-    );
+    try {
+      // Set up subscription to GameState PDA
+      const gameSubscriptionId = connection.onAccountChange(
+        gameStatePDA,
+        (accountInfo) => {
+          try {
+            const decodedState = program.coder.accounts.decode<GameState>(
+              "gameState",
+              accountInfo.data
+            );
+            setGameState(decodedState as any);
+          } catch (error) {
+            console.error("Error decoding GameState:", error);
+          }
+        }
+      );
 
-    // Set up subscription to SocialFeed PDA
-    const emitLogSubscriptionId = program.addEventListener(
-      "socialFeedEvent", // TODO: Any other events?
-      (event) => {
-        // TODO: Add this to state
-        console.log("Event Data:", event);
-      }
-    );
+      // Set up subscription to SocialFeed PDA
+      const emitLogSubscriptionId = program.addEventListener(
+        "socialFeedEvent", // TODO: Any other events?
+        (event) => {
+          // TODO: Add this to state
+          console.log("Event Data:", event);
+        }
+      );
 
-    // Fetch GameState PDA initially
-    program.account.gameState
-      .fetch(gameStatePDA)
-      .then((data) => {
-        setGameState(data);
-      })
-      .catch((error) => {
-        console.error("GameState PDA fetch error:", error);
-      });
+      // Fetch GameState PDA initially
+      program.account.gameState
+        .fetch(gameStatePDA)
+        .then((data) => {
+          setGameState(data as any);
+        })
+        .catch((error) => {
+          console.error("GameState PDA fetch error:", error);
+        });
 
-    return () => {
-      connection.removeAccountChangeListener(gameSubscriptionId);
-      program.removeEventListener(emitLogSubscriptionId);
-    };
+      return () => {
+        connection.removeAccountChangeListener(gameSubscriptionId);
+        program.removeEventListener(emitLogSubscriptionId);
+      };
+    } catch (error) {
+      console.error("Error in GameState effect:", error);
+    }
   }, [connection, program]);
 
   // Get PlayerState upon public key change

@@ -8,22 +8,36 @@ import { Blockrunners } from "@/idl/blockrunners";
 export const PROGRAM_ID = new PublicKey(IDL.address);
 
 // Program
-export const getProgram = (connection: Connection, provider: AnchorProvider | null) => {
-  return new Program<Blockrunners>(IDL as Blockrunners, {
-    connection,
-    publicKey: provider?.publicKey,
-  });
+export const getProgram = (
+  connection: Connection,
+  provider: AnchorProvider | null
+) => {
+  try {
+    if (!provider) return null;
+    return new Program(IDL as any, PROGRAM_ID, provider);
+  } catch (error) {
+    console.error("Error creating program:", error);
+    return null;
+  }
 };
 
 // Number constants from IDL
 export const CIPHER_COST = new BN(getConstantOrThrow("CIPHER_COST")).toNumber();
-export const INITIAL_PATH_LENGTH = Number(getConstantOrThrow("INITIAL_PATH_LENGTH"));
+export const INITIAL_PATH_LENGTH = Number(
+  getConstantOrThrow("INITIAL_PATH_LENGTH")
+);
 export const MAX_FEED_EVENTS = Number(getConstantOrThrow("MAX_FEED_EVENTS"));
-export const INITIAL_PRIZE_POOL = new BN(getConstantOrThrow("INITIAL_PRIZE_POOL")).toNumber();
+export const INITIAL_PRIZE_POOL = new BN(
+  getConstantOrThrow("INITIAL_PRIZE_POOL")
+).toNumber();
 
 // String constants from IDL stored as byte arrays
-export const GAME_STATE_SEED = getStringFromByteArray(getConstantOrThrow("GAME_STATE_SEED"));
-export const PLAYER_STATE_SEED = getStringFromByteArray(getConstantOrThrow("PLAYER_STATE_SEED"));
+export const GAME_STATE_SEED = getStringFromByteArray(
+  getConstantOrThrow("GAME_STATE_SEED")
+);
+export const PLAYER_STATE_SEED = getStringFromByteArray(
+  getConstantOrThrow("PLAYER_STATE_SEED")
+);
 
 // PDAs
 export const [gameStatePDA] = PublicKey.findProgramAddressSync(
