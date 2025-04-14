@@ -6,7 +6,7 @@ resolution = true
 skip-lint = false
 
 [programs.localnet]
-blockrunners = "BsPD4M38GiLBKuDSNipaw6GCfNeJ3uyRngqYBpsiEXko"
+blockrunners = "DuKpWZrAjCjYX1ixAp8X1TsghNiEmTHjxRG3wwUNR3an"
 
 [registry]
 url = "https://api.apr.dev"
