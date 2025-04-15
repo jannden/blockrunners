@@ -253,4 +253,73 @@ describe("Make Move", () => {
     const stateAfterBad = await program.account.playerState.fetch(playerStatePda);
     expect(stateAfterBad.position).to.equal(stateBefore.position); // no reset
   });
+
+  it("Verifies game completion and prize distribution", async () => {
+    // Setup: Add some prize money to the game state
+    const prizeMoney = new anchor.BN(1_000_000); // 0.001 SOL
+    await program.methods
+      .purchaseCiphers(new anchor.BN(10))
+      .accounts({
+        player: playerKeypair.publicKey,
+        playerState: playerStatePda,
+        gameState: gameStatePda,
+      })
+      .signers([playerKeypair])
+      .rpc();
+
+    // Get initial balances
+    const gameStateBefore = await program.account.gameState.fetch(gameStatePda);
+    const playerBalanceBefore = await provider.connection.getBalance(playerKeypair.publicKey);
+    console.log(`Initial prize pool: ${gameStateBefore.prizePool} lamports`); //tommy: added the initial check here for prize pool
+    console.log(`Initial player balance: ${playerBalanceBefore} lamports`); //tommy: added the initial check here for player balance
+
+    // Setup event listener for win announcements
+    let winEventCaptured = false;
+    const socialFeedEventListener = program.addEventListener("socialFeedEvent", (event) => {
+      if (event.eventType.gameWon) {
+        winEventCaptured = true;
+        console.log("Win event captured:", event.message);
+      }
+    });
+
+    // Move player to winning position (path_length - 1)
+    const playerStateBefore = await program.account.playerState.fetch(playerStatePda);
+    const movesNeeded = gameStateBefore.pathLength - playerStateBefore.position;
+    
+    console.log(`Moving player ${movesNeeded} times to reach the end...`);
+    for (let i = 0; i < movesNeeded; i++) {
+      const direction = { right: {} }; // Direction doesn't matter, program generates correct one
+      await program.methods
+        .makeMove(direction, CARD_USAGE_EMPTY_MOCK)
+        .accounts({
+          player: playerKeypair.publicKey,
+          playerState: playerStatePda,
+          gameState: gameStatePda,
+        })
+        .signers([playerKeypair])
+        .rpc();
+    }
+
+    // Get final state
+    const gameStateAfter = await program.account.gameState.fetch(gameStatePda);
+    const playerStateAfter = await program.account.playerState.fetch(playerStatePda);
+    const playerBalanceAfter = await provider.connection.getBalance(playerKeypair.publicKey);
+    console.log(`Final prize pool: ${gameStateAfter.prizePool} lamports`); //tommy: added the after check here for prize pool
+    console.log(`Final player balance: ${playerBalanceAfter} lamports`); //tommy: added the after check here for player balance
+
+    // Verify prize pool was distributed
+    expect(gameStateAfter.prizePool.toNumber()).to.equal(0);
+    expect(playerBalanceAfter).to.be.above(playerBalanceBefore);
+
+    // Verify player state was reset
+    expect(playerStateAfter.position).to.equal(0);
+    expect(playerStateAfter.cards.length).to.equal(0);
+    expect(playerStateAfter.playerEvents.length).to.equal(0);
+
+    // Verify win event was emitted
+    expect(winEventCaptured).to.be.true;
+
+    // Cleanup
+    await program.removeEventListener(socialFeedEventListener);
+  });
 });
