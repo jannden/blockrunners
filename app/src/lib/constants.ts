@@ -29,3 +29,17 @@ export const getPlayerStatePDA = (publicKey: PublicKey) => {
     PROGRAM_ID
   )[0];
 };
+
+// Program
+export const getProgram = (
+  connection: Connection,
+  provider: AnchorProvider | null
+) => {
+  try {
+    if (!provider) return null;
+    return new Program(IDL as any, PROGRAM_ID, provider);
+  } catch (error) {
+    console.error("Error creating program:", error);
+    return null;
+  }
+};
