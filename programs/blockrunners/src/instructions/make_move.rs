@@ -7,18 +7,23 @@ use crate::{
     state::{Card, GameState, PathDirection, PlayerState, SocialFeedEventType},
 };
 
+// tommy: step 1 - added mut to accounts we need to modify for prize money
 #[derive(Accounts)]
 pub struct MakeMove<'info> {
+    #[account(mut)]
     pub player: Signer<'info>,
 
     #[account(mut)]
     pub player_state: Account<'info, PlayerState>,
 
     #[account(
+        mut,
         seeds = [GAME_STATE_SEED],
         bump
     )]
     pub game_state: Account<'info, GameState>,
+
+    pub system_program: Program<'info, System>,
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug)]
@@ -35,7 +40,7 @@ pub fn make_move(
 ) -> Result<()> {
     let game_state = &ctx.accounts.game_state;
     let player_state = &mut ctx.accounts.player_state;
-
+    
     // Check if player has already completed the path
     require!(
         player_state.position < game_state.path_length,
@@ -54,7 +59,65 @@ pub fn make_move(
     let correct_direction = generate_next_direction_for_path(player_state);
 
     if direction == correct_direction {
-        handle_correct_move(game_state, player_state, card_usage)?;
+        // tommy: step 1 - make the handle_correct_move just return true/false for win detection
+        // tommy: step 2 - moved win handling here where we have access to ctx
+        let player_won = handle_correct_move(game_state, player_state, card_usage)?;
+        
+        // tommy: step 3 - handle the win celebration stuff:
+        if player_won {
+            // check if there's any prize to distribute from the pool
+            let prize_amount = game_state.prize_pool;
+
+            if prize_amount > 0 {
+                msg!("Yay! We are distributing prize of {} lamports", prize_amount);
+
+                // tommy: step 1 - check if there's prize money to give
+                // tommy: step 2 - grab lamports directly
+                // tommy: step 3 - move the money from game state to player
+                **game_state.to_account_info().try_borrow_mut_lamports()? -= prize_amount;
+                **ctx.accounts.player.to_account_info().try_borrow_mut_lamports()? += prize_amount; 
+
+                msg!("Prize transferred successfully!");
+
+                // reeset the prize pool back to zero!
+                game_state.prize_pool = 0;
+                msg!("Prize pool reset to 0.");
+            } else {
+                msg!("Player won, but there's no money in the pool dang.");
+            }
+
+
+            // tommy: step 1 - create the win message with player address and prize
+            // tommy: step 2 - announce to everyone through game events
+            // tommy: step 3 - give personal congrats through player events
+            let win_message = format!(
+                "Player {} has won the game with {} correct moves and collected {} SOL!",
+                ctx.accounts.player.key(),  // use the signer's key
+                player_state.position,
+                prize_amount
+            );
+
+            // announce the message to global feed 
+            save_and_emit_event(
+                &mut game_state.game_events,
+                SocialFeedEventType::GameWon,
+                win_message.clone(),
+            )?;
+
+            // announce to player's feed (local)
+            save_and_emit_event(
+                &mut player_state.player_events,
+                SocialFeedEventType::GameWon,
+                win_message,
+            )?;
+
+            // tommy: step 1 - reset position to start
+            // tommy: step 2 - clear their cards
+            // tommy: step 3 - clean up their event feed
+            player_state.position = 0;
+            player_state.cards.clear();
+            player_state.player_events.clear();
+        }
     } else {
         handle_incorrect_move(player_state, card_usage)?;
     }
@@ -120,23 +183,16 @@ fn handle_correct_move(
     game_state: &Account<GameState>,
     player_state: &mut Account<PlayerState>,
     card_usage: CardUsage,
-) -> Result<()> {
+) -> Result<bool> { // added the bool here for true/false check
     // Correct move: advance one step
     player_state.position += 1;
     let new_position = player_state.position;
 
-    // Check if player has reached the end of the path (victory condition)
+    // tommy: step 1 - check if they reached the end
+    // tommy: step 2 - return true if they won
+    // tommy: step 3 - let make_move handle all the celebration stuff
     if new_position >= game_state.path_length {
-        save_and_emit_event(
-            &mut player_state.player_events,
-            SocialFeedEventType::GameWon,
-            format!(
-                "Player has completed the path and won with {} correct moves!",
-                new_position
-            ),
-        )?;
-
-        return Ok(());
+        return Ok(true);
     }
 
     // Base message
@@ -172,7 +228,7 @@ fn handle_correct_move(
         event_message,
     )?;
 
-    Ok(())
+    Ok(false)
 }
 
 fn handle_incorrect_move(
