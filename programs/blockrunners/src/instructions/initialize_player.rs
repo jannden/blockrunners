@@ -43,8 +43,6 @@ pub fn initialize_player(ctx: Context<InitializePlayer>) -> Result<()> {
     player_state.first_login = clock.unix_timestamp;
     player_state.games_played = 0;
     player_state.total_ciphers_bought = 0;
-    
-    // Set last_login using the utility function
     update_last_login(player_state)?;
 
     msg!("Player initialized");
