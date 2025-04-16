@@ -9,7 +9,6 @@ on:
 env:
   SOLANA_VERSION: "2.2.3"
   ANCHOR_VERSION: "0.31.0"
-  RUST_VERSION: "1.79.0"
 
 jobs:
 
@@ -26,13 +25,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
       
-      - name: Install Rust toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: ${{ env.RUST_VERSION }}
-          override: true
-          components: rustfmt, clippy
-          
       - name: Test Anchor
         uses: IhorMuliar/test-anchor@v1.1
         with:
