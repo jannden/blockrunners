@@ -4,6 +4,7 @@ use strum::EnumCount;
 use crate::{
     constants::PLAYER_STATE_SEED,
     errors::BlockrunnersError,
+    instructions::update_last_login,
     state::{Card, PlayerState},
 };
 
@@ -22,6 +23,9 @@ pub struct DebugGiveCard<'info> {
 
 pub fn debug_give_card(ctx: Context<DebugGiveCard>, card: Card) -> Result<()> {
     let player_state = &mut ctx.accounts.player_state;
+    
+    update_last_login(player_state)?;
+    
     player_state.cards.push(card);
 
     Ok(())
