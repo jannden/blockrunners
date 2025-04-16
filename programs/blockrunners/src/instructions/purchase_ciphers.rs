@@ -3,7 +3,7 @@ use anchor_lang::{prelude::*, system_program};
 use crate::{
     constants::{CIPHER_COST, GAME_STATE_SEED, PLAYER_STATE_SEED},
     errors::BlockrunnersError,
-    instructions::{collect_player_card, save_and_emit_event},
+    instructions::{collect_player_card, save_and_emit_event, update_last_login},
     state::{GameState, PlayerState, SocialFeedEventType},
 };
 
@@ -35,6 +35,9 @@ pub fn purchase_ciphers(ctx: Context<PurchaseCiphers>, amount: u64) -> Result<()
 
     // Check if amount is positive
     require!(amount > 0, BlockrunnersError::NegativeCiphersAmount);
+
+    // Update last login time
+    update_last_login(player_state)?;
 
     // Calculate cost in lamports
     let cost = amount * CIPHER_COST;
@@ -70,6 +73,11 @@ pub fn purchase_ciphers(ctx: Context<PurchaseCiphers>, amount: u64) -> Result<()
     // Update player's cipher count
     player_state.ciphers = player_state
         .ciphers
+        .checked_add(amount)
+        .ok_or(ProgramError::ArithmeticOverflow)?;
+    
+    player_state.total_ciphers_bought = player_state
+        .total_ciphers_bought
         .checked_add(amount)
         .ok_or(ProgramError::ArithmeticOverflow)?;
 
