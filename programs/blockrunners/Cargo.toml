@@ -23,4 +23,5 @@ rand_chacha = "0.9.0"
 rand_core = "0.9.3"
 strum = "0.27"
 strum_macros = "0.27"
-session-keys = { version = "2.0.6", features = ["no-entrypoint"] }
+session-keys = { version = "2.0.6", features = ["no-entrypoint"] },
+proc-macro2 = "=1.0.93"
