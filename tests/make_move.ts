@@ -4,7 +4,7 @@ import { Keypair, PublicKey } from "@solana/web3.js";
 import { expect } from "chai";
 import { Blockrunners } from "../target/types/blockrunners";
 import { GAME_STATE_SEED, PLAYER_STATE_SEED } from "./helpers/constants";
-import { airdropSol, getMsgLogs, giveCard } from "./helpers/utils";
+import { airdropSol, getMsgLogs, giveCard, sleep } from "./helpers/utils";
 import { CARD_USAGE_EMPTY_MOCK } from "./mocks/card-usage";
 
 describe("Make Move", () => {
@@ -87,6 +87,9 @@ describe("Make Move", () => {
     const direction = { left: {} }; // Just pick a direction
     console.log(`Direction chosen: ${JSON.stringify(direction)}`);
 
+    // Sleep for 2 seconds to ensure timestamp changes
+    await sleep(2000);
+
     // Make the move
     const tx = await program.methods
       .makeMove(direction, CARD_USAGE_EMPTY_MOCK)
@@ -104,6 +107,9 @@ describe("Make Move", () => {
     const playerStateAfter = await program.account.playerState.fetch(playerStatePda);
     console.log(`Player position after move: ${playerStateAfter.position}`);
 
+    // Verify lastLogin was updated
+    expect(playerStateAfter.lastLogin.toString()).to.not.equal(playerStateBefore.lastLogin.toString());
+
     // If the position increased, it was a correct move
     if (playerStateAfter.position > initialPosition) {
       console.log("Correct move! Position increased.");
@@ -113,6 +119,11 @@ describe("Make Move", () => {
 
       // Verify player cards were increased
       expect(playerStateAfter.cards.length).to.equal(playerStateBefore.cards.length + 1);
+      
+      // Verify gamesPlayed was not incremented (because the path wasn't completed)
+      expect(playerStateAfter.gamesPlayed.toNumber()).to.equal(
+        playerStateBefore.gamesPlayed.toNumber()
+      );
     } else {
       console.log("Incorrect move! Position reset to 0.");
 
@@ -133,11 +144,15 @@ describe("Make Move", () => {
       // Fetch player state to get the current position
       const playerStateBefore = await program.account.playerState.fetch(playerStatePda);
       const currentPosition = playerStateBefore.position;
+      const lastLoginBefore = playerStateBefore.lastLogin.toString();
       console.log(`Move ${i + 1}: Player position before move: ${currentPosition}`);
 
       // Make a move (direction doesn't matter, the program will generate the correct direction)
       const direction = { left: {} }; // Just pick a direction
       console.log(`Move ${i + 1}: Direction chosen: ${JSON.stringify(direction)}`);
+
+      // Sleep for 2 seconds to ensure timestamp changes
+      await sleep(2000);
 
       // Make the move
       const tx = await program.methods
@@ -151,6 +166,9 @@ describe("Make Move", () => {
 
       // Fetch player state after the move
       const playerStateAfter = await program.account.playerState.fetch(playerStatePda);
+      
+      // Verify lastLogin was updated
+      expect(playerStateAfter.lastLogin.toString()).to.not.equal(lastLoginBefore);
 
       // If the position changed, it was correct
       if (playerStateAfter.position > currentPosition) {
@@ -167,11 +185,15 @@ describe("Make Move", () => {
     // Fetch player state to get the current position
     const playerStateBefore = await program.account.playerState.fetch(playerStatePda);
     const currentPosition = playerStateBefore.position;
+    const lastLoginBefore = playerStateBefore.lastLogin.toString();
     console.log(`Player position before move: ${currentPosition}`);
 
     // Make a move (direction doesn't matter, the program will generate the correct direction)
     const direction = { right: {} }; // Just pick a direction
     console.log(`Direction chosen: ${JSON.stringify(direction)}`);
+
+    // Sleep for 2 seconds to ensure timestamp changes
+    await sleep(2000);
 
     // Make the move
     const tx = await program.methods
@@ -189,6 +211,9 @@ describe("Make Move", () => {
     // Fetch player state after the move
     const playerStateAfter = await program.account.playerState.fetch(playerStatePda);
     console.log(`Player position after move: ${playerStateAfter.position}`);
+    
+    // Verify lastLogin was updated
+    expect(playerStateAfter.lastLogin.toString()).to.not.equal(lastLoginBefore);
 
     // If the position didn't increase, it was an incorrect move
     if (playerStateAfter.position <= currentPosition) {
@@ -218,6 +243,9 @@ describe("Make Move", () => {
     // Fetch player state before move
     let stateBefore = await program.account.playerState.fetch(playerStatePda);
 
+    // Sleep for 2 seconds to ensure timestamp changes
+    await sleep(2000);
+
     const correctDirection = { right: {} }; // irrelevant, we assume random matches
     const cards = { shield: false, doubler: true, swift: true }; // Doubler and Swift
     await program.methods
@@ -239,6 +267,9 @@ describe("Make Move", () => {
   it("Applies card effects correctly on invalid move", async () => {
     let stateBefore = await program.account.playerState.fetch(playerStatePda);
     await giveCard(program, playerKeypair, playerStatePda, { shield: {} }); // Add shield again
+
+    // Sleep for 2 seconds to ensure timestamp changes
+    await sleep(2000);
 
     await program.methods
       .makeMove({ left: {} }, { shield: true, doubler: false, swift: false }) // Incorrect direction, Shield
