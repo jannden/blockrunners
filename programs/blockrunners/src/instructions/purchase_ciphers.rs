@@ -36,7 +36,6 @@ pub fn purchase_ciphers(ctx: Context<PurchaseCiphers>, amount: u64) -> Result<()
     // Check if amount is positive
     require!(amount > 0, BlockrunnersError::NegativeCiphersAmount);
 
-    // Update last login time
     update_last_login(player_state)?;
 
     // Calculate cost in lamports
