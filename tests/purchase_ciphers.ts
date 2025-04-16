@@ -88,8 +88,8 @@ describe("Purchase ciphers", () => {
     const playerBalanceBefore = await provider.connection.getBalance(playerKeypair.publicKey);
     const gameBalanceBefore = await provider.connection.getBalance(gameStatePda);
 
-    // Sleep for 2 seconds to ensure timestamp changes
-    await sleep(2000);
+    // Sleep for 1 seconds to ensure timestamp changes
+    await sleep(1000);
 
     // Purchase ciphers
     const tx = await program.methods
@@ -168,8 +168,8 @@ describe("Purchase ciphers", () => {
     const additionalCiphers = 3;
     const expectedCost = additionalCiphers * CIPHER_COST;
 
-    // Sleep for 2 seconds to ensure timestamp changes
-    await sleep(2000);
+    // Sleep for 1 seconds to ensure timestamp changes
+    await sleep(1000);
 
     // Purchase more ciphers as the first player
     const tx = await program.methods

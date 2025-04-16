@@ -87,8 +87,8 @@ describe("Make Move", () => {
     const direction = { left: {} }; // Just pick a direction
     console.log(`Direction chosen: ${JSON.stringify(direction)}`);
 
-    // Sleep for 2 seconds to ensure timestamp changes
-    await sleep(2000);
+    // Sleep for 1 seconds to ensure timestamp changes
+    await sleep(1000);
 
     // Make the move
     const tx = await program.methods
@@ -151,8 +151,8 @@ describe("Make Move", () => {
       const direction = { left: {} }; // Just pick a direction
       console.log(`Move ${i + 1}: Direction chosen: ${JSON.stringify(direction)}`);
 
-      // Sleep for 2 seconds to ensure timestamp changes
-      await sleep(2000);
+      // Sleep for 1 seconds to ensure timestamp changes
+      await sleep(1000);
 
       // Make the move
       const tx = await program.methods
@@ -192,8 +192,8 @@ describe("Make Move", () => {
     const direction = { right: {} }; // Just pick a direction
     console.log(`Direction chosen: ${JSON.stringify(direction)}`);
 
-    // Sleep for 2 seconds to ensure timestamp changes
-    await sleep(2000);
+    // Sleep for 1 seconds to ensure timestamp changes
+    await sleep(1000);
 
     // Make the move
     const tx = await program.methods
@@ -243,8 +243,8 @@ describe("Make Move", () => {
     // Fetch player state before move
     let stateBefore = await program.account.playerState.fetch(playerStatePda);
 
-    // Sleep for 2 seconds to ensure timestamp changes
-    await sleep(2000);
+    // Sleep for 1 seconds to ensure timestamp changes
+    await sleep(1000);
 
     const correctDirection = { right: {} }; // irrelevant, we assume random matches
     const cards = { shield: false, doubler: true, swift: true }; // Doubler and Swift
@@ -262,14 +262,17 @@ describe("Make Move", () => {
     expect(afterMove.ciphers.toNumber()).to.be.equal(9);
     expect(afterMove.position).to.be.greaterThan(stateBefore.position); // moved forward
     expect(afterMove.cards.length).to.be.equal(4); // doubler effect
+
+    // Verify lastLogin was updated
+    expect(afterMove.lastLogin.toString()).to.not.equal(stateBefore.lastLogin.toString());
   });
 
   it("Applies card effects correctly on invalid move", async () => {
     let stateBefore = await program.account.playerState.fetch(playerStatePda);
     await giveCard(program, playerKeypair, playerStatePda, { shield: {} }); // Add shield again
 
-    // Sleep for 2 seconds to ensure timestamp changes
-    await sleep(2000);
+    // Sleep for 1 seconds to ensure timestamp changes
+    await sleep(1000);
 
     await program.methods
       .makeMove({ left: {} }, { shield: true, doubler: false, swift: false }) // Incorrect direction, Shield
@@ -283,5 +286,8 @@ describe("Make Move", () => {
 
     const stateAfterBad = await program.account.playerState.fetch(playerStatePda);
     expect(stateAfterBad.position).to.equal(stateBefore.position); // no reset
+
+    // Verify lastLogin was updated
+    expect(stateAfterBad.lastLogin.toString()).to.not.equal(stateBefore.lastLogin.toString());
   });
 });
