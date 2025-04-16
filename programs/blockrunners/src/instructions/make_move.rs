@@ -3,7 +3,7 @@ use anchor_lang::prelude::*;
 use crate::{
     constants::GAME_STATE_SEED,
     errors::BlockrunnersError,
-    instructions::{collect_player_card, generate_next_direction_for_path, save_and_emit_event},
+    instructions::{collect_player_card, generate_next_direction_for_path, save_and_emit_event, update_last_login},
     state::{Card, GameState, PathDirection, PlayerState, SocialFeedEventType},
 };
 
@@ -36,6 +36,8 @@ pub fn make_move(
     let game_state = &ctx.accounts.game_state;
     let player_state = &mut ctx.accounts.player_state;
 
+    update_last_login(player_state)?;
+
     // Check if player has already completed the path
     require!(
         player_state.position < game_state.path_length,
@@ -55,6 +57,13 @@ pub fn make_move(
 
     if direction == correct_direction {
         handle_correct_move(game_state, player_state, card_usage)?;
+        
+        // If player completed the path, increment games played
+        if player_state.position >= game_state.path_length {
+            player_state.games_played = player_state.games_played.checked_add(1)
+                .ok_or(BlockrunnersError::UnknownError)?;
+        }
+        
     } else {
         handle_incorrect_move(player_state, card_usage)?;
     }
