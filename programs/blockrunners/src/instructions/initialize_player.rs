@@ -1,13 +1,9 @@
 use anchor_lang::prelude::*;
 
 use crate::{
-    constants::{
-        DISCRIMINATOR_SIZE, 
-        PLAYER_STATE_SEED,
-        GAME_STATE_SEED
-    }, 
+    constants::{DISCRIMINATOR_SIZE, PLAYER_STATE_SEED},
     instructions::update_last_login,
-    state::{PlayerState, GameState}
+    state::PlayerState,
 };
 
 #[derive(Accounts)]
@@ -24,11 +20,8 @@ pub struct InitializePlayer<'info> {
     )]
     pub player_state: Account<'info, PlayerState>,
 
-    #[account(
-        seeds = [GAME_STATE_SEED],
-        bump
-    )]
-    pub game_state: Account<'info, GameState>,
+    /// CHECK: This account is validated in the instruction handler
+    pub randomness_account: AccountInfo<'info>,
 
     pub system_program: Program<'info, System>,
 }
@@ -55,6 +48,9 @@ pub fn initialize_player(ctx: Context<InitializePlayer>) -> Result<()> {
     player_state.total_ciphers_bought = 0;
     update_last_login(player_state)?;
 
+    player_state.randomness_account = ctx.accounts.randomness_account.key();
+    player_state.randomness_slot = None;
+    player_state.randomness_value = None;
     msg!("Player initialized");
     Ok(())
 }

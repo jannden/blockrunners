@@ -6,11 +6,11 @@ mod constants;
 mod errors;
 mod instructions;
 mod state;
-
+mod utils;
 use instructions::*;
-use state::{Card, PathDirection};
+use state::PathDirection;
 
-declare_id!("BsPD4M38GiLBKuDSNipaw6GCfNeJ3uyRngqYBpsiEXko");
+declare_id!("9VmQrVVZxi6wczuCNWcEMmuLAMRJkZ6e38yudFZv3hPo");
 
 #[program]
 pub mod blockrunners {
@@ -34,10 +34,5 @@ pub mod blockrunners {
         card_usage: CardUsage,
     ) -> Result<()> {
         make_move::make_move(ctx, direction, card_usage)
-    }
-
-    #[cfg(feature = "test")]
-    pub fn debug_give_card(ctx: Context<DebugGiveCard>, card: Card) -> Result<()> {
-        debug_give_card::debug_give_card(ctx, card)
     }
 }

@@ -103,6 +103,9 @@
           }
         },
         {
+          "name": "randomness_account"
+        },
+        {
           "name": "system_program",
           "address": "11111111111111111111111111111111"
         }
@@ -127,30 +130,15 @@
           "signer": true
         },
         {
+          "name": "game_state"
+        },
+        {
           "name": "player_state",
           "writable": true
         },
         {
-          "name": "game_state",
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  103,
-                  97,
-                  109,
-                  101,
-                  95,
-                  115,
-                  116,
-                  97,
-                  116,
-                  101
-                ]
-              }
-            ]
-          }
+          "name": "randomness_account",
+          "writable": true
         }
       ],
       "args": [
@@ -192,55 +180,14 @@
         },
         {
           "name": "player_state",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  112,
-                  108,
-                  97,
-                  121,
-                  101,
-                  114,
-                  95,
-                  115,
-                  116,
-                  97,
-                  116,
-                  101
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "player"
-              }
-            ]
-          }
+          "writable": true
         },
         {
           "name": "game_state",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  103,
-                  97,
-                  109,
-                  101,
-                  95,
-                  115,
-                  116,
-                  97,
-                  116,
-                  101
-                ]
-              }
-            ]
-          }
+          "writable": true
+        },
+        {
+          "name": "randomness_account"
         },
         {
           "name": "system_program",
@@ -312,7 +259,7 @@
     {
       "code": 6002,
       "name": "InsufficientBalance",
-      "msg": "Player has insufficient balance to pay for ciphers"
+      "msg": "Player has insufficient balance to pay"
     },
     {
       "code": 6003,
@@ -338,6 +285,56 @@
       "code": 6007,
       "name": "UnknownError",
       "msg": "Unknown Error"
+    },
+    {
+      "code": 6008,
+      "name": "NoCardsLeft",
+      "msg": "No cards left to use"
+    },
+    {
+      "code": 6009,
+      "name": "InvalidMove",
+      "msg": "Invalid move"
+    },
+    {
+      "code": 6010,
+      "name": "InvalidCardSelection",
+      "msg": "Invalid card selection"
+    },
+    {
+      "code": 6011,
+      "name": "NotEnoughCiphers",
+      "msg": "Not enough ciphers to make this move"
+    },
+    {
+      "code": 6012,
+      "name": "NotAtEndOfPath",
+      "msg": "Player not at end of path yet"
+    },
+    {
+      "code": 6013,
+      "name": "RandomnessUnavailable",
+      "msg": "Randomness data is unavailable"
+    },
+    {
+      "code": 6014,
+      "name": "RandomnessNotResolved",
+      "msg": "Randomness not resolved"
+    },
+    {
+      "code": 6015,
+      "name": "RandomnessStale",
+      "msg": "Randomness is stale"
+    },
+    {
+      "code": 6016,
+      "name": "RandomnessExpired",
+      "msg": "Randomness is expired"
+    },
+    {
+      "code": 6017,
+      "name": "Unauthorized",
+      "msg": "Unauthorized"
     }
   ],
   "types": [
@@ -489,32 +486,29 @@
             "type": "bool"
           },
           {
-            "name": "first_login",
+            "name": "randomness_account",
             "docs": [
-              "Player's first login timestamp"
+              "Switchboard randomness account for player-specific randomness"
             ],
-            "type": "i64"
+            "type": "pubkey"
           },
           {
-            "name": "last_login",
+            "name": "randomness_slot",
             "docs": [
-              "Player's last login timestamp"
+              "The slot at which the randomness was committed"
             ],
-            "type": "i64"
+            "type": {
+              "option": "u64"
+            }
           },
           {
-            "name": "games_won",
+            "name": "randomness_value",
             "docs": [
-              "Number of games the player has won"
+              "The randomness value for the player"
             ],
-            "type": "u64"
-          },
-          {
-            "name": "total_ciphers_bought",
-            "docs": [
-              "Total number of ciphers the player has purchased"
-            ],
-            "type": "u64"
+            "type": {
+              "option": "u64"
+            }
           }
         ]
       }
@@ -574,6 +568,11 @@
     }
   ],
   "constants": [
+    {
+      "name": "CARD_TYPES_COUNT",
+      "type": "u8",
+      "value": "3"
+    },
     {
       "name": "CIPHER_COST",
       "type": "u64",

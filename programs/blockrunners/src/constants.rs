@@ -22,4 +22,7 @@ pub const MAX_FEED_EVENTS: u8 = 20;
 pub const MAX_TOTAL_CARDS: u8 = 40;
 
 #[constant]
+pub const CARD_TYPES_COUNT: u8 = 3;
+
+#[constant]
 pub const PLAYER_STATE_SEED: &[u8] = b"player_state";

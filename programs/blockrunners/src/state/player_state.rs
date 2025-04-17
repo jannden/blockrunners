@@ -1,12 +1,11 @@
 use anchor_lang::prelude::*;
-use strum_macros::EnumCount as EnumCountMacro;
 
 use crate::{
     constants::{MAX_FEED_EVENTS, MAX_TOTAL_CARDS},
     state::SocialFeedEvent,
 };
 
-#[derive(Clone, Copy, AnchorSerialize, AnchorDeserialize, PartialEq, Debug, EnumCountMacro, Hash, Eq)]
+#[derive(Clone, Copy, AnchorSerialize, AnchorDeserialize, PartialEq, Debug, Hash, Eq)]
 pub enum Card {
     Shield,
     Doubler,
@@ -58,4 +57,13 @@ pub struct PlayerState {
     pub last_login: i64,
     pub games_won: u64,
     pub total_ciphers_bought: u64,
+
+    /// Switchboard randomness account for player-specific randomness
+    pub randomness_account: Pubkey,
+
+    /// The slot at which the randomness was committed
+    pub randomness_slot: Option<u64>,
+
+    /// The randomness value for the player
+    pub randomness_value: Option<u64>,
 }

@@ -1,10 +1,11 @@
 use anchor_lang::{prelude::*, system_program};
 
 use crate::{
-    constants::{CIPHER_COST, GAME_STATE_SEED, PLAYER_STATE_SEED},
+    constants::CIPHER_COST,
     errors::BlockrunnersError,
     instructions::{collect_player_card, save_and_emit_event, update_last_login},
     state::{GameState, PlayerState, SocialFeedEventType},
+    utils::{give_cards, randomness_request, randomness_reveal, save_and_emit_event},
 };
 
 #[derive(Accounts)]
@@ -12,19 +13,14 @@ pub struct PurchaseCiphers<'info> {
     #[account(mut)]
     pub player: Signer<'info>,
 
-    #[account(
-        mut,
-        seeds = [PLAYER_STATE_SEED, player.key().as_ref()],
-        bump = player_state.bump,
-    )]
+    #[account(mut)]
     pub player_state: Account<'info, PlayerState>,
 
-    #[account(
-        mut,
-        seeds = [GAME_STATE_SEED],
-        bump
-    )]
+    #[account(mut)]
     pub game_state: Account<'info, GameState>,
+
+    /// CHECK: This account is validated in the instruction handler
+    pub randomness_account: AccountInfo<'info>,
 
     pub system_program: Program<'info, System>,
 }
@@ -32,6 +28,7 @@ pub struct PurchaseCiphers<'info> {
 pub fn purchase_ciphers(ctx: Context<PurchaseCiphers>, amount: u64) -> Result<()> {
     let player_state = &mut ctx.accounts.player_state;
     let game_state = &mut ctx.accounts.game_state;
+    let randomness_account = &ctx.accounts.randomness_account;
 
     // Check if amount is positive
     require!(amount > 0, BlockrunnersError::NegativeCiphersAmount);
@@ -47,18 +44,6 @@ pub fn purchase_ciphers(ctx: Context<PurchaseCiphers>, amount: u64) -> Result<()
         BlockrunnersError::InsufficientBalance
     );
 
-    // Check if the player is not already in the game
-    if !player_state.in_game {
-        collect_player_card(player_state)?;
-        save_and_emit_event(
-            &mut game_state.game_events,
-            SocialFeedEventType::PlayerJoined,
-            format!("Player {} joined the game!", player_state.player.key()),
-        )?;
-
-        player_state.in_game = true;
-    }
-
     // Transfer SOL from player to the program
     let cpi_context = CpiContext::new(
         ctx.accounts.system_program.to_account_info(),
@@ -69,12 +54,26 @@ pub fn purchase_ciphers(ctx: Context<PurchaseCiphers>, amount: u64) -> Result<()
     );
     system_program::transfer(cpi_context, cost)?;
 
+    // Check if the player is not already in the game
+    if !player_state.in_game {
+        randomness_request(player_state, randomness_account)?;
+        randomness_reveal(player_state, randomness_account)?;
+        give_cards(player_state, 1)?;
+        save_and_emit_event(
+            &mut game_state.game_events,
+            SocialFeedEventType::PlayerJoined,
+            format!("Player {} joined the game!", player_state.player.key()),
+        )?;
+
+        player_state.in_game = true;
+    }
+
     // Update player's cipher count
     player_state.ciphers = player_state
         .ciphers
         .checked_add(amount)
         .ok_or(ProgramError::ArithmeticOverflow)?;
-    
+
     player_state.total_ciphers_bought = player_state
         .total_ciphers_bought
         .checked_add(amount)

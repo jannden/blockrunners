@@ -8,7 +8,7 @@ pub enum BlockrunnersError {
     #[msg("Player used duplicate card")]
     DuplicateCard,
 
-    #[msg("Player has insufficient balance to pay for ciphers")]
+    #[msg("Player has insufficient balance to pay")]
     InsufficientBalance,
 
     #[msg("Player tried to use a card they don't have")]
@@ -28,4 +28,34 @@ pub enum BlockrunnersError {
 
     #[msg("Unknown Error")]
     UnknownError,
+
+    #[msg("No cards left to use")]
+    NoCardsLeft,
+
+    #[msg("Invalid move")]
+    InvalidMove,
+
+    #[msg("Invalid card selection")]
+    InvalidCardSelection,
+
+    #[msg("Not enough ciphers to make this move")]
+    NotEnoughCiphers,
+
+    #[msg("Player not at end of path yet")]
+    NotAtEndOfPath,
+
+    #[msg("Randomness data is unavailable")]
+    RandomnessUnavailable,
+
+    #[msg("Randomness not resolved")]
+    RandomnessNotResolved,
+
+    #[msg("Randomness is stale")]
+    RandomnessStale,
+
+    #[msg("Randomness is expired")]
+    RandomnessExpired,
+
+    #[msg("Unauthorized")]
+    Unauthorized,
 }
