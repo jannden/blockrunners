@@ -110,12 +110,12 @@ That should install:
 General workflow can look like this:
 
 ```bash
-# Make sure you’re on the localnet.
+# Make sure you’re on the correct cluster: mainnet-beta, devnet, localhost.
 solana config set --url localhost
 
-# Your Anchor.toml file should point to the localnet cluster:
+# Your Anchor.toml file should point to the correct cluster: Mainnet, Devnet, Localnet.
 # [provider]
-# cluster = "localnet"
+# cluster = "Localnet"
 
 # Run an initial build.
 anchor build

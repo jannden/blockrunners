@@ -1,8 +1,7 @@
 import { getConstantOrThrow, getStringFromByteArray } from "@/lib/utils";
-import { Connection, PublicKey } from "@solana/web3.js";
-import { AnchorProvider, BN, Program } from "@coral-xyz/anchor";
+import { PublicKey } from "@solana/web3.js";
+import { BN } from "@coral-xyz/anchor";
 import IDL from "@/idl/blockrunners.json";
-import { Blockrunners } from "@/idl/blockrunners";
 
 // Program ID
 export const PROGRAM_ID = new PublicKey(IDL.address);

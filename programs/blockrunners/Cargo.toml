@@ -15,12 +15,9 @@ cpi = ["no-entrypoint"]
 no-entrypoint = []
 no-idl = []
 no-log-ix-name = []
-idl-build = ["anchor-lang/idl-build"]
+idl-build = ["anchor-lang/idl-build", "anchor-spl/idl-build"]
 
 [dependencies]
-anchor-lang = "0.31.0"
-rand_chacha = "0.9.0"
-rand_core = "0.9.3"
-strum = "0.27"
-strum_macros = "0.27"
-session-keys = { version = "2.0.6", features = ["no-entrypoint"] }
+anchor-lang = { version = "0.31.0", features = ["init-if-needed"] }
+anchor-spl = { version = "0.31.0", features = ["metadata"] }
+switchboard-on-demand = "0.3.4"
