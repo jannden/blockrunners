@@ -58,9 +58,9 @@ pub fn make_move(
     if direction == correct_direction {
         handle_correct_move(game_state, player_state, card_usage)?;
         
-        // If player completed the path, increment games played
+        // If player completed the path, increment games won
         if player_state.position >= game_state.path_length {
-            player_state.games_played = player_state.games_played.checked_add(1)
+            player_state.games_won = player_state.games_won.checked_add(1)
                 .ok_or(BlockrunnersError::UnknownError)?;
         }
         

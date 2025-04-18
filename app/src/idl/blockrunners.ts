@@ -432,7 +432,7 @@ export type Blockrunners = {
             "type": "i64"
           },
           {
-            "name": "gamesPlayed",
+            "name": "gamesWon",
             "docs": [
               "Number of games the player has completed"
             ],

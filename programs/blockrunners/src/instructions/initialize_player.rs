@@ -41,7 +41,7 @@ pub fn initialize_player(ctx: Context<InitializePlayer>) -> Result<()> {
 
     // Initialize player statistics
     player_state.first_login = clock.unix_timestamp;
-    player_state.games_played = 0;
+    player_state.games_won = 0;
     player_state.total_ciphers_bought = 0;
     update_last_login(player_state)?;
 

@@ -82,7 +82,7 @@ describe("Initialize Player", () => {
     // Verify player statistics were initialized correctly
     expect(playerState.firstLogin.toString()).to.not.equal("0"); // Should have a timestamp
     expect(playerState.lastLogin.toString()).to.not.equal("0"); // Should have a timestamp
-    expect(playerState.gamesPlayed.toNumber()).to.equal(0); // Start with 0 games played
+    expect(playerState.gamesWon.toNumber()).to.equal(0); // Start with 0 games won
     expect(playerState.totalCiphersBought.toNumber()).to.equal(0); // Start with 0 ciphers bought
     
     // First login and last login should be the same initially

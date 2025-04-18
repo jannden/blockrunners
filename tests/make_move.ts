@@ -120,9 +120,9 @@ describe("Make Move", () => {
       // Verify player cards were increased
       expect(playerStateAfter.cards.length).to.equal(playerStateBefore.cards.length + 1);
       
-      // Verify gamesPlayed was not incremented (because the path wasn't completed)
-      expect(playerStateAfter.gamesPlayed.toNumber()).to.equal(
-        playerStateBefore.gamesPlayed.toNumber()
+      // Verify gamesWon was not incremented (because the path wasn't completed)
+      expect(playerStateAfter.gamesWon.toNumber()).to.equal(
+        playerStateBefore.gamesWon.toNumber()
       );
     } else {
       console.log("Incorrect move! Position reset to 0.");

@@ -53,6 +53,6 @@ pub struct PlayerState {
     /// Player statistics
     pub first_login: i64,
     pub last_login: i64,
-    pub games_played: u64,
+    pub games_won: u64,
     pub total_ciphers_bought: u64,
 }

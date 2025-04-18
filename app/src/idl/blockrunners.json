@@ -503,9 +503,9 @@
             "type": "i64"
           },
           {
-            "name": "games_played",
+            "name": "games_won",
             "docs": [
-              "Number of games the player has completed"
+              "Number of games the player has won"
             ],
             "type": "u64"
           },
