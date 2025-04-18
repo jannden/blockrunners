@@ -6,6 +6,7 @@ pub mod initialize_player;
 pub mod make_move;
 pub mod purchase_ciphers;
 pub mod save_and_emit_event;
+pub mod update_last_login;
 
 pub use collect_player_card::*;
 pub use debug_give_card::*;
@@ -15,3 +16,4 @@ pub use initialize_player::*;
 pub use make_move::*;
 pub use purchase_ciphers::*;
 pub use save_and_emit_event::*;
+pub use update_last_login::*;

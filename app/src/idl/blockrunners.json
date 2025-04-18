@@ -487,6 +487,34 @@
               "The player has joined the game or not"
             ],
             "type": "bool"
+          },
+          {
+            "name": "first_login",
+            "docs": [
+              "Player's first login timestamp"
+            ],
+            "type": "i64"
+          },
+          {
+            "name": "last_login",
+            "docs": [
+              "Player's last login timestamp"
+            ],
+            "type": "i64"
+          },
+          {
+            "name": "games_won",
+            "docs": [
+              "Number of games the player has won"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "total_ciphers_bought",
+            "docs": [
+              "Total number of ciphers the player has purchased"
+            ],
+            "type": "u64"
           }
         ]
       }

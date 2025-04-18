@@ -4,7 +4,7 @@ import { Keypair, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import { expect } from "chai";
 import { Blockrunners } from "../target/types/blockrunners";
 import { GAME_STATE_SEED, PLAYER_STATE_SEED, CIPHER_COST } from "./helpers/constants";
-import { airdropSol, getMsgLogs } from "./helpers/utils";
+import { airdropSol, getMsgLogs, sleep } from "./helpers/utils";
 import { CARD_USAGE_EMPTY_MOCK } from "./mocks/card-usage";
 
 describe("Purchase ciphers", () => {
@@ -88,6 +88,9 @@ describe("Purchase ciphers", () => {
     const playerBalanceBefore = await provider.connection.getBalance(playerKeypair.publicKey);
     const gameBalanceBefore = await provider.connection.getBalance(gameStatePda);
 
+    // Sleep for 1 seconds to ensure timestamp changes
+    await sleep(1000);
+
     // Purchase ciphers
     const tx = await program.methods
       .purchaseCiphers(new anchor.BN(ciphersToPurchase))
@@ -128,9 +131,17 @@ describe("Purchase ciphers", () => {
       playerStateBefore.ciphers.toNumber() + ciphersToPurchase
     );
 
+    // Verify totalCiphersBought was increased by the correct amount
+    expect(playerStateAfter.totalCiphersBought.toNumber()).to.equal(
+      playerStateBefore.totalCiphersBought.toNumber() + ciphersToPurchase
+    );
+
     // Verify player has joined the game
     expect(playerStateBefore.inGame).to.equal(false);
     expect(playerStateAfter.inGame).to.equal(true);
+
+    // Verify lastLogin was updated
+    expect(playerStateAfter.lastLogin.toString()).to.not.equal(playerStateBefore.lastLogin.toString());
 
     // Verify player cards were increased
     expect(playerStateAfter.cards.length).to.equal(playerStateBefore.cards.length + 1);
@@ -157,6 +168,9 @@ describe("Purchase ciphers", () => {
     const additionalCiphers = 3;
     const expectedCost = additionalCiphers * CIPHER_COST;
 
+    // Sleep for 1 seconds to ensure timestamp changes
+    await sleep(1000);
+
     // Purchase more ciphers as the first player
     const tx = await program.methods
       .purchaseCiphers(new anchor.BN(additionalCiphers))
@@ -182,6 +196,14 @@ describe("Purchase ciphers", () => {
     expect(playerStateAfter.ciphers.toNumber()).to.equal(
       playerStateBefore.ciphers.toNumber() + additionalCiphers
     );
+
+    // Verify totalCiphersBought was increased by the correct amount
+    expect(playerStateAfter.totalCiphersBought.toNumber()).to.equal(
+      playerStateBefore.totalCiphersBought.toNumber() + additionalCiphers
+    );
+
+    // Verify lastLogin was updated
+    expect(playerStateAfter.lastLogin.toString()).to.not.equal(playerStateBefore.lastLogin.toString());
 
     // Verify prize pool was increased by the correct amount
     expect(gameStateAfter.prizePool.toNumber()).to.equal(

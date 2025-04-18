@@ -7,7 +7,7 @@ import {
   GAME_STATE_SEED, 
   PLAYER_STATE_SEED, 
 } from "./helpers/constants";
-import { airdropSol, getMsgLogs } from "./helpers/utils";
+import { airdropSol, getMsgLogs, sleep } from "./helpers/utils";
 
 describe("Initialize Player", () => {
   // Configure the client to use the local cluster
@@ -78,6 +78,15 @@ describe("Initialize Player", () => {
     expect(playerState.cards.length).to.equal(0); // Start with 0 ciphers
     expect(playerState.position).to.equal(0); // Start at position 0
     expect(playerState.inGame).to.equal(false); // Start not in the game
+    
+    // Verify player statistics were initialized correctly
+    expect(playerState.firstLogin.toString()).to.not.equal("0"); // Should have a timestamp
+    expect(playerState.lastLogin.toString()).to.not.equal("0"); // Should have a timestamp
+    expect(playerState.gamesWon.toNumber()).to.equal(0); // Start with 0 games won
+    expect(playerState.totalCiphersBought.toNumber()).to.equal(0); // Start with 0 ciphers bought
+    
+    // First login and last login should be the same initially
+    expect(playerState.firstLogin.toString()).to.equal(playerState.lastLogin.toString());
   });
 
   it("Fails if player state account already exists", async () => {

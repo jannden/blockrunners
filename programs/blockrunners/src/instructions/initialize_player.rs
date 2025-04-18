@@ -5,6 +5,7 @@ use crate::{
         DISCRIMINATOR_SIZE, 
         PLAYER_STATE_SEED
     }, 
+    instructions::update_last_login,
     state::PlayerState
 };
 
@@ -27,6 +28,7 @@ pub struct InitializePlayer<'info> {
 
 pub fn initialize_player(ctx: Context<InitializePlayer>) -> Result<()> {
     let player_state = &mut ctx.accounts.player_state;
+    let clock = Clock::get()?;
 
     // Initialize player state with default values
     player_state.player = *ctx.accounts.player.key;
@@ -36,6 +38,12 @@ pub fn initialize_player(ctx: Context<InitializePlayer>) -> Result<()> {
     player_state.bump = ctx.bumps.player_state;
     player_state.player_events = Vec::new();
     player_state.in_game = false;
+
+    // Initialize player statistics
+    player_state.first_login = clock.unix_timestamp;
+    player_state.games_won = 0;
+    player_state.total_ciphers_bought = 0;
+    update_last_login(player_state)?;
 
     msg!("Player initialized");
     Ok(())
