@@ -19,6 +19,9 @@ pub const GAME_STATE_SEED: &[u8] = b"game_state";
 pub const MAX_FEED_EVENTS: u8 = 20;
 
 #[constant]
+pub const MAX_RANDOMNESS_VALUES: u8 = 32;
+
+#[constant]
 pub const MAX_TOTAL_CARDS: u8 = 40;
 
 #[constant]

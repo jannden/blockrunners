@@ -110,12 +110,12 @@ That should install:
 General workflow can look like this:
 
 ```bash
-# Make sure you’re on the correct cluster: mainnet-beta, devnet, localhost.
+# Choose a cluster: mainnet-beta, devnet, localhost.
 solana config set --url localhost
 
-# Your Anchor.toml file should point to the correct cluster: Mainnet, Devnet, Localnet.
+# Set cluster also in Anchor.toml: mainnet, devnet, localnet.
 # [provider]
-# cluster = "Localnet"
+# cluster = "localnet"
 
 # Run an initial build.
 anchor build
@@ -123,17 +123,18 @@ anchor build
 # Update the program ID in Anchor.
 anchor keys sync
 
-# Copy the IDL to the frontend.
-anchor run copy_idl
-
 # Run the tests including the "test" feature.
 anchor test -- --features test
 
-# Airdrop yourself some money if necessary.
-solana airdrop 5
-
-# Build, deploy and start a local ledger.
+# Deploy the program to the localnet.
 anchor localnet
+
+# Or deploy to devnet/mainnet-beta.
+anchor build
+anchor deploy
+
+# Copy the IDL to the frontend.
+anchor run copy_idl
 
 # Serve your frontend application locally.
 anchor run frontend

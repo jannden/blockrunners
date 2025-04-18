@@ -1,5 +1,5 @@
 {
-  "address": "BsPD4M38GiLBKuDSNipaw6GCfNeJ3uyRngqYBpsiEXko",
+  "address": "7TMxuDvpqy8ye1SMWZ4KFXerGjn2ua4s8VaWm8nEEE7y",
   "metadata": {
     "name": "blockrunners",
     "version": "0.1.0",
@@ -130,11 +130,56 @@
           "signer": true
         },
         {
-          "name": "game_state"
+          "name": "player_state",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  108,
+                  97,
+                  121,
+                  101,
+                  114,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "player"
+              }
+            ]
+          }
         },
         {
-          "name": "player_state",
-          "writable": true
+          "name": "game_state",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  103,
+                  97,
+                  109,
+                  101,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  101
+                ]
+              }
+            ]
+          }
         },
         {
           "name": "randomness_account",
@@ -180,11 +225,55 @@
         },
         {
           "name": "player_state",
-          "writable": true
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  108,
+                  97,
+                  121,
+                  101,
+                  114,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "player"
+              }
+            ]
+          }
         },
         {
           "name": "game_state",
-          "writable": true
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  103,
+                  97,
+                  109,
+                  101,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  101
+                ]
+              }
+            ]
+          }
         },
         {
           "name": "randomness_account"
@@ -504,10 +593,10 @@
           {
             "name": "randomness_value",
             "docs": [
-              "The randomness value for the player"
+              "The randomness values generated for the player"
             ],
             "type": {
-              "option": "u64"
+              "option": "bytes"
             }
           }
         ]
@@ -602,6 +691,11 @@
       "name": "MAX_FEED_EVENTS",
       "type": "u8",
       "value": "20"
+    },
+    {
+      "name": "MAX_RANDOMNESS_VALUES",
+      "type": "u8",
+      "value": "32"
     },
     {
       "name": "MAX_TOTAL_CARDS",

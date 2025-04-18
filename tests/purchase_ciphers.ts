@@ -17,6 +17,7 @@ describe("Purchase ciphers", () => {
   // Keypairs
   const adminKeypair = Keypair.generate();
   const playerKeypair = Keypair.generate();
+  const randomnessKeypair = Keypair.generate();
 
   // Game state PDA
   const [gameStatePda] = PublicKey.findProgramAddressSync(
@@ -61,6 +62,7 @@ describe("Purchase ciphers", () => {
       .initializePlayer()
       .accounts({
         player: playerKeypair.publicKey,
+        randomnessAccount: randomnessKeypair.publicKey,
       })
       .signers([playerKeypair])
       .rpc();
@@ -96,6 +98,7 @@ describe("Purchase ciphers", () => {
       .purchaseCiphers(new anchor.BN(ciphersToPurchase))
       .accounts({
         player: playerKeypair.publicKey,
+        randomnessAccount: randomnessKeypair.publicKey,
       })
       .signers([playerKeypair])
       .rpc();
@@ -176,6 +179,7 @@ describe("Purchase ciphers", () => {
       .purchaseCiphers(new anchor.BN(additionalCiphers))
       .accounts({
         player: playerKeypair.publicKey,
+        randomnessAccount: randomnessKeypair.publicKey,
       })
       .signers([playerKeypair])
       .rpc();
@@ -234,6 +238,7 @@ describe("Purchase ciphers", () => {
   it("Allows second player to purchase ciphers", async () => {
     // Create a second player
     const player2Keypair = Keypair.generate();
+    const randomness2Keypair = Keypair.generate();
 
     // Get the player2 state PDA
     const [player2StatePda] = PublicKey.findProgramAddressSync(
@@ -249,6 +254,7 @@ describe("Purchase ciphers", () => {
       .initializePlayer()
       .accounts({
         player: player2Keypair.publicKey,
+        randomnessAccount: randomness2Keypair.publicKey,
       })
       .signers([player2Keypair])
       .rpc();
@@ -271,6 +277,7 @@ describe("Purchase ciphers", () => {
       .purchaseCiphers(new anchor.BN(ciphersToPurchase))
       .accounts({
         player: player2Keypair.publicKey,
+        randomnessAccount: randomness2Keypair.publicKey,
       })
       .signers([player2Keypair])
       .rpc();
@@ -318,10 +325,12 @@ describe("Purchase ciphers", () => {
         .purchaseCiphers(new anchor.BN(ciphersToPurchase))
         .accounts({
           player: playerKeypair.publicKey,
+          randomnessAccount: randomnessKeypair.publicKey,
         })
         .signers([playerKeypair])
         .rpc();
     } catch (error) {
+      console.error("Error purchasing ciphers:", error);
       expect(error.error.errorCode.code).to.equal("InsufficientBalance");
       return;
     }
@@ -336,6 +345,7 @@ describe("Purchase ciphers", () => {
         .purchaseCiphers(new anchor.BN(ciphersToPurchase))
         .accounts({
           player: playerKeypair.publicKey,
+          randomnessAccount: randomnessKeypair.publicKey,
         })
         .signers([playerKeypair])
         .rpc();
@@ -351,11 +361,13 @@ describe("Purchase ciphers", () => {
       const ciphersToPurchase = 1;
 
       const player2Keypair = Keypair.generate();
+      const randomness2Keypair = Keypair.generate();
 
       const tx = await program.methods
         .purchaseCiphers(new anchor.BN(ciphersToPurchase))
         .accounts({
           player: player2Keypair.publicKey,
+          randomnessAccount: randomness2Keypair.publicKey,
         })
         .signers([player2Keypair])
         .rpc();
@@ -369,7 +381,9 @@ describe("Purchase ciphers", () => {
   it("Verifies different players have their own paths", async () => {
     // Create two new players
     const player1Keypair = Keypair.generate();
+    const randomness1Keypair = Keypair.generate();
     const player2Keypair = Keypair.generate();
+    const randomness2Keypair = Keypair.generate();
 
     // Get the player state PDAs
     const [player1StatePda] = PublicKey.findProgramAddressSync(
@@ -390,6 +404,7 @@ describe("Purchase ciphers", () => {
       .initializePlayer()
       .accounts({
         player: player1Keypair.publicKey,
+        randomnessAccount: randomness1Keypair.publicKey,
       })
       .signers([player1Keypair])
       .rpc();
@@ -397,6 +412,7 @@ describe("Purchase ciphers", () => {
       .initializePlayer()
       .accounts({
         player: player2Keypair.publicKey,
+        randomnessAccount: randomness2Keypair.publicKey,
       })
       .signers([player2Keypair])
       .rpc();
@@ -407,6 +423,7 @@ describe("Purchase ciphers", () => {
       .purchaseCiphers(new anchor.BN(ciphersToPurchase))
       .accounts({
         player: player1Keypair.publicKey,
+        randomnessAccount: randomnessKeypair.publicKey,
       })
       .signers([player1Keypair])
       .rpc();
@@ -414,17 +431,14 @@ describe("Purchase ciphers", () => {
       .purchaseCiphers(new anchor.BN(ciphersToPurchase))
       .accounts({
         player: player2Keypair.publicKey,
+        randomnessAccount: randomness2Keypair.publicKey,
       })
       .signers([player2Keypair])
       .rpc();
 
-    // Get both player states
-    const player1State = await program.account.playerState.fetch(player1StatePda);
-    const player2State = await program.account.playerState.fetch(player2StatePda);
-
     // Try to make a move with each player
     // Make a move with player 1
-    try { 
+    try {
       // Generate a random direction for player 1
       const player1Direction = { left: {} };
 
@@ -432,7 +446,7 @@ describe("Purchase ciphers", () => {
         .makeMove(player1Direction, CARD_USAGE_EMPTY_MOCK)
         .accounts({
           player: player1Keypair.publicKey,
-          playerState: player1StatePda,
+          randomnessAccount: randomness1Keypair.publicKey,
         })
         .signers([player1Keypair])
         .rpc();
@@ -446,7 +460,7 @@ describe("Purchase ciphers", () => {
         .makeMove(player2Direction, CARD_USAGE_EMPTY_MOCK)
         .accounts({
           player: player2Keypair.publicKey,
-          playerState: player2StatePda,
+          randomnessAccount: randomness2Keypair.publicKey,
         })
         .signers([player2Keypair])
         .rpc();

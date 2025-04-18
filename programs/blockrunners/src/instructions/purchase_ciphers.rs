@@ -1,7 +1,7 @@
 use anchor_lang::{prelude::*, system_program};
 
 use crate::{
-    constants::CIPHER_COST,
+    constants::{CIPHER_COST, GAME_STATE_SEED, PLAYER_STATE_SEED},
     errors::BlockrunnersError,
     instructions::{collect_player_card, save_and_emit_event, update_last_login},
     state::{GameState, PlayerState, SocialFeedEventType},
@@ -13,10 +13,16 @@ pub struct PurchaseCiphers<'info> {
     #[account(mut)]
     pub player: Signer<'info>,
 
-    #[account(mut)]
+    #[account(mut,
+      seeds = [PLAYER_STATE_SEED, player.key().as_ref()],
+      bump
+  )]
     pub player_state: Account<'info, PlayerState>,
 
-    #[account(mut)]
+    #[account(mut,
+      seeds = [GAME_STATE_SEED],
+      bump
+    )]
     pub game_state: Account<'info, GameState>,
 
     /// CHECK: This account is validated in the instruction handler

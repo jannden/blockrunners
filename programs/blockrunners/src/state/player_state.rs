@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 
 use crate::{
-    constants::{MAX_FEED_EVENTS, MAX_TOTAL_CARDS},
+    constants::{MAX_FEED_EVENTS, MAX_RANDOMNESS_VALUES, MAX_TOTAL_CARDS},
     state::SocialFeedEvent,
 };
 
@@ -64,6 +64,7 @@ pub struct PlayerState {
     /// The slot at which the randomness was committed
     pub randomness_slot: Option<u64>,
 
-    /// The randomness value for the player
-    pub randomness_value: Option<u64>,
+    /// The randomness values generated for the player
+    #[max_len(MAX_RANDOMNESS_VALUES)]
+    pub randomness_value: Option<Vec<u8>>,
 }

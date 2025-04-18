@@ -2,9 +2,8 @@ use anchor_lang::prelude::*;
 
 use crate::{
     constants::{CARD_TYPES_COUNT, MAX_TOTAL_CARDS},
-    errors::BlockrunnersError,
     state::{Card, PlayerState, SocialFeedEventType},
-    utils::save_and_emit_event,
+    utils::{randomness_use, save_and_emit_event},
 };
 
 pub fn give_cards(player_state: &mut Account<PlayerState>, card_count: u8) -> Result<()> {
@@ -25,18 +24,11 @@ pub fn give_cards(player_state: &mut Account<PlayerState>, card_count: u8) -> Re
         return Ok(());
     }
 
-    // Get randomness value or return error if not available
-    let randomness_value = player_state
-        .randomness_value
-        .ok_or(BlockrunnersError::RandomnessNotResolved)?;
-
     // Generate cards using the randomness
-    let mut remaining_value = randomness_value;
     let mut cards_given = Vec::with_capacity(adjusted_card_count as usize);
 
-    for _ in 0..adjusted_card_count {
-        // Use lowest 2 bits for each card selection
-        let card_index = (remaining_value & 0b11) as u32 % (CARD_TYPES_COUNT as u32);
+    for _ in 1..=adjusted_card_count {
+        let card_index = randomness_use(player_state)? % CARD_TYPES_COUNT;
 
         // Select card based on random index
         let new_card = match card_index {
@@ -49,9 +41,6 @@ pub fn give_cards(player_state: &mut Account<PlayerState>, card_count: u8) -> Re
         // Add card to player's collection
         player_state.cards.push(new_card);
         cards_given.push(new_card);
-
-        // Shift right to use next 2 bits for next card
-        remaining_value >>= 2;
     }
 
     // Create summary of cards received

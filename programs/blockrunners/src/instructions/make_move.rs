@@ -1,13 +1,14 @@
 use anchor_lang::prelude::*;
 
 use crate::{
+    constants::{GAME_STATE_SEED, PLAYER_STATE_SEED},
     errors::BlockrunnersError,
     instructions::{
         collect_player_card, generate_next_direction_for_path, save_and_emit_event,
         update_last_login,
     },
     state::{Card, GameState, PathDirection, PlayerState, SocialFeedEventType},
-    utils::{randomness_request, randomness_reveal, save_and_emit_event},
+    utils::{randomness_request, randomness_reveal, randomness_use, save_and_emit_event},
 };
 
 #[derive(Accounts)]
@@ -15,9 +16,10 @@ pub struct MakeMove<'info> {
     #[account(mut)]
     pub player: Signer<'info>,
 
-    pub game_state: Account<'info, GameState>,
-
-    #[account(mut)]
+    #[account(mut,
+        seeds = [PLAYER_STATE_SEED, player.key().as_ref()],
+        bump
+    )]
     pub player_state: Account<'info, PlayerState>,
 
     #[account(
@@ -72,15 +74,12 @@ pub fn make_move(
     );
     player_state.ciphers -= total_cost;
 
-    // Generate the correct direction for the next move
+    // Request and reveal randomness
     randomness_request(player_state, player_randomness)?;
     randomness_reveal(player_state, player_randomness)?;
-    let randomness_value = player_state
-        .randomness_value
-        .ok_or(BlockrunnersError::RandomnessNotResolved)?;
 
     // Determine the correct direction based on the randomness value
-    let correct_direction = if randomness_value % 2 == 0 {
+    let correct_direction = if randomness_use(player_state)? % 2 == 0 {
         PathDirection::Left
     } else {
         PathDirection::Right

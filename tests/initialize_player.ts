@@ -19,6 +19,7 @@ describe("Initialize Player", () => {
   // Keypairs
   const adminKeypair = Keypair.generate();
   const playerKeypair = Keypair.generate();
+  const randomnessKeypair = Keypair.generate();
 
   // Game state PDA
   const [gameStatePda] = PublicKey.findProgramAddressSync(
@@ -61,6 +62,7 @@ describe("Initialize Player", () => {
       .initializePlayer()
       .accounts({
         player: playerKeypair.publicKey,
+        randomnessAccount: randomnessKeypair.publicKey,
       })
       .signers([playerKeypair])
       .rpc();
@@ -95,6 +97,7 @@ describe("Initialize Player", () => {
         .initializePlayer()
         .accounts({
           player: playerKeypair.publicKey,
+          randomnessAccount: randomnessKeypair.publicKey,
         })
         .signers([playerKeypair])
         .rpc();

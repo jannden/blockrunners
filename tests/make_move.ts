@@ -17,6 +17,7 @@ describe("Make Move", () => {
   // Keypairs
   const adminKeypair = Keypair.generate();
   const playerKeypair = Keypair.generate();
+  const randomnessKeypair = Keypair.generate();
 
   // Game state PDA
   const [gameStatePda] = PublicKey.findProgramAddressSync(
@@ -54,6 +55,7 @@ describe("Make Move", () => {
       .initializePlayer()
       .accounts({
         player: playerKeypair.publicKey,
+        randomnessAccount: randomnessKeypair.publicKey,
       })
       .signers([playerKeypair])
       .rpc();
@@ -66,6 +68,7 @@ describe("Make Move", () => {
       .purchaseCiphers(new anchor.BN(ciphersToPurchase))
       .accounts({
         player: playerKeypair.publicKey,
+        randomnessAccount: randomnessKeypair.publicKey,
       })
       .signers([playerKeypair])
       .rpc();
@@ -95,7 +98,7 @@ describe("Make Move", () => {
       .makeMove(direction, CARD_USAGE_EMPTY_MOCK)
       .accounts({
         player: playerKeypair.publicKey,
-        playerState: playerStatePda,
+        randomnessAccount: randomnessKeypair.publicKey,
       })
       .signers([playerKeypair])
       .rpc();
@@ -108,7 +111,9 @@ describe("Make Move", () => {
     console.log(`Player position after move: ${playerStateAfter.position}`);
 
     // Verify lastLogin was updated
-    expect(playerStateAfter.lastLogin.toString()).to.not.equal(playerStateBefore.lastLogin.toString());
+    expect(playerStateAfter.lastLogin.toString()).to.not.equal(
+      playerStateBefore.lastLogin.toString()
+    );
 
     // If the position increased, it was a correct move
     if (playerStateAfter.position > initialPosition) {
@@ -119,11 +124,9 @@ describe("Make Move", () => {
 
       // Verify player cards were increased
       expect(playerStateAfter.cards.length).to.equal(playerStateBefore.cards.length + 1);
-      
+
       // Verify gamesWon was not incremented (because the path wasn't completed)
-      expect(playerStateAfter.gamesWon.toNumber()).to.equal(
-        playerStateBefore.gamesWon.toNumber()
-      );
+      expect(playerStateAfter.gamesWon.toNumber()).to.equal(playerStateBefore.gamesWon.toNumber());
     } else {
       console.log("Incorrect move! Position reset to 0.");
 
@@ -159,14 +162,14 @@ describe("Make Move", () => {
         .makeMove(direction, CARD_USAGE_EMPTY_MOCK)
         .accounts({
           player: playerKeypair.publicKey,
-          playerState: playerStatePda,
+          randomnessAccount: randomnessKeypair.publicKey,
         })
         .signers([playerKeypair])
         .rpc();
 
       // Fetch player state after the move
       const playerStateAfter = await program.account.playerState.fetch(playerStatePda);
-      
+
       // Verify lastLogin was updated
       expect(playerStateAfter.lastLogin.toString()).to.not.equal(lastLoginBefore);
 
@@ -200,7 +203,7 @@ describe("Make Move", () => {
       .makeMove(direction, CARD_USAGE_EMPTY_MOCK)
       .accounts({
         player: playerKeypair.publicKey,
-        playerState: playerStatePda,
+        randomnessAccount: randomnessKeypair.publicKey,
       })
       .signers([playerKeypair])
       .rpc();
@@ -211,7 +214,7 @@ describe("Make Move", () => {
     // Fetch player state after the move
     const playerStateAfter = await program.account.playerState.fetch(playerStatePda);
     console.log(`Player position after move: ${playerStateAfter.position}`);
-    
+
     // Verify lastLogin was updated
     expect(playerStateAfter.lastLogin.toString()).to.not.equal(lastLoginBefore);
 
@@ -242,23 +245,24 @@ describe("Make Move", () => {
 
     // Fetch player state before move
     let stateBefore = await program.account.playerState.fetch(playerStatePda);
+    console.log("State before move -> ", stateBefore);
 
-    // Sleep for 1 seconds to ensure timestamp changes
-    await sleep(1000);
-
-    const correctDirection = { right: {} }; // irrelevant, we assume random matches
-    const cards = { shield: false, doubler: true, swift: true }; // Doubler and Swift
-    await program.methods
+    const correctDirection = { right: {} }; // based on the TEST MODE for randomness
+    const cards = { shield: false, doubler: true, swift: true };
+    const tx = await program.methods
       .makeMove(correctDirection, cards)
       .accounts({
         player: playerKeypair.publicKey,
-        playerState: playerStatePda,
-        gameState: gameStatePda,
+        randomnessAccount: randomnessKeypair.publicKey,
       })
       .signers([playerKeypair])
       .rpc();
+    const logs = await getMsgLogs(provider, tx);
+    console.log("Make move logs -> ", logs);
 
     const afterMove = await program.account.playerState.fetch(playerStatePda);
+    console.log("State after move -> ", afterMove);
+
     expect(afterMove.ciphers.toNumber()).to.be.equal(9);
     expect(afterMove.position).to.be.greaterThan(stateBefore.position); // moved forward
     expect(afterMove.cards.length).to.be.equal(4); // doubler effect
@@ -268,23 +272,27 @@ describe("Make Move", () => {
   });
 
   it("Applies card effects correctly on invalid move", async () => {
+    await giveCard(program, playerKeypair, playerStatePda, { shield: {} });
     let stateBefore = await program.account.playerState.fetch(playerStatePda);
-    await giveCard(program, playerKeypair, playerStatePda, { shield: {} }); // Add shield again
+    console.log("State before move DEBUG -> ", stateBefore);
 
-    // Sleep for 1 seconds to ensure timestamp changes
-    await sleep(1000);
-
-    await program.methods
-      .makeMove({ left: {} }, { shield: true, doubler: false, swift: false }) // Incorrect direction, Shield
+    const incorrectDirection = { left: {} }; // based on the TEST MODE for randomness
+    const cards = { shield: true, doubler: false, swift: false };
+    const tx = await program.methods
+      .makeMove(incorrectDirection, cards) // Incorrect direction, Shield
       .accounts({
         player: playerKeypair.publicKey,
-        playerState: playerStatePda,
-        gameState: gameStatePda,
+        randomnessAccount: randomnessKeypair.publicKey,
       })
       .signers([playerKeypair])
       .rpc();
 
+    const logs = await getMsgLogs(provider, tx);
+    console.log("Make move logs -> ", logs);
+
     const stateAfterBad = await program.account.playerState.fetch(playerStatePda);
+    console.log("State after move DEBUG -> ", stateAfterBad);
+
     expect(stateAfterBad.position).to.equal(stateBefore.position); // no reset
 
     // Verify lastLogin was updated
@@ -322,7 +330,7 @@ describe("Make Move", () => {
     // Move player to winning position (path_length - 1)
     const playerStateBefore = await program.account.playerState.fetch(playerStatePda);
     const movesNeeded = gameStateBefore.pathLength - playerStateBefore.position;
-    
+
     console.log(`Moving player ${movesNeeded} times to reach the end...`);
     for (let i = 0; i < movesNeeded; i++) {
       const direction = { right: {} }; // Direction doesn't matter, program generates correct one

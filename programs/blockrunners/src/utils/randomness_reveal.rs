@@ -1,45 +1,58 @@
 use anchor_lang::prelude::*;
-use switchboard_on_demand::accounts::RandomnessAccountData;
+use switchboard_on_demand::RandomnessAccountData;
 
 use crate::{errors::BlockrunnersError, state::PlayerState};
 
-#[cfg(any(not(test), rust_analyzer))]
+#[cfg(not(feature = "test"))]
 pub fn randomness_reveal(
-    player_state: &Account<PlayerState>,
+    player_state: &mut Account<PlayerState>,
     player_randomness: &AccountInfo,
-) -> Result<bool> {
+) -> Result<()> {
     // Verify that the randomness account matches the one stored in player_state
-    if player_randomness.key() != player_state.randomness_account {
-        return Err(BlockrunnersError::Unauthorized.into());
-    }
+    require_keys_eq!(
+        player_randomness.key(),
+        player_state.randomness_account,
+        BlockrunnersError::Unauthorized
+    );
 
     // Parse the randomness account data
-    let randomness_data = RandomnessAccountData::parse(player_randomness.data.borrow()).unwrap();
+    let randomness_data = RandomnessAccountData::parse(player_randomness.data.borrow())
+        .map_err(|_| BlockrunnersError::RandomnessUnavailable)?;
 
-    // Verify that the randomness is not stale
-    if Some(randomness_data.seed_slot) != player_state.randomness_slot {
-        return Err(BlockrunnersError::RandomnessExpired.into());
-    }
+    // Verify that the randomness slot matches what was stored at request time
+    require!(
+        Some(randomness_data.seed_slot) == player_state.randomness_slot,
+        BlockrunnersError::RandomnessExpired
+    );
 
     let clock = Clock::get()?;
 
     // Call the switchboard on-demand get_value function to get the revealed random value
-    let revealed_random_value = randomness_data.get_value(&clock).map_err(|_| {
-        msg!("Randomness not yet resolved");
-        error!(BlockrunnersError::RandomnessNotResolved)
-    })?;
+    player_state.randomness_value = Some(
+        randomness_data
+            .get_value(&clock)
+            .map_err(|_| {
+                msg!("Randomness not yet resolved");
+                BlockrunnersError::RandomnessNotResolved
+            })?
+            .to_vec(),
+    );
 
-    // Use the revealed random value to determine the flip results
-    let randomness_result = revealed_random_value[0] % 2 == 0;
-
-    Ok(randomness_result)
+    Ok(())
 }
 
-#[cfg(all(test, not(rust_analyzer)))]
+#[cfg(feature = "test")]
 #[allow(unused_variables)]
 pub fn randomness_reveal(
-    player_state: &Account<PlayerState>,
+    player_state: &mut Account<PlayerState>,
     player_randomness: &AccountInfo,
-) -> Result<bool> {
-    Ok(true)
+) -> Result<()> {
+    msg!("TEST MODE: Running randomness_reveal");
+
+    // All randomness values are 1 in test mode
+    // This means the correct direction is always "Right"
+    // And the card given is always "Doubler"
+    player_state.randomness_value = Some(vec![1; 32]);
+
+    Ok(())
 }
