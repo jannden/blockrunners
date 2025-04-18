@@ -1,5 +1,5 @@
 export type CardType = "shield" | "doubler" | "swift";
-
+// test
 export interface AbilityCard {
   id: string;
   type: CardType;
