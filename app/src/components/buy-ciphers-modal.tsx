@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import { useState } from "react"
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -8,12 +8,13 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { Zap } from "lucide-react"
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Zap } from "lucide-react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useBalance } from "@/hooks/useBalance";
 import { CIPHER_COST } from "@/lib/constants";
+import { useBlockrunners } from "@/hooks/useBlockrunners";
 
 interface BuyCiphersModalProps {
   open: boolean;
@@ -21,10 +22,16 @@ interface BuyCiphersModalProps {
   onBuy: (amount: number) => void;
 }
 
-export function BuyCiphersModal({ open, onClose, onBuy }: BuyCiphersModalProps) {
+export function BuyCiphersModal({
+  open,
+  onClose,
+  onBuy,
+}: BuyCiphersModalProps) {
   const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   const { connected } = useWallet();
   const { balance } = useBalance();
+  const { purchaseCiphers } = useBlockrunners();
 
   const cipherPackages = [
     {
@@ -52,12 +59,39 @@ export function BuyCiphersModal({ open, onClose, onBuy }: BuyCiphersModalProps) 
     return connected && balance >= cost;
   };
 
+  // 구매 처리 함수
+  const handlePurchase = async () => {
+    if (!connected || !selectedAmount) return;
+
+    setIsLoading(true);
+    try {
+      // 블록체인에 트랜잭션 기록
+      await purchaseCiphers(selectedAmount);
+      console.log(
+        "Purchase transaction submitted for",
+        selectedAmount,
+        "ciphers"
+      );
+
+      // UI 업데이트
+      onBuy(selectedAmount);
+    } catch (error) {
+      console.log("Error purchasing ciphers:", error);
+    } finally {
+      setIsLoading(false);
+      // 모달 닫기
+      onClose();
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] max-w-md">
         <DialogHeader>
           <DialogTitle className="text-xl font-black">BUY CIPHERS</DialogTitle>
-          <DialogDescription>Purchase ciphers to continue your journey</DialogDescription>
+          <DialogDescription>
+            Purchase ciphers to continue your journey
+          </DialogDescription>
         </DialogHeader>
 
         {!connected && (
@@ -90,10 +124,14 @@ export function BuyCiphersModal({ open, onClose, onBuy }: BuyCiphersModalProps) 
                   <div>
                     <h3 className="font-bold">{pkg.amount} Ciphers</h3>
                     {pkg.discount && (
-                      <span className="text-xs text-[#ff5a5f] font-medium">Best value!</span>
+                      <span className="text-xs text-[#ff5a5f] font-medium">
+                        Best value!
+                      </span>
                     )}
                     {!canAfford && (
-                      <span className="text-xs text-red-500 font-medium">Insufficient funds</span>
+                      <span className="text-xs text-red-500 font-medium">
+                        Insufficient funds
+                      </span>
                     )}
                   </div>
                 </div>
@@ -105,11 +143,13 @@ export function BuyCiphersModal({ open, onClose, onBuy }: BuyCiphersModalProps) 
 
         <DialogFooter>
           <Button
-            onClick={() => selectedAmount && onBuy(selectedAmount)}
-            disabled={!connected || !selectedAmount}
+            onClick={handlePurchase}
+            disabled={!connected || !selectedAmount || isLoading}
             className="w-full h-12 bg-[#00c853] hover:bg-[#00b34a] text-white border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-y-1 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {!connected
+            {isLoading
+              ? "Processing..."
+              : !connected
               ? "Connect Wallet First"
               : selectedAmount
               ? `Buy ${selectedAmount} Ciphers`
@@ -120,4 +160,3 @@ export function BuyCiphersModal({ open, onClose, onBuy }: BuyCiphersModalProps) 
     </Dialog>
   );
 }
-
