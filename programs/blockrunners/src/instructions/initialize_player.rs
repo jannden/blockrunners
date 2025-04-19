@@ -3,7 +3,7 @@ use anchor_lang::prelude::*;
 use crate::{
     constants::{DISCRIMINATOR_SIZE, PLAYER_STATE_SEED},
     instructions::update_last_login,
-    state::PlayerState,
+    state::{Card, PlayerState},
 };
 
 #[derive(Accounts)]
@@ -28,9 +28,8 @@ pub fn initialize_player(ctx: Context<InitializePlayer>) -> Result<()> {
     let clock = Clock::get()?;
 
     // Initialize player state with default values
-    player_state.player = *ctx.accounts.player.key;
     player_state.ciphers = 0;
-    player_state.cards = Vec::new();
+    player_state.cards = vec![Card::Shield, Card::Doubler, Card::Swift]; // TODO: Implement default for cards
     player_state.position = 0;
     player_state.bump = ctx.bumps.player_state;
     player_state.player_events = Vec::new();
@@ -48,6 +47,8 @@ pub fn initialize_player(ctx: Context<InitializePlayer>) -> Result<()> {
     player_state.randomness_account = None;
     player_state.randomness_slot = None;
     player_state.randomness_value = None;
+    player_state.move_direction = None;
+    player_state.move_cards = None;
 
     msg!("Player initialized");
 

@@ -8,12 +8,13 @@ mod instructions;
 mod state;
 mod utils;
 use instructions::*;
-use state::{Card, PathDirection};
+use state::{Card, CardUsage, PathDirection};
 
-declare_id!("7Ry4KiT8BGuUJHgEXKjmeHxDTgYd25tczRiiC8nQKQ9Z");
+declare_id!("HiYeEKsFdW3k4dcLYsSewYmeZ1bHoiWa45tSZ7kdDXeV");
 
 #[program]
 pub mod blockrunners {
+
     use super::*;
 
     pub fn initialize_game(ctx: Context<InitializeGame>) -> Result<()> {
@@ -28,24 +29,20 @@ pub mod blockrunners {
         purchase_ciphers::purchase_ciphers(ctx, amount)
     }
 
-    pub fn make_move(
-        ctx: Context<MakeMove>,
+    pub fn move_commit(
+        ctx: Context<MoveCommit>,
         direction: PathDirection,
         card_usage: CardUsage,
     ) -> Result<()> {
-        make_move::make_move(ctx, direction, card_usage)
+        move_commit::move_commit(ctx, direction, card_usage)
+    }
+
+    pub fn move_reveal(ctx: Context<MoveReveal>) -> Result<()> {
+        move_reveal::move_reveal(ctx)
     }
 
     #[cfg(feature = "test")]
     pub fn debug_give_card(ctx: Context<DebugGiveCard>, card: Card) -> Result<()> {
         debug_give_card::debug_give_card(ctx, card)
-    }
-
-    pub fn temp_rand_request(ctx: Context<RandRequest>) -> Result<()> {
-        temp_rand_request::temp_rand_request(ctx)
-    }
-
-    pub fn temp_rand_reveal(ctx: Context<RandReveal>) -> Result<()> {
-        temp_rand_reveal::temp_rand_reveal(ctx)
     }
 }

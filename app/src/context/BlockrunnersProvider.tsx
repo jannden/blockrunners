@@ -3,7 +3,7 @@ import { useConnection, useAnchorWallet } from "@solana/wallet-adapter-react";
 import { BN } from "@coral-xyz/anchor";
 import { PublicKey, Keypair, SystemProgram } from "@solana/web3.js";
 import { gameStatePDA, getPlayerStatePDA } from "../lib/constants";
-import type { Direction, GameState, PlayerState } from "../types/types";
+import type { GameState, PlayerState } from "../types/types";
 import { BlockrunnersContext } from "../hooks/useBlockrunners";
 import { useProgram, useSwitchboardProgram } from "@/hooks/useProgram";
 import * as sb from "@switchboard-xyz/on-demand";
@@ -127,6 +127,8 @@ function BlockrunnersProvider({ children }: { children: ReactNode }) {
       .initializeGame()
       .accounts({
         admin: wallet.publicKey,
+        gameState: gameStatePDA,
+        systemProgram: SystemProgram.programId,
       })
       .rpc()
       .then((tx) => {
@@ -138,7 +140,7 @@ function BlockrunnersProvider({ children }: { children: ReactNode }) {
   };
 
   // Create randomness account
-  const requestRandomness = async () => {
+  const moveRequest = async () => {
     if (!program || !wallet?.publicKey || !playerStatePDA) {
       console.error("Create randomness account: Wallet not connected or program not available");
       return;
@@ -153,8 +155,6 @@ function BlockrunnersProvider({ children }: { children: ReactNode }) {
         console.error("Switchboard program not available");
         return;
       }
-
-      // Type errors due to a mismatch between the @switchboard-xyz/on-demand package and @coral-xyz/anchor
 
       // Create randomness account
       const queue = await setupQueue(switchboardProgram);
@@ -200,7 +200,14 @@ function BlockrunnersProvider({ children }: { children: ReactNode }) {
 
       // Blockrunners program request instruction
       const blockrunnersRequestIx = await program.methods
-        .tempRandRequest()
+        .moveCommit(
+          { right: true },
+          {
+            shield: false,
+            doubler: false,
+            swift: false,
+          }
+        )
         .accounts({
           player: wallet.publicKey,
           randomnessAccount: randomnessAccount.pubkey,
@@ -250,7 +257,7 @@ function BlockrunnersProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const revealRandomness = async () => {
+  const moveReveal = async () => {
     if (!program || !wallet?.publicKey || !randomnessAccountAddress || !playerStatePDA) {
       console.error("Reveal randomness: Wallet not connected or program not available");
       return;
@@ -271,7 +278,7 @@ function BlockrunnersProvider({ children }: { children: ReactNode }) {
 
       // Blockrunners program reveal instruction
       const blockrunnersRevealIx = await program.methods
-        .tempRandReveal()
+        .moveReveal()
         .accounts({
           player: wallet.publicKey,
           randomnessAccount: randomnessAccountAddress,
@@ -385,35 +392,6 @@ function BlockrunnersProvider({ children }: { children: ReactNode }) {
       });
   };
 
-  // Instruction: Make a move
-  const makeMove = async (direction: Direction) => {
-    if (!program) return;
-    if (!wallet?.publicKey || !playerStatePDA || !randomnessAccountAddress) {
-      console.error("Make move: Wallet or PlayerStatePDA not found");
-      return;
-    }
-
-    program.methods
-      .makeMove(direction === "left" ? { left: true } : { right: true }, {
-        shield: true,
-        doubler: true,
-        swift: true,
-      })
-      .accounts({
-        player: wallet.publicKey,
-        playerState: playerStatePDA,
-        gameState: gameStatePDA,
-        randomnessAccount: randomnessAccountAddress,
-      })
-      .rpc()
-      .then((tx) => {
-        console.log("Make move: Transaction sent", tx);
-      })
-      .catch((err) => {
-        console.error("Make move:", err);
-      });
-  };
-
   const value = {
     program,
     gameState,
@@ -424,9 +402,8 @@ function BlockrunnersProvider({ children }: { children: ReactNode }) {
     initializeGame,
     initializePlayer,
     purchaseCiphers,
-    makeMove,
-    requestRandomness,
-    revealRandomness,
+    moveRequest,
+    moveReveal,
   };
 
   return <BlockrunnersContext.Provider value={value}>{children}</BlockrunnersContext.Provider>;

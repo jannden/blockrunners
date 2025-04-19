@@ -6,7 +6,8 @@ import { RoundButton } from "./ui/round-button";
 import { AirdropButton } from "./airdrop-button";
 import { InitGameButton } from "./init-game-button";
 import { InitPlayerButton } from "./init-player-button";
-import { InitRandomnessButton } from "./init-randomness-button";
+import { MoveRequestButton } from "./move-request";
+import { MoveRevealButton } from "./move-reveal";
 import { useBlockrunners } from "@/hooks/useBlockrunners";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { GetCiphersButton } from "./get-ciphers";
@@ -35,7 +36,8 @@ export function GameControls({
         {connected && <AirdropButton />}
         {connected && <InitGameButton />}
         {connected && <InitPlayerButton />}
-        {connected && <InitRandomnessButton />}
+        {connected && <MoveRequestButton />}
+        {connected && <MoveRevealButton />}
         {connected && <GetCiphersButton />}
       </div>
 

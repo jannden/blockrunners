@@ -1,5 +1,5 @@
 {
-  "address": "7Ry4KiT8BGuUJHgEXKjmeHxDTgYd25tczRiiC8nQKQ9Z",
+  "address": "HiYeEKsFdW3k4dcLYsSewYmeZ1bHoiWa45tSZ7kdDXeV",
   "metadata": {
     "name": "blockrunners",
     "version": "0.1.0",
@@ -110,16 +110,16 @@
       "args": []
     },
     {
-      "name": "make_move",
+      "name": "move_commit",
       "discriminator": [
-        78,
+        83,
+        26,
+        171,
         77,
-        152,
-        203,
-        222,
-        211,
-        208,
-        233
+        137,
+        39,
+        119,
+        210
       ],
       "accounts": [
         {
@@ -157,7 +157,6 @@
         },
         {
           "name": "game_state",
-          "writable": true,
           "pda": {
             "seeds": [
               {
@@ -179,8 +178,7 @@
           }
         },
         {
-          "name": "randomness_account",
-          "writable": true
+          "name": "randomness_account"
         }
       ],
       "args": [
@@ -201,6 +199,80 @@
           }
         }
       ]
+    },
+    {
+      "name": "move_reveal",
+      "discriminator": [
+        107,
+        207,
+        143,
+        156,
+        197,
+        217,
+        108,
+        61
+      ],
+      "accounts": [
+        {
+          "name": "player",
+          "signer": true
+        },
+        {
+          "name": "player_state",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  108,
+                  97,
+                  121,
+                  101,
+                  114,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "player"
+              }
+            ]
+          }
+        },
+        {
+          "name": "game_state",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  103,
+                  97,
+                  109,
+                  101,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  101
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "randomness_account"
+        }
+      ],
+      "args": []
     },
     {
       "name": "purchase_ciphers",
@@ -273,9 +345,6 @@
           }
         },
         {
-          "name": "randomness_account"
-        },
-        {
           "name": "system_program",
           "address": "11111111111111111111111111111111"
         }
@@ -286,112 +355,6 @@
           "type": "u64"
         }
       ]
-    },
-    {
-      "name": "temp_rand_request",
-      "discriminator": [
-        113,
-        139,
-        225,
-        92,
-        32,
-        154,
-        254,
-        183
-      ],
-      "accounts": [
-        {
-          "name": "player",
-          "writable": true,
-          "signer": true
-        },
-        {
-          "name": "player_state",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  112,
-                  108,
-                  97,
-                  121,
-                  101,
-                  114,
-                  95,
-                  115,
-                  116,
-                  97,
-                  116,
-                  101
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "player"
-              }
-            ]
-          }
-        },
-        {
-          "name": "randomness_account"
-        }
-      ],
-      "args": []
-    },
-    {
-      "name": "temp_rand_reveal",
-      "discriminator": [
-        236,
-        197,
-        245,
-        2,
-        182,
-        122,
-        170,
-        212
-      ],
-      "accounts": [
-        {
-          "name": "player",
-          "writable": true,
-          "signer": true
-        },
-        {
-          "name": "player_state",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  112,
-                  108,
-                  97,
-                  121,
-                  101,
-                  114,
-                  95,
-                  115,
-                  116,
-                  97,
-                  116,
-                  101
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "player"
-              }
-            ]
-          }
-        },
-        {
-          "name": "randomness_account"
-        }
-      ],
-      "args": []
     }
   ],
   "accounts": [
@@ -542,6 +505,11 @@
       "code": 6020,
       "name": "Unauthorized",
       "msg": "Unauthorized"
+    },
+    {
+      "code": 6021,
+      "name": "MoveNotCommitted",
+      "msg": "Move not committed"
     }
   ],
   "types": [
@@ -641,10 +609,6 @@
         "kind": "struct",
         "fields": [
           {
-            "name": "player",
-            "type": "pubkey"
-          },
-          {
             "name": "ciphers",
             "docs": [
               "Number of ciphers owned"
@@ -653,6 +617,9 @@
           },
           {
             "name": "cards",
+            "docs": [
+              "Cards owned"
+            ],
             "type": {
               "vec": {
                 "defined": {
@@ -664,7 +631,7 @@
           {
             "name": "position",
             "docs": [
-              "Current block number"
+              "Current position"
             ],
             "type": "u8"
           },
@@ -677,6 +644,9 @@
           },
           {
             "name": "player_events",
+            "docs": [
+              "Social feed events history"
+            ],
             "type": {
               "vec": {
                 "defined": {
@@ -717,6 +687,32 @@
             ],
             "type": {
               "option": "bytes"
+            }
+          },
+          {
+            "name": "move_direction",
+            "docs": [
+              "Commitment to the move direction"
+            ],
+            "type": {
+              "option": {
+                "defined": {
+                  "name": "PathDirection"
+                }
+              }
+            }
+          },
+          {
+            "name": "move_cards",
+            "docs": [
+              "Commitment to use cards"
+            ],
+            "type": {
+              "option": {
+                "defined": {
+                  "name": "CardUsage"
+                }
+              }
             }
           }
         ]

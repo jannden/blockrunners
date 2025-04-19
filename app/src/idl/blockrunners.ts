@@ -5,7 +5,7 @@
  * IDL can be found at `target/idl/blockrunners.json`.
  */
 export type Blockrunners = {
-  address: "7Ry4KiT8BGuUJHgEXKjmeHxDTgYd25tczRiiC8nQKQ9Z";
+  address: "HiYeEKsFdW3k4dcLYsSewYmeZ1bHoiWa45tSZ7kdDXeV";
   metadata: {
     name: "blockrunners";
     version: "0.1.0";
@@ -74,8 +74,8 @@ export type Blockrunners = {
       args: [];
     },
     {
-      name: "makeMove";
-      discriminator: [78, 77, 152, 203, 222, 211, 208, 233];
+      name: "moveCommit";
+      discriminator: [83, 26, 171, 77, 137, 39, 119, 210];
       accounts: [
         {
           name: "player";
@@ -99,7 +99,6 @@ export type Blockrunners = {
         },
         {
           name: "gameState";
-          writable: true;
           pda: {
             seeds: [
               {
@@ -111,7 +110,6 @@ export type Blockrunners = {
         },
         {
           name: "randomnessAccount";
-          writable: true;
         }
       ];
       args: [
@@ -132,6 +130,47 @@ export type Blockrunners = {
           };
         }
       ];
+    },
+    {
+      name: "moveReveal";
+      discriminator: [107, 207, 143, 156, 197, 217, 108, 61];
+      accounts: [
+        {
+          name: "player";
+          signer: true;
+        },
+        {
+          name: "playerState";
+          writable: true;
+          pda: {
+            seeds: [
+              {
+                kind: "const";
+                value: [112, 108, 97, 121, 101, 114, 95, 115, 116, 97, 116, 101];
+              },
+              {
+                kind: "account";
+                path: "player";
+              }
+            ];
+          };
+        },
+        {
+          name: "gameState";
+          pda: {
+            seeds: [
+              {
+                kind: "const";
+                value: [103, 97, 109, 101, 95, 115, 116, 97, 116, 101];
+              }
+            ];
+          };
+        },
+        {
+          name: "randomnessAccount";
+        }
+      ];
+      args: [];
     },
     {
       name: "purchaseCiphers";
@@ -171,9 +210,6 @@ export type Blockrunners = {
           };
         },
         {
-          name: "randomnessAccount";
-        },
-        {
           name: "systemProgram";
           address: "11111111111111111111111111111111";
         }
@@ -184,68 +220,6 @@ export type Blockrunners = {
           type: "u64";
         }
       ];
-    },
-    {
-      name: "tempRandRequest";
-      discriminator: [113, 139, 225, 92, 32, 154, 254, 183];
-      accounts: [
-        {
-          name: "player";
-          writable: true;
-          signer: true;
-        },
-        {
-          name: "playerState";
-          writable: true;
-          pda: {
-            seeds: [
-              {
-                kind: "const";
-                value: [112, 108, 97, 121, 101, 114, 95, 115, 116, 97, 116, 101];
-              },
-              {
-                kind: "account";
-                path: "player";
-              }
-            ];
-          };
-        },
-        {
-          name: "randomnessAccount";
-        }
-      ];
-      args: [];
-    },
-    {
-      name: "tempRandReveal";
-      discriminator: [236, 197, 245, 2, 182, 122, 170, 212];
-      accounts: [
-        {
-          name: "player";
-          writable: true;
-          signer: true;
-        },
-        {
-          name: "playerState";
-          writable: true;
-          pda: {
-            seeds: [
-              {
-                kind: "const";
-                value: [112, 108, 97, 121, 101, 114, 95, 115, 116, 97, 116, 101];
-              },
-              {
-                kind: "account";
-                path: "player";
-              }
-            ];
-          };
-        },
-        {
-          name: "randomnessAccount";
-        }
-      ];
-      args: [];
     }
   ];
   accounts: [
@@ -369,6 +343,11 @@ export type Blockrunners = {
       code: 6020;
       name: "unauthorized";
       msg: "unauthorized";
+    },
+    {
+      code: 6021;
+      name: "moveNotCommitted";
+      msg: "Move not committed";
     }
   ];
   types: [
@@ -462,16 +441,13 @@ export type Blockrunners = {
         kind: "struct";
         fields: [
           {
-            name: "player";
-            type: "pubkey";
-          },
-          {
             name: "ciphers";
             docs: ["Number of ciphers owned"];
             type: "u64";
           },
           {
             name: "cards";
+            docs: ["Cards owned"];
             type: {
               vec: {
                 defined: {
@@ -482,7 +458,7 @@ export type Blockrunners = {
           },
           {
             name: "position";
-            docs: ["Current block number"];
+            docs: ["Current position"];
             type: "u8";
           },
           {
@@ -492,6 +468,7 @@ export type Blockrunners = {
           },
           {
             name: "playerEvents";
+            docs: ["Social feed events history"];
             type: {
               vec: {
                 defined: {
@@ -524,6 +501,28 @@ export type Blockrunners = {
             docs: ["The randomness values generated for the player"];
             type: {
               option: "bytes";
+            };
+          },
+          {
+            name: "moveDirection";
+            docs: ["Commitment to the move direction"];
+            type: {
+              option: {
+                defined: {
+                  name: "pathDirection";
+                };
+              };
+            };
+          },
+          {
+            name: "moveCards";
+            docs: ["Commitment to use cards"];
+            type: {
+              option: {
+                defined: {
+                  name: "cardUsage";
+                };
+              };
             };
           }
         ];

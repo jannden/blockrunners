@@ -67,4 +67,7 @@ pub enum BlockrunnersError {
 
     #[msg("Unauthorized")]
     Unauthorized,
+
+    #[msg("Move not committed")]
+    MoveNotCommitted,
 }

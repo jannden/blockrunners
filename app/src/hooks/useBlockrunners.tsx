@@ -2,7 +2,7 @@ import { PublicKey } from "@solana/web3.js";
 import { createContext, useContext } from "react";
 import { gameStatePDA } from "../lib/constants";
 import { GameState, PlayerState } from "../types/types";
-import type { Direction, SocialFeedEvent } from "../types/types";
+import type { SocialFeedEvent } from "../types/types";
 
 // Define the types for React context
 interface BlockrunnersContextType {
@@ -14,9 +14,8 @@ interface BlockrunnersContextType {
   initializeGame: () => Promise<void>;
   initializePlayer: () => Promise<void>;
   purchaseCiphers: (amount: number) => Promise<void>;
-  makeMove: (direction: Direction) => Promise<void>;
-  requestRandomness: () => Promise<void>;
-  revealRandomness: () => Promise<void>;
+  moveRequest: () => Promise<void>;
+  moveReveal: () => Promise<void>;
 }
 
 // Create context with default values
@@ -29,9 +28,8 @@ export const BlockrunnersContext = createContext<BlockrunnersContextType>({
   initializeGame: async () => {},
   initializePlayer: async () => {},
   purchaseCiphers: async () => {},
-  makeMove: async () => {},
-  requestRandomness: async () => undefined,
-  revealRandomness: async () => undefined,
+  moveRequest: async () => {},
+  moveReveal: async () => {},
 });
 
 export const useBlockrunners = () => useContext(BlockrunnersContext);

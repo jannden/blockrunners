@@ -26,18 +26,28 @@ impl Space for PathDirection {
     const INIT_SPACE: usize = 1;
 }
 
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, Debug, Default)]
+pub struct CardUsage {
+    pub shield: bool,
+    pub doubler: bool,
+    pub swift: bool,
+}
+
+impl Space for CardUsage {
+    const INIT_SPACE: usize = 3;
+}
+
 #[account]
 #[derive(InitSpace)]
 pub struct PlayerState {
-    pub player: Pubkey,
-
     /// Number of ciphers owned
     pub ciphers: u64,
 
+    /// Cards owned
     #[max_len(MAX_TOTAL_CARDS)]
     pub cards: Vec<Card>,
 
-    /// Current block number
+    /// Current position
     pub position: u8,
 
     /// Store bump to save compute
@@ -46,6 +56,7 @@ pub struct PlayerState {
     /// tommy: The Unix timestamp of the game instance this player is part of i think
     pub game_start: i64,
 
+    /// Social feed events history
     #[max_len(MAX_FEED_EVENTS)]
     pub player_events: Vec<SocialFeedEvent>,
 
@@ -67,4 +78,10 @@ pub struct PlayerState {
     /// The randomness values generated for the player
     #[max_len(MAX_RANDOMNESS_VALUES)]
     pub randomness_value: Option<Vec<u8>>,
+
+    /// Commitment to the move direction
+    pub move_direction: Option<PathDirection>,
+
+    /// Commitment to use cards
+    pub move_cards: Option<CardUsage>,
 }

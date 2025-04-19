@@ -61,7 +61,7 @@ pub fn purchase_ciphers(ctx: Context<PurchaseCiphers>, amount: u64) -> Result<()
         save_and_emit_event(
             &mut game_state.game_events,
             SocialFeedEventType::PlayerJoined,
-            format!("Player {} joining the game!", player_state.player.key()),
+            format!("Player {} joining the game!", ctx.accounts.player.key()),
         )?;
 
         player_state.in_game = true;
