@@ -44,8 +44,17 @@ pub enum BlockrunnersError {
     #[msg("Player not at end of path yet")]
     NotAtEndOfPath,
 
+    #[msg("Failed to parse randomness account")]
+    RandomnessAccountParsing,
+
+    #[msg("Failed to parse randomness account for reveal")]
+    RandomnessAccountParsingReveal,
+
     #[msg("Randomness data is unavailable")]
     RandomnessUnavailable,
+
+    #[msg("Randomness finished")]
+    RandomnessFinished,
 
     #[msg("Randomness not resolved")]
     RandomnessNotResolved,

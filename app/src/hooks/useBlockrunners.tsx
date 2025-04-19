@@ -15,6 +15,8 @@ interface BlockrunnersContextType {
   initializePlayer: () => Promise<void>;
   purchaseCiphers: (amount: number) => Promise<void>;
   makeMove: (direction: Direction) => Promise<void>;
+  requestRandomness: () => Promise<void>;
+  revealRandomness: () => Promise<void>;
 }
 
 // Create context with default values
@@ -28,6 +30,8 @@ export const BlockrunnersContext = createContext<BlockrunnersContextType>({
   initializePlayer: async () => {},
   purchaseCiphers: async () => {},
   makeMove: async () => {},
+  requestRandomness: async () => undefined,
+  revealRandomness: async () => undefined,
 });
 
 export const useBlockrunners = () => useContext(BlockrunnersContext);

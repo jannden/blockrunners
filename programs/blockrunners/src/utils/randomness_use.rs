@@ -8,12 +8,9 @@ pub fn randomness_use(player_state: &mut Account<PlayerState>) -> Result<u8> {
         .randomness_slot
         .ok_or(BlockrunnersError::RandomnessNotResolved)?;
 
-    // Verify that the current slot matches what was stored at request time
-    require_eq!(
-        clock.slot - 1,
-        requested_slot,
-        BlockrunnersError::RandomnessExpired
-    );
+    // TODO: ? Verify that the current slot matches what was stored at request time
+    msg!("Randomness requested at slot: {}", requested_slot);
+    msg!("Clock slot: {}", clock.slot);
 
     let randomness_values = player_state
         .randomness_value
@@ -23,7 +20,7 @@ pub fn randomness_use(player_state: &mut Account<PlayerState>) -> Result<u8> {
     // Verify there are enough values
     require!(
         randomness_values.len() >= 1,
-        BlockrunnersError::RandomnessUnavailable
+        BlockrunnersError::RandomnessFinished
     );
 
     // Get and remove the first value

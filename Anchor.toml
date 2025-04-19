@@ -1,21 +1,24 @@
 [toolchain]
-package_manager = "yarn"
 anchor_version = "0.31.0"
 solana_version = "2.1.0"
+package_manager = "yarn"
 
 [features]
 resolution = true
 skip-lint = false
 
-[programs.localnet]
-blockrunners = "9VmQrVVZxi6wczuCNWcEMmuLAMRJkZ6e38yudFZv3hPo"
+[programs.devnet]
+blockrunners = "7Ry4KiT8BGuUJHgEXKjmeHxDTgYd25tczRiiC8nQKQ9Z"
 
 [registry]
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "Localnet"
+cluster = "devnet"
 wallet = "~/.config/solana/id.json"
+
+[workspace]
+types = "app/src/idl/"
 
 [scripts]
 copy_idl = "mkdir -p app/src/idl && cp target/idl/blockrunners.json app/src/idl/blockrunners.json"

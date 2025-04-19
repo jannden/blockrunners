@@ -1,5 +1,5 @@
 {
-  "address": "7TMxuDvpqy8ye1SMWZ4KFXerGjn2ua4s8VaWm8nEEE7y",
+  "address": "7Ry4KiT8BGuUJHgEXKjmeHxDTgYd25tczRiiC8nQKQ9Z",
   "metadata": {
     "name": "blockrunners",
     "version": "0.1.0",
@@ -101,9 +101,6 @@
               }
             ]
           }
-        },
-        {
-          "name": "randomness_account"
         },
         {
           "name": "system_program",
@@ -289,6 +286,112 @@
           "type": "u64"
         }
       ]
+    },
+    {
+      "name": "temp_rand_request",
+      "discriminator": [
+        113,
+        139,
+        225,
+        92,
+        32,
+        154,
+        254,
+        183
+      ],
+      "accounts": [
+        {
+          "name": "player",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "player_state",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  108,
+                  97,
+                  121,
+                  101,
+                  114,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "player"
+              }
+            ]
+          }
+        },
+        {
+          "name": "randomness_account"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "temp_rand_reveal",
+      "discriminator": [
+        236,
+        197,
+        245,
+        2,
+        182,
+        122,
+        170,
+        212
+      ],
+      "accounts": [
+        {
+          "name": "player",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "player_state",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  108,
+                  97,
+                  121,
+                  101,
+                  114,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "player"
+              }
+            ]
+          }
+        },
+        {
+          "name": "randomness_account"
+        }
+      ],
+      "args": []
     }
   ],
   "accounts": [
@@ -402,26 +505,41 @@
     },
     {
       "code": 6013,
+      "name": "RandomnessAccountParsing",
+      "msg": "Failed to parse randomness account"
+    },
+    {
+      "code": 6014,
+      "name": "RandomnessAccountParsingReveal",
+      "msg": "Failed to parse randomness account for reveal"
+    },
+    {
+      "code": 6015,
       "name": "RandomnessUnavailable",
       "msg": "Randomness data is unavailable"
     },
     {
-      "code": 6014,
+      "code": 6016,
+      "name": "RandomnessFinished",
+      "msg": "Randomness finished"
+    },
+    {
+      "code": 6017,
       "name": "RandomnessNotResolved",
       "msg": "Randomness not resolved"
     },
     {
-      "code": 6015,
+      "code": 6018,
       "name": "RandomnessStale",
       "msg": "Randomness is stale"
     },
     {
-      "code": 6016,
+      "code": 6019,
       "name": "RandomnessExpired",
       "msg": "Randomness is expired"
     },
     {
-      "code": 6017,
+      "code": 6020,
       "name": "Unauthorized",
       "msg": "Unauthorized"
     }
@@ -579,7 +697,9 @@
             "docs": [
               "Switchboard randomness account for player-specific randomness"
             ],
-            "type": "pubkey"
+            "type": {
+              "option": "pubkey"
+            }
           },
           {
             "name": "randomness_slot",

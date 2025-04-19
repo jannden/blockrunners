@@ -59,7 +59,7 @@ pub struct PlayerState {
     pub total_ciphers_bought: u64,
 
     /// Switchboard randomness account for player-specific randomness
-    pub randomness_account: Pubkey,
+    pub randomness_account: Option<Pubkey>,
 
     /// The slot at which the randomness was committed
     pub randomness_slot: Option<u64>,

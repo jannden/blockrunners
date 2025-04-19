@@ -6,7 +6,7 @@ use crate::{
     utils::{randomness_use, save_and_emit_event},
 };
 
-pub fn give_cards(player_state: &mut Account<PlayerState>, card_count: u8) -> Result<()> {
+pub fn give_random_cards(player_state: &mut Account<PlayerState>, card_count: u8) -> Result<()> {
     // Check if player has reached max card limit
     let space_left = MAX_TOTAL_CARDS.saturating_sub(player_state.cards.len() as u8);
     if space_left == 0 {

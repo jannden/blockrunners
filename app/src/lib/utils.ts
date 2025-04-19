@@ -1,7 +1,8 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 import * as anchor from "@coral-xyz/anchor";
-import { Keypair, LAMPORTS_PER_SOL } from "@solana/web3.js";
+import { Keypair, PublicKey, LAMPORTS_PER_SOL } from "@solana/web3.js";
+import * as sb from "@switchboard-xyz/on-demand";
 import IDL from "@/idl/blockrunners.json";
 
 export function cn(...inputs: ClassValue[]) {
@@ -103,3 +104,37 @@ export const getMsgLogs = async (
     return null;
   }
 };
+
+export async function loadSbProgram(provider: anchor.Provider): Promise<anchor.Program> {
+  const sbProgramId = await sb.getProgramId(provider.connection);
+  const sbIdl = await anchor.Program.fetchIdl(sbProgramId, provider);
+  const sbProgram = new anchor.Program(sbIdl!, provider);
+  return sbProgram;
+}
+
+export async function loadSVMSwitchboardProgram(
+  provider: anchor.Provider
+): Promise<anchor.Program> {
+  const svmProgramId = sb.ON_DEMAND_MAINNET_PID;
+  const svmIdl = await anchor.Program.fetchIdl(svmProgramId, provider);
+  const svmProgram = new anchor.Program(svmIdl!, provider);
+  return svmProgram;
+}
+
+export async function setupQueue(program: anchor.Program): Promise<PublicKey> {
+  const queueAccount = await sb.getDefaultQueue(program.provider.connection.rpcEndpoint);
+  console.log("Queue account", queueAccount.pubkey.toString());
+  try {
+    await queueAccount.loadData();
+  } catch (err) {
+    console.error("Queue not found, ensure you are using devnet in your env", err);
+    process.exit(1);
+  }
+  return queueAccount.pubkey;
+}
+
+export async function setupSVMQueue(program: anchor.Program, queue: PublicKey): Promise<PublicKey> {
+  const queuePDA = sb.Queue.queuePDA(program, queue);
+  console.log("Queue:", queuePDA.toString());
+  return queuePDA;
+}

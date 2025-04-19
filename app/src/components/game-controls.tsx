@@ -6,8 +6,10 @@ import { RoundButton } from "./ui/round-button";
 import { AirdropButton } from "./airdrop-button";
 import { InitGameButton } from "./init-game-button";
 import { InitPlayerButton } from "./init-player-button";
+import { InitRandomnessButton } from "./init-randomness-button";
 import { useBlockrunners } from "@/hooks/useBlockrunners";
 import { useWallet } from "@solana/wallet-adapter-react";
+import { GetCiphersButton } from "./get-ciphers";
 
 interface GameControlsProps {
   onMove: (direction: "left" | "right") => void;
@@ -29,13 +31,13 @@ export function GameControls({
 
   return (
     <div className="border-4 border-black rounded-lg shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] bg-white dark:bg-[#1e1e1e] overflow-hidden">
-      {!playerState && (
-        <div className="flex flex-row justify-center gap-2 p-4">
-          {connected && <AirdropButton />}
-          {connected && <InitGameButton />}
-          {connected && <InitPlayerButton />}
-        </div>
-      )}
+      <div className="flex flex-row flex-wrap justify-center gap-2 p-4">
+        {connected && <AirdropButton />}
+        {connected && <InitGameButton />}
+        {connected && <InitPlayerButton />}
+        {connected && <InitRandomnessButton />}
+        {connected && <GetCiphersButton />}
+      </div>
 
       {playerState && (
         <>

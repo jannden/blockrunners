@@ -10,7 +10,7 @@ mod utils;
 use instructions::*;
 use state::{Card, PathDirection};
 
-declare_id!("7TMxuDvpqy8ye1SMWZ4KFXerGjn2ua4s8VaWm8nEEE7y");
+declare_id!("7Ry4KiT8BGuUJHgEXKjmeHxDTgYd25tczRiiC8nQKQ9Z");
 
 #[program]
 pub mod blockrunners {
@@ -39,5 +39,13 @@ pub mod blockrunners {
     #[cfg(feature = "test")]
     pub fn debug_give_card(ctx: Context<DebugGiveCard>, card: Card) -> Result<()> {
         debug_give_card::debug_give_card(ctx, card)
+    }
+
+    pub fn temp_rand_request(ctx: Context<RandRequest>) -> Result<()> {
+        temp_rand_request::temp_rand_request(ctx)
+    }
+
+    pub fn temp_rand_reveal(ctx: Context<RandReveal>) -> Result<()> {
+        temp_rand_reveal::temp_rand_reveal(ctx)
     }
 }

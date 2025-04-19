@@ -24,7 +24,7 @@ export const InitGameButton = () => {
 
   return (
     <>
-      {publicKey && (
+      {publicKey && !gameState && (
         <Button onClick={handleInitGame} disabled={isLoading || !!gameState}>
           {isLoading ? "Loading..." : "Init Game"}
         </Button>

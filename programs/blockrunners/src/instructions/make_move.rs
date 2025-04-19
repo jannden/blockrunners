@@ -8,7 +8,10 @@ use crate::{
         update_last_login,
     },
     state::{Card, GameState, PathDirection, PlayerState, SocialFeedEventType},
-    utils::{randomness_request, randomness_reveal, randomness_use, save_and_emit_event},
+    utils::{
+        give_random_cards, randomness_request, randomness_reveal, randomness_use,
+        save_and_emit_event,
+    },
 };
 
 #[derive(Accounts)]
@@ -50,7 +53,7 @@ pub fn make_move(
 ) -> Result<()> {
     let game_state = &mut ctx.accounts.game_state;
     let player_state = &mut ctx.accounts.player_state;
-    let player_randomness = &ctx.accounts.randomness_account;
+    let randomness_account = &ctx.accounts.randomness_account;
 
     // tommy: check if player needs to be reset due to game completion
     require!(
@@ -75,8 +78,8 @@ pub fn make_move(
     player_state.ciphers -= total_cost;
 
     // Request and reveal randomness
-    randomness_request(player_state, player_randomness)?;
-    randomness_reveal(player_state, player_randomness)?;
+    randomness_request(player_state, randomness_account)?;
+    randomness_reveal(player_state, randomness_account)?;
 
     // Determine the correct direction based on the randomness value
     let correct_direction = if randomness_use(player_state)? % 2 == 0 {
@@ -250,22 +253,7 @@ fn handle_correct_move(
     let collect_cards_count = if card_usage.doubler { 2 } else { 1 };
 
     // Collect cards based on success and doubler
-    for _ in 0..collect_cards_count {
-        // To update this with Switchboard randomness, we would need to pass the randomness account,
-        // but for now we'll skip this since the player_card collection would need to be redesigned
-        // with a different approach for on-demand randomness
-
-        // Just add a placeholder card for now
-        if player_state.cards.len() < crate::constants::MAX_TOTAL_CARDS as usize {
-            player_state.cards.push(Card::Shield);
-
-            save_and_emit_event(
-                &mut player_state.player_events,
-                SocialFeedEventType::PlayerCardCollected,
-                format!("You have collected a new card: {:?}", Card::Shield),
-            )?;
-        }
-    }
+    give_random_cards(player_state, collect_cards_count)?;
 
     // Build event message
     let mut card_effects = Vec::new();
@@ -335,6 +323,7 @@ fn handle_incorrect_move(
     } else {
         // No shield = reset to start
         player_state.position = 0;
+        player_state.cards = vec![Card::Shield, Card::Doubler, Card::Swift];
 
         // Build event message for incorrect move
         let mut event_message = "Player made an incorrect move and reset to the start!".to_string();

@@ -6,18 +6,23 @@ use crate::{errors::BlockrunnersError, state::PlayerState};
 #[cfg(not(feature = "test"))]
 pub fn randomness_reveal(
     player_state: &mut Account<PlayerState>,
-    player_randomness: &AccountInfo,
+    randomness_account: &AccountInfo,
 ) -> Result<()> {
     // Verify that the randomness account matches the one stored in player_state
-    require_keys_eq!(
-        player_randomness.key(),
-        player_state.randomness_account,
-        BlockrunnersError::Unauthorized
-    );
+    if let Some(randomness_account_key) = player_state.randomness_account {
+        require_keys_eq!(
+            randomness_account.key(),
+            randomness_account_key,
+            BlockrunnersError::Unauthorized
+        );
+    } else {
+        // No randomness account stored, this is a state error
+        return Err(BlockrunnersError::RandomnessUnavailable.into());
+    }
 
     // Parse the randomness account data
-    let randomness_data = RandomnessAccountData::parse(player_randomness.data.borrow())
-        .map_err(|_| BlockrunnersError::RandomnessUnavailable)?;
+    let randomness_data = RandomnessAccountData::parse(randomness_account.data.borrow())
+        .map_err(|_| BlockrunnersError::RandomnessAccountParsingReveal)?;
 
     // Verify that the randomness slot matches what was stored at request time
     require!(
@@ -45,7 +50,7 @@ pub fn randomness_reveal(
 #[allow(unused_variables)]
 pub fn randomness_reveal(
     player_state: &mut Account<PlayerState>,
-    player_randomness: &AccountInfo,
+    randomness_account: &AccountInfo,
 ) -> Result<()> {
     msg!("TEST MODE: Running randomness_reveal");
 

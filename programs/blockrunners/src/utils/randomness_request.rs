@@ -7,35 +7,30 @@ use crate::state::PlayerState;
 #[cfg(not(feature = "test"))]
 pub fn randomness_request(
     player_state: &mut Account<PlayerState>,
-    player_randomness: &AccountInfo,
+    randomness_account: &AccountInfo,
 ) -> Result<()> {
-    // Reset the randomness value to None since we are requesting new randomness
+    // Save randomness account to verify later
+    player_state.randomness_account = Some(randomness_account.key());
+
+    // Reset the randomness values without removing the account reference
     player_state.randomness_value = None;
 
     // Parse the randomness account data
-    let randomness_data =
-        RandomnessAccountData::parse(player_randomness.data.borrow()).map_err(|_| {
-            msg!(
-                "Failed to parse randomness data for account {}",
-                player_randomness.key()
-            );
-            BlockrunnersError::RandomnessUnavailable
-        })?;
+    let randomness_data = RandomnessAccountData::parse(randomness_account.data.borrow())
+        .map_err(|_| BlockrunnersError::RandomnessAccountParsing)?;
 
-    // Get the current clock to verify randomness is committed but not yet revealed
+    // TODO ??? Error if randomness_data.seed_slot != clock.slot - 1
     let clock = Clock::get()?;
+    msg!("seed_slot: {}", randomness_data.seed_slot);
+    msg!("slot: {}", clock.slot);
 
-    // Check if the randomness seed is available and from the previous slot
-    if randomness_data.seed_slot != clock.slot - 1 {
-        msg!("seed_slot: {}", randomness_data.seed_slot);
-        msg!("slot: {}", clock.slot);
-        return Err(BlockrunnersError::RandomnessStale.into());
-    }
-
-    // Store slot to verify when using randomness
+    // Store the seed slot when the randomness was committed
     player_state.randomness_slot = Some(randomness_data.seed_slot);
 
-    msg!("Randomness request successful");
+    msg!(
+        "Randomness request successful - slot: {}",
+        randomness_data.seed_slot
+    );
 
     Ok(())
 }
@@ -44,12 +39,13 @@ pub fn randomness_request(
 #[allow(unused_variables)]
 pub fn randomness_request(
     player_state: &mut Account<PlayerState>,
-    _player_randomness: &AccountInfo,
+    randomness_account: &AccountInfo,
 ) -> Result<()> {
     msg!("TEST MODE: Running randomness_request");
 
     let clock = Clock::get()?;
     player_state.randomness_slot = Some(clock.slot - 1);
+    player_state.randomness_account = Some(randomness_account.key());
 
     Ok(())
 }

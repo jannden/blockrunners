@@ -3,6 +3,8 @@ pub mod initialize_game;
 pub mod initialize_player;
 pub mod make_move;
 pub mod purchase_ciphers;
+pub mod temp_rand_request;
+pub mod temp_rand_reveal;
 pub mod update_last_login;
 
 pub use debug_give_card::*;
@@ -10,4 +12,6 @@ pub use initialize_game::*;
 pub use initialize_player::*;
 pub use make_move::*;
 pub use purchase_ciphers::*;
+pub use temp_rand_request::*;
+pub use temp_rand_reveal::*;
 pub use update_last_login::*;
