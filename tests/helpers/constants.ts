@@ -1,11 +1,5 @@
-import * as anchor from "@coral-xyz/anchor";
-import { Blockrunners } from "../../target/types/blockrunners";
 import { getStringFromByteArray, getConstantOrThrow } from "./utils";
 import { BN } from "@coral-xyz/anchor";
-
-// Access constants from IDL
-const program = anchor.workspace.blockrunners as anchor.Program<Blockrunners>;
-const IDL = program.idl;
 
 // Number constants
 export const CIPHER_COST = new BN(getConstantOrThrow("cipherCost")).toNumber();

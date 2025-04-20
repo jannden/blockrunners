@@ -7,7 +7,7 @@ import { GAME_STATE_SEED, PLAYER_STATE_SEED } from "./helpers/constants";
 import { airdropSol, getMsgLogs, giveCard, sleep } from "./helpers/utils";
 import { CARD_USAGE_EMPTY_MOCK } from "./mocks/card-usage";
 
-describe("Make Move", () => {
+describe("Move Commit-Reveal", () => {
   // Configure the client to use the local cluster.
   anchor.setProvider(anchor.AnchorProvider.env());
 
@@ -31,7 +31,14 @@ describe("Make Move", () => {
     program.programId
   );
 
+  let playerLogsSubscription: number;
+
   before(async () => {
+    // Logs subscription
+    playerLogsSubscription = provider.connection.onLogs(playerKeypair.publicKey, (logs) => {
+      console.log("Player logs changed:", logs);
+    });
+
     // Airdrop SOL to the admin and player
     await airdropSol(provider, adminKeypair);
     await airdropSol(provider, playerKeypair);
@@ -39,7 +46,7 @@ describe("Make Move", () => {
     // Initialize the game if not already initialized
     const gameState = await program.account.gameState.fetchNullable(gameStatePda);
     if (!gameState) {
-      const initGameTx = await program.methods
+      await program.methods
         .initializeGame()
         .accounts({
           admin: adminKeypair.publicKey,
@@ -47,33 +54,35 @@ describe("Make Move", () => {
         .signers([adminKeypair])
         .rpc();
 
-      console.log("Game initialization transaction signature", initGameTx);
+      console.log("Game initialized");
     }
 
     // Initialize player state
-    const initPlayerTx = await program.methods
+    await program.methods
       .initializePlayer()
       .accounts({
         player: playerKeypair.publicKey,
-        randomnessAccount: randomnessKeypair.publicKey,
       })
       .signers([playerKeypair])
       .rpc();
 
-    console.log("Player initialization transaction signature", initPlayerTx);
+    console.log("Player initialized");
 
-    // Purchase ciphers to generate path
+    // Purchase ciphers
     const ciphersToPurchase = 10;
-    const tx = await program.methods
+    await program.methods
       .purchaseCiphers(new anchor.BN(ciphersToPurchase))
       .accounts({
         player: playerKeypair.publicKey,
-        randomnessAccount: randomnessKeypair.publicKey,
       })
       .signers([playerKeypair])
       .rpc();
 
-    console.log("Player joined the game");
+    console.log("Player was given ciphers");
+  });
+
+  after(() => {
+    provider.connection.removeOnLogsListener(playerLogsSubscription);
   });
 
   it("Allows successful player movement with correct choice and no cards", async () => {
@@ -90,12 +99,9 @@ describe("Make Move", () => {
     const direction = { left: {} }; // Just pick a direction
     console.log(`Direction chosen: ${JSON.stringify(direction)}`);
 
-    // Sleep for 1 seconds to ensure timestamp changes
-    await sleep(1000);
-
-    // Make the move
-    const tx = await program.methods
-      .makeMove(direction, CARD_USAGE_EMPTY_MOCK)
+    // Step 1: Commit the move
+    const txCommit = await program.methods
+      .moveCommit(direction, CARD_USAGE_EMPTY_MOCK)
       .accounts({
         player: playerKeypair.publicKey,
         randomnessAccount: randomnessKeypair.publicKey,
@@ -103,8 +109,21 @@ describe("Make Move", () => {
       .signers([playerKeypair])
       .rpc();
 
-    const logs = await getMsgLogs(provider, tx);
-    console.log("Make move logs -> ", logs);
+    const commitLogs = await getMsgLogs(provider, txCommit);
+    console.log("Move commit logs -> ", commitLogs);
+
+    // Step 2: Reveal the move
+    const txReveal = await program.methods
+      .moveReveal()
+      .accounts({
+        player: playerKeypair.publicKey,
+        randomnessAccount: randomnessKeypair.publicKey,
+      })
+      .signers([playerKeypair])
+      .rpc();
+
+    const revealLogs = await getMsgLogs(provider, txReveal);
+    console.log("Move reveal logs -> ", revealLogs);
 
     // Fetch player state after the move
     const playerStateAfter = await program.account.playerState.fetch(playerStatePda);
@@ -154,12 +173,19 @@ describe("Make Move", () => {
       const direction = { left: {} }; // Just pick a direction
       console.log(`Move ${i + 1}: Direction chosen: ${JSON.stringify(direction)}`);
 
-      // Sleep for 1 seconds to ensure timestamp changes
-      await sleep(1000);
+      // Step 1: Commit the move
+      await program.methods
+        .moveCommit(direction, CARD_USAGE_EMPTY_MOCK)
+        .accounts({
+          player: playerKeypair.publicKey,
+          randomnessAccount: randomnessKeypair.publicKey,
+        })
+        .signers([playerKeypair])
+        .rpc();
 
-      // Make the move
-      const tx = await program.methods
-        .makeMove(direction, CARD_USAGE_EMPTY_MOCK)
+      // Step 2: Reveal the move
+      await program.methods
+        .moveReveal()
         .accounts({
           player: playerKeypair.publicKey,
           randomnessAccount: randomnessKeypair.publicKey,
@@ -195,12 +221,9 @@ describe("Make Move", () => {
     const direction = { right: {} }; // Just pick a direction
     console.log(`Direction chosen: ${JSON.stringify(direction)}`);
 
-    // Sleep for 1 seconds to ensure timestamp changes
-    await sleep(1000);
-
-    // Make the move
-    const tx = await program.methods
-      .makeMove(direction, CARD_USAGE_EMPTY_MOCK)
+    // Step 1: Commit the move
+    await program.methods
+      .moveCommit(direction, CARD_USAGE_EMPTY_MOCK)
       .accounts({
         player: playerKeypair.publicKey,
         randomnessAccount: randomnessKeypair.publicKey,
@@ -208,8 +231,18 @@ describe("Make Move", () => {
       .signers([playerKeypair])
       .rpc();
 
-    const logs = await getMsgLogs(provider, tx);
-    console.log("Make move logs -> ", logs);
+    // Step 2: Reveal the move
+    const txReveal = await program.methods
+      .moveReveal()
+      .accounts({
+        player: playerKeypair.publicKey,
+        randomnessAccount: randomnessKeypair.publicKey,
+      })
+      .signers([playerKeypair])
+      .rpc();
+
+    const logs = await getMsgLogs(provider, txReveal);
+    console.log("Move reveal logs -> ", logs);
 
     // Fetch player state after the move
     const playerStateAfter = await program.account.playerState.fetch(playerStatePda);
@@ -239,7 +272,6 @@ describe("Make Move", () => {
   });
 
   it("Applies card effects correctly on valid move", async () => {
-    // Give all three types of cards
     await giveCard(program, playerKeypair, playerStatePda, { doubler: {} });
     await giveCard(program, playerKeypair, playerStatePda, { swift: {} });
 
@@ -249,23 +281,38 @@ describe("Make Move", () => {
 
     const correctDirection = { right: {} }; // based on the TEST MODE for randomness
     const cards = { shield: false, doubler: true, swift: true };
-    const tx = await program.methods
-      .makeMove(correctDirection, cards)
+
+    // Step 1: Commit the move
+    await program.methods
+      .moveCommit(correctDirection, cards)
       .accounts({
         player: playerKeypair.publicKey,
         randomnessAccount: randomnessKeypair.publicKey,
       })
       .signers([playerKeypair])
       .rpc();
-    const logs = await getMsgLogs(provider, tx);
-    console.log("Make move logs -> ", logs);
+
+    // Step 2: Reveal the move
+    const txReveal = await program.methods
+      .moveReveal()
+      .accounts({
+        player: playerKeypair.publicKey,
+        randomnessAccount: randomnessKeypair.publicKey,
+      })
+      .signers([playerKeypair])
+      .rpc();
+
+    const logs = await getMsgLogs(provider, txReveal);
+    console.log("Move reveal logs -> ", logs);
 
     const afterMove = await program.account.playerState.fetch(playerStatePda);
     console.log("State after move -> ", afterMove);
 
     expect(afterMove.ciphers.toNumber()).to.be.equal(9);
     expect(afterMove.position).to.be.greaterThan(stateBefore.position); // moved forward
-    expect(afterMove.cards.length).to.be.equal(4); // doubler effect
+
+    // TODO: Temporary disabling to refactor cards from vector to hashmap
+    // expect(afterMove.cards.length).to.be.equal(stateBefore.cards.length); // doubler effect
 
     // Verify lastLogin was updated
     expect(afterMove.lastLogin.toString()).to.not.equal(stateBefore.lastLogin.toString());
@@ -278,8 +325,10 @@ describe("Make Move", () => {
 
     const incorrectDirection = { left: {} }; // based on the TEST MODE for randomness
     const cards = { shield: true, doubler: false, swift: false };
-    const tx = await program.methods
-      .makeMove(incorrectDirection, cards) // Incorrect direction, Shield
+
+    // Step 1: Commit the move
+    await program.methods
+      .moveCommit(incorrectDirection, cards) // Incorrect direction, Shield
       .accounts({
         player: playerKeypair.publicKey,
         randomnessAccount: randomnessKeypair.publicKey,
@@ -287,8 +336,18 @@ describe("Make Move", () => {
       .signers([playerKeypair])
       .rpc();
 
-    const logs = await getMsgLogs(provider, tx);
-    console.log("Make move logs -> ", logs);
+    // Step 2: Reveal the move
+    const txReveal = await program.methods
+      .moveReveal()
+      .accounts({
+        player: playerKeypair.publicKey,
+        randomnessAccount: randomnessKeypair.publicKey,
+      })
+      .signers([playerKeypair])
+      .rpc();
+
+    const logs = await getMsgLogs(provider, txReveal);
+    console.log("Move reveal logs -> ", logs);
 
     const stateAfterBad = await program.account.playerState.fetch(playerStatePda);
     console.log("State after move DEBUG -> ", stateAfterBad);

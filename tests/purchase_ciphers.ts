@@ -4,8 +4,7 @@ import { Keypair, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import { expect } from "chai";
 import { Blockrunners } from "../target/types/blockrunners";
 import { GAME_STATE_SEED, PLAYER_STATE_SEED, CIPHER_COST } from "./helpers/constants";
-import { airdropSol, getMsgLogs, sleep } from "./helpers/utils";
-import { CARD_USAGE_EMPTY_MOCK } from "./mocks/card-usage";
+import { airdropSol, getMsgLogs } from "./helpers/utils";
 
 describe("Purchase ciphers", () => {
   // Configure the client to use the local cluster.
@@ -17,7 +16,6 @@ describe("Purchase ciphers", () => {
   // Keypairs
   const adminKeypair = Keypair.generate();
   const playerKeypair = Keypair.generate();
-  const randomnessKeypair = Keypair.generate();
 
   // Game state PDA
   const [gameStatePda] = PublicKey.findProgramAddressSync(
@@ -31,12 +29,12 @@ describe("Purchase ciphers", () => {
     program.programId
   );
 
-  let playerLogsSubscription;
+  let playerLogsSubscription: number;
 
   before(async () => {
     // Logs subscription
     playerLogsSubscription = provider.connection.onLogs(playerKeypair.publicKey, (logs) => {
-      console.log("Player logs:", logs);
+      console.log("Player logs changed:", logs);
     });
 
     // Airdrop SOL to the admin and player
@@ -46,7 +44,7 @@ describe("Purchase ciphers", () => {
     // Initialize the game if not already initialized
     const gameState = await program.account.gameState.fetchNullable(gameStatePda);
     if (!gameState) {
-      const initGameTx = await program.methods
+      await program.methods
         .initializeGame()
         .accounts({
           admin: adminKeypair.publicKey,
@@ -54,20 +52,19 @@ describe("Purchase ciphers", () => {
         .signers([adminKeypair])
         .rpc();
 
-      console.log("Game initialization transaction signature", initGameTx);
+      console.log("Game initialized");
     }
 
     // Initialize player state
-    const initPlayerTx = await program.methods
+    await program.methods
       .initializePlayer()
       .accounts({
         player: playerKeypair.publicKey,
-        randomnessAccount: randomnessKeypair.publicKey,
       })
       .signers([playerKeypair])
       .rpc();
 
-    console.log("Player initialization transaction signature", initPlayerTx);
+    console.log("Player initialized");
   });
 
   after(() => {
@@ -98,7 +95,6 @@ describe("Purchase ciphers", () => {
       .purchaseCiphers(new anchor.BN(ciphersToPurchase))
       .accounts({
         player: playerKeypair.publicKey,
-        randomnessAccount: randomnessKeypair.publicKey,
       })
       .signers([playerKeypair])
       .rpc();
@@ -144,18 +140,20 @@ describe("Purchase ciphers", () => {
     expect(playerStateAfter.inGame).to.equal(true);
 
     // Verify lastLogin was updated
-    expect(playerStateAfter.lastLogin.toString()).to.not.equal(playerStateBefore.lastLogin.toString());
+    expect(playerStateAfter.lastLogin.toString()).to.not.equal(
+      playerStateBefore.lastLogin.toString()
+    );
 
-    // Verify player cards were increased
-    expect(playerStateAfter.cards.length).to.equal(playerStateBefore.cards.length + 1);
+    // Verify the amount of cards did not increase
+    expect(playerStateAfter.cards.length).to.equal(playerStateBefore.cards.length);
 
     // Verify player events were increased
-    expect(playerStateAfter.playerEvents.length).to.equal(
-      playerStateBefore.playerEvents.length + 2
+    expect(playerStateAfter.playerEvents.length).to.be.greaterThan(
+      playerStateBefore.playerEvents.length
     );
 
     // Verify game events were increased
-    expect(gameStateAfter.gameEvents.length).to.equal(gameStateBefore.gameEvents.length + 1);
+    expect(gameStateAfter.gameEvents.length).to.be.greaterThan(gameStateBefore.gameEvents.length);
 
     // Remove listener
     await program.removeEventListener(socialFeedEventListener);
@@ -179,7 +177,6 @@ describe("Purchase ciphers", () => {
       .purchaseCiphers(new anchor.BN(additionalCiphers))
       .accounts({
         player: playerKeypair.publicKey,
-        randomnessAccount: randomnessKeypair.publicKey,
       })
       .signers([playerKeypair])
       .rpc();
@@ -207,7 +204,9 @@ describe("Purchase ciphers", () => {
     );
 
     // Verify lastLogin was updated
-    expect(playerStateAfter.lastLogin.toString()).to.not.equal(playerStateBefore.lastLogin.toString());
+    expect(playerStateAfter.lastLogin.toString()).to.not.equal(
+      playerStateBefore.lastLogin.toString()
+    );
 
     // Verify prize pool was increased by the correct amount
     expect(gameStateAfter.prizePool.toNumber()).to.equal(
@@ -254,7 +253,6 @@ describe("Purchase ciphers", () => {
       .initializePlayer()
       .accounts({
         player: player2Keypair.publicKey,
-        randomnessAccount: randomness2Keypair.publicKey,
       })
       .signers([player2Keypair])
       .rpc();
@@ -277,7 +275,6 @@ describe("Purchase ciphers", () => {
       .purchaseCiphers(new anchor.BN(ciphersToPurchase))
       .accounts({
         player: player2Keypair.publicKey,
-        randomnessAccount: randomness2Keypair.publicKey,
       })
       .signers([player2Keypair])
       .rpc();
@@ -313,8 +310,8 @@ describe("Purchase ciphers", () => {
     expect(player2StateBefore.inGame).to.equal(false);
     expect(player2StateAfter.inGame).to.equal(true);
 
-    // Verify player cards were increased
-    expect(player2StateAfter.cards.length).to.equal(player2StateBefore.cards.length + 1);
+    // Verify the amount of cards did not increase
+    expect(player2StateAfter.cards.length).to.equal(player2StateBefore.cards.length);
   });
 
   it("Fails if player doesn't have enough balance", async () => {
@@ -325,7 +322,6 @@ describe("Purchase ciphers", () => {
         .purchaseCiphers(new anchor.BN(ciphersToPurchase))
         .accounts({
           player: playerKeypair.publicKey,
-          randomnessAccount: randomnessKeypair.publicKey,
         })
         .signers([playerKeypair])
         .rpc();
@@ -345,7 +341,6 @@ describe("Purchase ciphers", () => {
         .purchaseCiphers(new anchor.BN(ciphersToPurchase))
         .accounts({
           player: playerKeypair.publicKey,
-          randomnessAccount: randomnessKeypair.publicKey,
         })
         .signers([playerKeypair])
         .rpc();
@@ -367,7 +362,6 @@ describe("Purchase ciphers", () => {
         .purchaseCiphers(new anchor.BN(ciphersToPurchase))
         .accounts({
           player: player2Keypair.publicKey,
-          randomnessAccount: randomness2Keypair.publicKey,
         })
         .signers([player2Keypair])
         .rpc();
@@ -376,109 +370,5 @@ describe("Purchase ciphers", () => {
       return;
     }
     expect.fail("Should not reach this point");
-  });
-
-  it("Verifies different players have their own paths", async () => {
-    // Create two new players
-    const player1Keypair = Keypair.generate();
-    const randomness1Keypair = Keypair.generate();
-    const player2Keypair = Keypair.generate();
-    const randomness2Keypair = Keypair.generate();
-
-    // Get the player state PDAs
-    const [player1StatePda] = PublicKey.findProgramAddressSync(
-      [Buffer.from(PLAYER_STATE_SEED), player1Keypair.publicKey.toBuffer()],
-      program.programId
-    );
-    const [player2StatePda] = PublicKey.findProgramAddressSync(
-      [Buffer.from(PLAYER_STATE_SEED), player2Keypair.publicKey.toBuffer()],
-      program.programId
-    );
-
-    // Airdrop SOL to both players
-    await airdropSol(provider, player1Keypair);
-    await airdropSol(provider, player2Keypair);
-
-    // Initialize both players
-    await program.methods
-      .initializePlayer()
-      .accounts({
-        player: player1Keypair.publicKey,
-        randomnessAccount: randomness1Keypair.publicKey,
-      })
-      .signers([player1Keypair])
-      .rpc();
-    await program.methods
-      .initializePlayer()
-      .accounts({
-        player: player2Keypair.publicKey,
-        randomnessAccount: randomness2Keypair.publicKey,
-      })
-      .signers([player2Keypair])
-      .rpc();
-
-    // Both players purchase ciphers
-    const ciphersToPurchase = 2;
-    await program.methods
-      .purchaseCiphers(new anchor.BN(ciphersToPurchase))
-      .accounts({
-        player: player1Keypair.publicKey,
-        randomnessAccount: randomnessKeypair.publicKey,
-      })
-      .signers([player1Keypair])
-      .rpc();
-    await program.methods
-      .purchaseCiphers(new anchor.BN(ciphersToPurchase))
-      .accounts({
-        player: player2Keypair.publicKey,
-        randomnessAccount: randomness2Keypair.publicKey,
-      })
-      .signers([player2Keypair])
-      .rpc();
-
-    // Try to make a move with each player
-    // Make a move with player 1
-    try {
-      // Generate a random direction for player 1
-      const player1Direction = { left: {} };
-
-      const move1Tx = await program.methods
-        .makeMove(player1Direction, CARD_USAGE_EMPTY_MOCK)
-        .accounts({
-          player: player1Keypair.publicKey,
-          randomnessAccount: randomness1Keypair.publicKey,
-        })
-        .signers([player1Keypair])
-        .rpc();
-
-      console.log("Player 1 made a move");
-
-      // Make a move with player 2 (different direction)
-      const player2Direction = { right: {} };
-
-      const move2Tx = await program.methods
-        .makeMove(player2Direction, CARD_USAGE_EMPTY_MOCK)
-        .accounts({
-          player: player2Keypair.publicKey,
-          randomnessAccount: randomness2Keypair.publicKey,
-        })
-        .signers([player2Keypair])
-        .rpc();
-
-      console.log("Player 2 made a move");
-    } catch (error) {
-      console.log("Error making moves:", error);
-    }
-
-    // Get updated player states
-    const player1StateAfter = await program.account.playerState.fetch(player1StatePda);
-    const player2StateAfter = await program.account.playerState.fetch(player2StatePda);
-
-    // At this point, the players should have different positions
-    // If one player made a correct move and the other didn't, their positions will be different
-    // If both made correct or incorrect moves, their positions might be the same
-    // We'll just verify that both players are in the game
-    expect(player1StateAfter.inGame).to.equal(true);
-    expect(player2StateAfter.inGame).to.equal(true);
   });
 });

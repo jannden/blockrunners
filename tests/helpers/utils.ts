@@ -120,7 +120,6 @@ export const giveCard = async (
     .debugGiveCard(card) // assumes debug-only method for test env
     .accounts({
       player: playerKeypair.publicKey,
-      playerState: playerStatePda,
     })
     .signers([playerKeypair])
     .rpc();

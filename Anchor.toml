@@ -16,7 +16,7 @@ blockrunners = "HiYeEKsFdW3k4dcLYsSewYmeZ1bHoiWa45tSZ7kdDXeV"
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "devnet"
+cluster = "localnet"
 wallet = "~/.config/solana/id.json"
 
 [workspace]

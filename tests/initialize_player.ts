@@ -62,7 +62,6 @@ describe("Initialize Player", () => {
       .initializePlayer()
       .accounts({
         player: playerKeypair.publicKey,
-        randomnessAccount: randomnessKeypair.publicKey,
       })
       .signers([playerKeypair])
       .rpc();
@@ -77,7 +76,7 @@ describe("Initialize Player", () => {
     const playerState = await program.account.playerState.fetch(playerStatePda);
 
     // Verify player state was initialized correctly
-    expect(playerState.cards.length).to.equal(0); // Start with 0 ciphers
+    expect(playerState.cards.length).to.equal(3); // Start with 3 cards
     expect(playerState.position).to.equal(0); // Start at position 0
     expect(playerState.inGame).to.equal(false); // Start not in the game
     
@@ -97,7 +96,6 @@ describe("Initialize Player", () => {
         .initializePlayer()
         .accounts({
           player: playerKeypair.publicKey,
-          randomnessAccount: randomnessKeypair.publicKey,
         })
         .signers([playerKeypair])
         .rpc();
