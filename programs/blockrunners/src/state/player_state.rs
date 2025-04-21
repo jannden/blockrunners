@@ -44,6 +44,9 @@ pub struct PlayerState {
     /// Store bump to save compute
     pub bump: u8,
 
+    /// tommy: The Unix timestamp of the game instance this player is part of i think
+    pub game_start: i64,
+
     #[max_len(MAX_FEED_EVENTS)]
     pub player_events: Vec<SocialFeedEvent>,
 

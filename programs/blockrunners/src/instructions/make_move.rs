@@ -38,8 +38,14 @@ pub fn make_move(
     direction: PathDirection,
     card_usage: CardUsage,
 ) -> Result<()> {
-    let game_state = &ctx.accounts.game_state;
+    let game_state = &mut ctx.accounts.game_state;
     let player_state = &mut ctx.accounts.player_state;
+    
+    // tommy: check if player needs to be reset due to game completion
+    require!(
+        player_state.game_start == game_state.start,
+        BlockrunnersError::InsufficientBalance
+    );
     
     // Check if player has already completed the path
     require!(
@@ -59,23 +65,41 @@ pub fn make_move(
     let correct_direction = generate_next_direction_for_path(player_state);
 
     if direction == correct_direction {
-        // tommy: step 1 - make the handle_correct_move just return true/false for win detection
-        // tommy: step 2 - moved win handling here where we have access to ctx
-        let player_won = handle_correct_move(game_state, player_state, card_usage)?;
+        // tommy: step 1 - handle the move first
+        handle_correct_move(game_state, player_state, card_usage)?;
+        
+        // tommy: step 2 - check win condition directly with it's own function as you suggested!
+        let player_won = player_state.position == game_state.path_length;
         
         // tommy: step 3 - handle the win celebration stuff:
         if player_won {
+            // tommy: verify we have enough lamports before transfer new check
+            let current_lamports = game_state.to_account_info().lamports();
+            require!(
+                current_lamports >= game_state.prize_pool,
+                BlockrunnersError::InsufficientBalance
+            );
+
             // check if there's any prize to distribute from the pool
             let prize_amount = game_state.prize_pool;
 
             if prize_amount > 0 {
                 msg!("Yay! We are distributing prize of {} lamports", prize_amount);
 
-                // tommy: step 1 - check if there's prize money to give
-                // tommy: step 2 - grab lamports directly
-                // tommy: step 3 - move the money from game state to player
-                **game_state.to_account_info().try_borrow_mut_lamports()? -= prize_amount;
-                **ctx.accounts.player.to_account_info().try_borrow_mut_lamports()? += prize_amount; 
+                // tommy: use checked arithmetic for game state subtraction
+                **game_state.to_account_info().try_borrow_mut_lamports()? = game_state
+                    .to_account_info()
+                    .lamports()
+                    .checked_sub(prize_amount)
+                    .ok_or(BlockrunnersError::ArithmeticOverflow)?;
+
+                // tommy: use checked arithmetic for player addition
+                **ctx.accounts.player.try_borrow_mut_lamports()? = ctx
+                    .accounts
+                    .player
+                    .lamports()
+                    .checked_add(prize_amount)
+                    .ok_or(BlockrunnersError::ArithmeticOverflow)?;
 
                 msg!("Prize transferred successfully!");
 
@@ -87,36 +111,37 @@ pub fn make_move(
             }
 
 
-            // tommy: step 1 - create the win message with player address and prize
-            // tommy: step 2 - announce to everyone through game events
-            // tommy: step 3 - give personal congrats through player events
-            let win_message = format!(
+            // tommy: create global win message for everyone
+            let global_message = format!(
                 "Player {} has won the game with {} correct moves and collected {} SOL!",
                 ctx.accounts.player.key(),  // use the signer's key
                 player_state.position,
                 prize_amount
             );
 
-            // announce the message to global feed 
+            // tommy: announce to global feed
             save_and_emit_event(
                 &mut game_state.game_events,
                 SocialFeedEventType::GameWon,
-                win_message.clone(),
+                global_message,
             )?;
 
-            // announce to player's feed (local)
+            // tommy: create personal congrats for winner as suggested
+            let personal_message = format!(
+                "Congratulations! You won the game and collected {} SOL!",
+                prize_amount
+            );
+
+            // tommy: announce to player's feed
             save_and_emit_event(
                 &mut player_state.player_events,
                 SocialFeedEventType::GameWon,
-                win_message,
+                personal_message,
             )?;
 
-            // tommy: step 1 - reset position to start
-            // tommy: step 2 - clear their cards
-            // tommy: step 3 - clean up their event feed
-            player_state.position = 0;
-            player_state.cards.clear();
-            player_state.player_events.clear();
+            // tommy: update game start time to trigger resets for all players with a new timestamp set
+            let clock = Clock::get()?;
+            game_state.start = clock.unix_timestamp;
         }
     } else {
         handle_incorrect_move(player_state, card_usage)?;
@@ -180,20 +205,13 @@ fn process_cards(player_state: &mut PlayerState, card_usage: &CardUsage) -> Resu
 }
 
 fn handle_correct_move(
-    game_state: &Account<GameState>,
+    game_state: &mut Account<GameState>,
     player_state: &mut Account<PlayerState>,
     card_usage: CardUsage,
-) -> Result<bool> { // added the bool here for true/false check
+) -> Result<()> { // changed return type since we don't check win here anymore
     // Correct move: advance one step
     player_state.position += 1;
     let new_position = player_state.position;
-
-    // tommy: step 1 - check if they reached the end
-    // tommy: step 2 - return true if they won
-    // tommy: step 3 - let make_move handle all the celebration stuff
-    if new_position >= game_state.path_length {
-        return Ok(true);
-    }
 
     // Base message
     let mut event_message = format!("Player advanced to position {}!", new_position);
@@ -228,7 +246,7 @@ fn handle_correct_move(
         event_message,
     )?;
 
-    Ok(false)
+    Ok(())
 }
 
 fn handle_incorrect_move(

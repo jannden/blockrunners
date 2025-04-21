@@ -311,10 +311,10 @@ describe("Make Move", () => {
     expect(gameStateAfter.prizePool.toNumber()).to.equal(0);
     expect(playerBalanceAfter).to.be.above(playerBalanceBefore);
 
-    // Verify player state was reset
-    expect(playerStateAfter.position).to.equal(0);
-    expect(playerStateAfter.cards.length).to.equal(0);
-    expect(playerStateAfter.playerEvents.length).to.equal(0);
+    // tommy: verify the game start time was updated to trigger resets
+    const gameStartBefore = gameStateBefore.start.toNumber();
+    const gameStartAfter = gameStateAfter.start.toNumber();
+    expect(gameStartAfter).to.be.above(gameStartBefore);
 
     // Verify win event was emitted
     expect(winEventCaptured).to.be.true;
