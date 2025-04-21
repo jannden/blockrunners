@@ -11,9 +11,12 @@ import { BuyCiphersModal } from "./buy-ciphers-modal";
 import { CostInfoModal } from "./cost-info-modal";
 import { useStore } from "@/lib/game-store";
 import { AbilityCard } from "@/types/game";
+import { useSocialFeedStore } from "@/lib/social-feed-store";
+import { useBlockrunners } from "@/hooks/useBlockrunners";
 
 export function GameInterface() {
   const { connected } = useWallet();
+  const { socialFeeds } = useBlockrunners();
 
   // State from store
   const {
@@ -36,10 +39,21 @@ export function GameInterface() {
   const [buyCiphersModalOpen, setBuyCiphersModalOpen] = useState(false);
   const [costInfoModalOpen, setCostInfoModalOpen] = useState(false);
 
+  // Access the feed
+  const feedMessages = useSocialFeedStore((state) => state.feedMessages);
+  const addMessage = useSocialFeedStore((state) => state.addMessage);
+
   // Initialize game
   useEffect(() => {
     initializeGame();
   }, [initializeGame]);
+
+  // Add social feeds to the feed messages
+  useEffect(() => {
+    if (socialFeeds.length > 0) {
+      addMessage(socialFeeds[socialFeeds.length - 1].message);
+    }
+  }, [socialFeeds, addMessage ]);
 
   // Calculate progress
   const progress = Math.floor((playerPosition / pathLength) * 100);
@@ -89,7 +103,7 @@ export function GameInterface() {
       {connected && (
         <>
           <div className="flex-1 overflow-hidden flex flex-col py-4 pr-1 gap-4">
-            <GameFeed messages={socialFeed} />
+            <GameFeed messages={[...socialFeed, ...feedMessages]} />
 
             <div className="flex flex-col justify-center">
               <AbilityCards

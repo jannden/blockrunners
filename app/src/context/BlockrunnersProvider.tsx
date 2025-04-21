@@ -2,10 +2,10 @@ import { useState, useEffect, ReactNode } from "react";
 import { useConnection, useAnchorWallet } from "@solana/wallet-adapter-react";
 import { BN } from "@coral-xyz/anchor";
 import { PublicKey } from "@solana/web3.js";
-import { gameStatePDA, getPlayerStatePDA } from "../lib/constants";
-import type { Direction, GameState, PlayerState } from "../types/types";
+import { gameStatePDA, getPlayerStatePDA, getProgram } from "../lib/constants";
+import type { Direction, GameState, PlayerState, SocialFeedEvent } from "../types/types";
 import { BlockrunnersContext } from "../hooks/useBlockrunners";
-import { useProgram } from "@/hooks/useProgram";
+import { useAnchorProvider } from "@/hooks/useAnchorProvider";
 
 function BlockrunnersProvider({ children }: { children: ReactNode }) {
   const { connection } = useConnection();
@@ -14,8 +14,10 @@ function BlockrunnersProvider({ children }: { children: ReactNode }) {
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [playerState, setPlayerState] = useState<PlayerState | null>(null);
   const [playerStatePDA, setPlayerStatePDA] = useState<PublicKey | null>(null);
+  const [socialFeeds, setSocialFeeds] = useState<SocialFeedEvent[]>([]);
 
-  const program = useProgram();
+  const provider = useAnchorProvider();
+  const program = getProgram(connection, provider);
 
   // Get GameState on load
   useEffect(() => {
@@ -30,8 +32,10 @@ function BlockrunnersProvider({ children }: { children: ReactNode }) {
     const emitLogSubscriptionId = program.addEventListener(
       "socialFeedEvent", // TODO: Any other events?
       (event) => {
-        // TODO: Add this to state
         console.log("Event Data:", event);
+        setSocialFeeds((prevState) => {
+          return [...prevState, event];
+        });
       }
     );
 
@@ -195,6 +199,7 @@ function BlockrunnersProvider({ children }: { children: ReactNode }) {
     playerState,
     gameStatePDA,
     playerStatePDA,
+    socialFeeds,
     initializeGame,
     initializePlayer,
     purchaseCiphers,
