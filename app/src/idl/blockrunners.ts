@@ -409,6 +409,41 @@ export type Blockrunners = {
                 }
               }
             }
+          },
+          {
+            "name": "inGame",
+            "docs": [
+              "The player has joined the game or not"
+            ],
+            "type": "bool"
+          },
+          {
+            "name": "firstLogin",
+            "docs": [
+              "Player's first login timestamp"
+            ],
+            "type": "i64"
+          },
+          {
+            "name": "lastLogin",
+            "docs": [
+              "Player's last login timestamp"
+            ],
+            "type": "i64"
+          },
+          {
+            "name": "gamesWon",
+            "docs": [
+              "Number of games the player has completed"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "totalCiphersBought",
+            "docs": [
+              "Total number of ciphers the player has purchased"
+            ],
+            "type": "u64"
           }
         ]
       }

@@ -6,6 +6,7 @@ use crate::{
         PLAYER_STATE_SEED,
         GAME_STATE_SEED
     }, 
+    instructions::update_last_login,
     state::{PlayerState, GameState}
 };
 
@@ -34,6 +35,7 @@ pub struct InitializePlayer<'info> {
 
 pub fn initialize_player(ctx: Context<InitializePlayer>) -> Result<()> {
     let player_state = &mut ctx.accounts.player_state;
+    let clock = Clock::get()?;
 
     // Initialize player state with default values
     player_state.player = *ctx.accounts.player.key;
@@ -44,8 +46,14 @@ pub fn initialize_player(ctx: Context<InitializePlayer>) -> Result<()> {
     player_state.player_events = Vec::new();
     player_state.in_game = false;
 
-    // tommy: save current game start time for this player in initialize_player
+    // Initialize game start time
     player_state.game_start = ctx.accounts.game_state.start;
+
+    // Initialize player statistics
+    player_state.first_login = clock.unix_timestamp;
+    player_state.games_won = 0;
+    player_state.total_ciphers_bought = 0;
+    update_last_login(player_state)?;
 
     msg!("Player initialized");
     Ok(())

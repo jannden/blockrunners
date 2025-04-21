@@ -3,11 +3,10 @@ use anchor_lang::prelude::*;
 use crate::{
     constants::GAME_STATE_SEED,
     errors::BlockrunnersError,
-    instructions::{collect_player_card, generate_next_direction_for_path, save_and_emit_event},
+    instructions::{collect_player_card, generate_next_direction_for_path, save_and_emit_event, update_last_login},
     state::{Card, GameState, PathDirection, PlayerState, SocialFeedEventType},
 };
 
-// tommy: step 1 - added mut to accounts we need to modify for prize money
 #[derive(Accounts)]
 pub struct MakeMove<'info> {
     #[account(mut)]
@@ -46,6 +45,8 @@ pub fn make_move(
         player_state.game_start == game_state.start,
         BlockrunnersError::InsufficientBalance
     );
+
+    update_last_login(player_state)?;
     
     // Check if player has already completed the path
     require!(
@@ -73,7 +74,11 @@ pub fn make_move(
         
         // tommy: step 3 - handle the win celebration stuff:
         if player_won {
-            // tommy: verify we have enough lamports before transfer new check
+            // tommy: move increment games won counter here
+            player_state.games_won = player_state.games_won.checked_add(1)
+                .ok_or(BlockrunnersError::UnknownError)?;
+
+            // Verify we have enough lamports before transfer
             let current_lamports = game_state.to_account_info().lamports();
             require!(
                 current_lamports >= game_state.prize_pool,
@@ -109,7 +114,6 @@ pub fn make_move(
             } else {
                 msg!("Player won, but there's no money in the pool dang.");
             }
-
 
             // tommy: create global win message for everyone
             let global_message = format!(

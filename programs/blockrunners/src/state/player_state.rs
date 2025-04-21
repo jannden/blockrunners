@@ -52,4 +52,10 @@ pub struct PlayerState {
 
     /// The player has joined the game or not
     pub in_game: bool,
+
+    /// Player statistics
+    pub first_login: i64,
+    pub last_login: i64,
+    pub games_won: u64,
+    pub total_ciphers_bought: u64,
 }
