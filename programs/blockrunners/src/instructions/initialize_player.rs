@@ -1,9 +1,9 @@
 use anchor_lang::prelude::*;
 
 use crate::{
-    constants::{DISCRIMINATOR_SIZE, PLAYER_STATE_SEED},
+    constants::{DISCRIMINATOR_SIZE, GAME_STATE_SEED, PLAYER_STATE_SEED},
     instructions::update_last_login,
-    state::{Card, PlayerState},
+    state::{Card, GameState, PlayerState},
 };
 
 #[derive(Accounts)]
@@ -20,10 +20,17 @@ pub struct InitializePlayer<'info> {
     )]
     pub player_state: Account<'info, PlayerState>,
 
+    #[account(
+        seeds = [GAME_STATE_SEED],
+        bump
+    )]
+    pub game_state: Account<'info, GameState>,
+
     pub system_program: Program<'info, System>,
 }
 
 pub fn initialize_player(ctx: Context<InitializePlayer>) -> Result<()> {
+    let game_state = &ctx.accounts.game_state;
     let player_state = &mut ctx.accounts.player_state;
     let clock = Clock::get()?;
 
@@ -36,7 +43,7 @@ pub fn initialize_player(ctx: Context<InitializePlayer>) -> Result<()> {
     player_state.in_game = false;
 
     // Initialize game start time
-    player_state.game_start = ctx.accounts.game_state.start;
+    player_state.game_start = game_state.start;
 
     // Initialize player statistics
     player_state.first_login = clock.unix_timestamp;

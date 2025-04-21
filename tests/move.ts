@@ -231,6 +231,9 @@ describe("Move Commit-Reveal", () => {
       .signers([playerKeypair])
       .rpc();
 
+    // Sleep for 1 seconds to ensure timestamp changes
+    await sleep(1000);
+
     // Step 2: Reveal the move
     const txReveal = await program.methods
       .moveReveal()
@@ -359,14 +362,10 @@ describe("Move Commit-Reveal", () => {
   });
 
   it("Verifies game completion and prize distribution", async () => {
-    // Setup: Add some prize money to the game state
-    const prizeMoney = new anchor.BN(1_000_000); // 0.001 SOL
     await program.methods
       .purchaseCiphers(new anchor.BN(10))
       .accounts({
         player: playerKeypair.publicKey,
-        playerState: playerStatePda,
-        gameState: gameStatePda,
       })
       .signers([playerKeypair])
       .rpc();
@@ -374,8 +373,8 @@ describe("Move Commit-Reveal", () => {
     // Get initial balances
     const gameStateBefore = await program.account.gameState.fetch(gameStatePda);
     const playerBalanceBefore = await provider.connection.getBalance(playerKeypair.publicKey);
-    console.log(`Initial prize pool: ${gameStateBefore.prizePool} lamports`); //tommy: added the initial check here for prize pool
-    console.log(`Initial player balance: ${playerBalanceBefore} lamports`); //tommy: added the initial check here for player balance
+    console.log(`Initial prize pool: ${gameStateBefore.prizePool} lamports`);
+    console.log(`Initial player balance: ${playerBalanceBefore} lamports`);
 
     // Setup event listener for win announcements
     let winEventCaptured = false;
@@ -392,30 +391,44 @@ describe("Move Commit-Reveal", () => {
 
     console.log(`Moving player ${movesNeeded} times to reach the end...`);
     for (let i = 0; i < movesNeeded; i++) {
-      const direction = { right: {} }; // Direction doesn't matter, program generates correct one
+      const direction = { right: {} }; // This is always the correct direction for tests
+
+      // Step 1: Commit the move
       await program.methods
-        .makeMove(direction, CARD_USAGE_EMPTY_MOCK)
+        .moveCommit(direction, CARD_USAGE_EMPTY_MOCK)
         .accounts({
           player: playerKeypair.publicKey,
-          playerState: playerStatePda,
-          gameState: gameStatePda,
+          randomnessAccount: randomnessKeypair.publicKey,
         })
         .signers([playerKeypair])
         .rpc();
+
+      // Step 2: Reveal the move
+      await program.methods
+        .moveReveal()
+        .accounts({
+          player: playerKeypair.publicKey,
+          randomnessAccount: randomnessKeypair.publicKey,
+        })
+        .signers([playerKeypair])
+        .rpc();
+
+      // Wait a small amount of time between moves
+      await sleep(500);
     }
 
     // Get final state
     const gameStateAfter = await program.account.gameState.fetch(gameStatePda);
     const playerStateAfter = await program.account.playerState.fetch(playerStatePda);
     const playerBalanceAfter = await provider.connection.getBalance(playerKeypair.publicKey);
-    console.log(`Final prize pool: ${gameStateAfter.prizePool} lamports`); //tommy: added the after check here for prize pool
-    console.log(`Final player balance: ${playerBalanceAfter} lamports`); //tommy: added the after check here for player balance
+    console.log(`Final prize pool: ${gameStateAfter.prizePool} lamports`);
+    console.log(`Final player balance: ${playerBalanceAfter} lamports`);
 
     // Verify prize pool was distributed
     expect(gameStateAfter.prizePool.toNumber()).to.equal(0);
     expect(playerBalanceAfter).to.be.above(playerBalanceBefore);
 
-    // tommy: verify the game start time was updated to trigger resets
+    // Verify the game start time was updated to trigger resets
     const gameStartBefore = gameStateBefore.start.toNumber();
     const gameStartAfter = gameStateAfter.start.toNumber();
     expect(gameStartAfter).to.be.above(gameStartBefore);

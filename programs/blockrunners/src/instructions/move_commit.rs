@@ -3,6 +3,7 @@ use anchor_lang::prelude::*;
 use crate::{
     constants::{GAME_STATE_SEED, PLAYER_STATE_SEED},
     errors::BlockrunnersError,
+    instructions::update_last_login,
     state::{CardUsage, GameState, PathDirection, PlayerState},
     utils::{get_move_cost, randomness_request},
 };
@@ -37,6 +38,14 @@ pub fn move_commit(
     let player_state = &mut ctx.accounts.player_state;
     let randomness_account = &ctx.accounts.randomness_account;
 
+    update_last_login(player_state)?;
+
+    // Check if player is part of the current game
+    require!(
+        player_state.game_start == game_state.start,
+        BlockrunnersError::PlayingInDifferentGame
+    );
+
     // Check if player has already completed the path
     require!(
         player_state.position < game_state.path_length,
@@ -50,12 +59,12 @@ pub fn move_commit(
         BlockrunnersError::InsufficientBalance
     );
 
-    // Request randomness
-    randomness_request(player_state, randomness_account)?;
-
     // Save commitment
     player_state.move_direction = Some(direction);
     player_state.move_cards = Some(card_usage);
+
+    // Request randomness
+    randomness_request(player_state, randomness_account)?;
 
     Ok(())
 }

@@ -5,633 +5,895 @@
  * IDL can be found at `target/idl/blockrunners.json`.
  */
 export type Blockrunners = {
-  address: "HiYeEKsFdW3k4dcLYsSewYmeZ1bHoiWa45tSZ7kdDXeV";
-  metadata: {
-    name: "blockrunners";
-    version: "0.1.0";
-    spec: "0.1.0";
-    description: "Created with Anchor";
-  };
-  instructions: [
+  "address": "HiYeEKsFdW3k4dcLYsSewYmeZ1bHoiWa45tSZ7kdDXeV",
+  "metadata": {
+    "name": "blockrunners",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Created with Anchor"
+  },
+  "instructions": [
     {
-      name: "initializeGame";
-      discriminator: [44, 62, 102, 247, 126, 208, 130, 215];
-      accounts: [
+      "name": "initializeGame",
+      "discriminator": [
+        44,
+        62,
+        102,
+        247,
+        126,
+        208,
+        130,
+        215
+      ],
+      "accounts": [
         {
-          name: "admin";
-          writable: true;
-          signer: true;
+          "name": "admin",
+          "writable": true,
+          "signer": true
         },
         {
-          name: "gameState";
-          writable: true;
-          pda: {
-            seeds: [
+          "name": "gameState",
+          "writable": true,
+          "pda": {
+            "seeds": [
               {
-                kind: "const";
-                value: [103, 97, 109, 101, 95, 115, 116, 97, 116, 101];
+                "kind": "const",
+                "value": [
+                  103,
+                  97,
+                  109,
+                  101,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  101
+                ]
               }
-            ];
-          };
+            ]
+          }
         },
         {
-          name: "systemProgram";
-          address: "11111111111111111111111111111111";
+          "name": "systemProgram",
+          "address": "11111111111111111111111111111111"
         }
-      ];
-      args: [];
+      ],
+      "args": []
     },
     {
-      name: "initializePlayer";
-      discriminator: [79, 249, 88, 177, 220, 62, 56, 128];
-      accounts: [
+      "name": "initializePlayer",
+      "discriminator": [
+        79,
+        249,
+        88,
+        177,
+        220,
+        62,
+        56,
+        128
+      ],
+      "accounts": [
         {
-          name: "player";
-          writable: true;
-          signer: true;
+          "name": "player",
+          "writable": true,
+          "signer": true
         },
         {
-          name: "playerState";
-          writable: true;
-          pda: {
-            seeds: [
+          "name": "playerState",
+          "writable": true,
+          "pda": {
+            "seeds": [
               {
-                kind: "const";
-                value: [112, 108, 97, 121, 101, 114, 95, 115, 116, 97, 116, 101];
+                "kind": "const",
+                "value": [
+                  112,
+                  108,
+                  97,
+                  121,
+                  101,
+                  114,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  101
+                ]
               },
               {
-                kind: "account";
-                path: "player";
+                "kind": "account",
+                "path": "player"
               }
-            ];
-          };
+            ]
+          }
         },
         {
-          name: "systemProgram";
-          address: "11111111111111111111111111111111";
+          "name": "gameState",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  103,
+                  97,
+                  109,
+                  101,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  101
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "systemProgram",
+          "address": "11111111111111111111111111111111"
         }
-      ];
-      args: [];
+      ],
+      "args": []
     },
     {
-      name: "moveCommit";
-      discriminator: [83, 26, 171, 77, 137, 39, 119, 210];
-      accounts: [
+      "name": "moveCommit",
+      "discriminator": [
+        83,
+        26,
+        171,
+        77,
+        137,
+        39,
+        119,
+        210
+      ],
+      "accounts": [
         {
-          name: "player";
-          signer: true;
+          "name": "player",
+          "signer": true
         },
         {
-          name: "playerState";
-          writable: true;
-          pda: {
-            seeds: [
+          "name": "playerState",
+          "writable": true,
+          "pda": {
+            "seeds": [
               {
-                kind: "const";
-                value: [112, 108, 97, 121, 101, 114, 95, 115, 116, 97, 116, 101];
+                "kind": "const",
+                "value": [
+                  112,
+                  108,
+                  97,
+                  121,
+                  101,
+                  114,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  101
+                ]
               },
               {
-                kind: "account";
-                path: "player";
+                "kind": "account",
+                "path": "player"
               }
-            ];
-          };
+            ]
+          }
         },
         {
-          name: "gameState";
-          pda: {
-            seeds: [
+          "name": "gameState",
+          "pda": {
+            "seeds": [
               {
-                kind: "const";
-                value: [103, 97, 109, 101, 95, 115, 116, 97, 116, 101];
+                "kind": "const",
+                "value": [
+                  103,
+                  97,
+                  109,
+                  101,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  101
+                ]
               }
-            ];
-          };
+            ]
+          }
         },
         {
-          name: "randomnessAccount";
+          "name": "randomnessAccount"
         }
-      ];
-      args: [
+      ],
+      "args": [
         {
-          name: "direction";
-          type: {
-            defined: {
-              name: "pathDirection";
-            };
-          };
+          "name": "direction",
+          "type": {
+            "defined": {
+              "name": "pathDirection"
+            }
+          }
         },
         {
-          name: "cardUsage";
-          type: {
-            defined: {
-              name: "cardUsage";
-            };
-          };
+          "name": "cardUsage",
+          "type": {
+            "defined": {
+              "name": "cardUsage"
+            }
+          }
         }
-      ];
+      ]
     },
     {
-      name: "moveReveal";
-      discriminator: [107, 207, 143, 156, 197, 217, 108, 61];
-      accounts: [
+      "name": "moveReveal",
+      "discriminator": [
+        107,
+        207,
+        143,
+        156,
+        197,
+        217,
+        108,
+        61
+      ],
+      "accounts": [
         {
-          name: "player";
-          signer: true;
+          "name": "player",
+          "writable": true,
+          "signer": true
         },
         {
-          name: "playerState";
-          writable: true;
-          pda: {
-            seeds: [
+          "name": "playerState",
+          "writable": true,
+          "pda": {
+            "seeds": [
               {
-                kind: "const";
-                value: [112, 108, 97, 121, 101, 114, 95, 115, 116, 97, 116, 101];
+                "kind": "const",
+                "value": [
+                  112,
+                  108,
+                  97,
+                  121,
+                  101,
+                  114,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  101
+                ]
               },
               {
-                kind: "account";
-                path: "player";
+                "kind": "account",
+                "path": "player"
               }
-            ];
-          };
+            ]
+          }
         },
         {
-          name: "gameState";
-          pda: {
-            seeds: [
+          "name": "gameState",
+          "writable": true,
+          "pda": {
+            "seeds": [
               {
-                kind: "const";
-                value: [103, 97, 109, 101, 95, 115, 116, 97, 116, 101];
+                "kind": "const",
+                "value": [
+                  103,
+                  97,
+                  109,
+                  101,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  101
+                ]
               }
-            ];
-          };
+            ]
+          }
         },
         {
-          name: "randomnessAccount";
+          "name": "randomnessAccount"
+        },
+        {
+          "name": "systemProgram",
+          "address": "11111111111111111111111111111111"
         }
-      ];
-      args: [];
+      ],
+      "args": []
     },
     {
-      name: "purchaseCiphers";
-      discriminator: [99, 179, 154, 118, 166, 190, 214, 168];
-      accounts: [
+      "name": "purchaseCiphers",
+      "discriminator": [
+        99,
+        179,
+        154,
+        118,
+        166,
+        190,
+        214,
+        168
+      ],
+      "accounts": [
         {
-          name: "player";
-          writable: true;
-          signer: true;
+          "name": "player",
+          "writable": true,
+          "signer": true
         },
         {
-          name: "playerState";
-          writable: true;
-          pda: {
-            seeds: [
+          "name": "playerState",
+          "writable": true,
+          "pda": {
+            "seeds": [
               {
-                kind: "const";
-                value: [112, 108, 97, 121, 101, 114, 95, 115, 116, 97, 116, 101];
+                "kind": "const",
+                "value": [
+                  112,
+                  108,
+                  97,
+                  121,
+                  101,
+                  114,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  101
+                ]
               },
               {
-                kind: "account";
-                path: "player";
+                "kind": "account",
+                "path": "player"
               }
-            ];
-          };
+            ]
+          }
         },
         {
-          name: "gameState";
-          writable: true;
-          pda: {
-            seeds: [
+          "name": "gameState",
+          "writable": true,
+          "pda": {
+            "seeds": [
               {
-                kind: "const";
-                value: [103, 97, 109, 101, 95, 115, 116, 97, 116, 101];
+                "kind": "const",
+                "value": [
+                  103,
+                  97,
+                  109,
+                  101,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  101
+                ]
               }
-            ];
-          };
+            ]
+          }
         },
         {
-          name: "systemProgram";
-          address: "11111111111111111111111111111111";
+          "name": "systemProgram",
+          "address": "11111111111111111111111111111111"
         }
-      ];
-      args: [
+      ],
+      "args": [
         {
-          name: "amount";
-          type: "u64";
+          "name": "amount",
+          "type": "u64"
         }
-      ];
+      ]
     }
-  ];
-  accounts: [
+  ],
+  "accounts": [
     {
-      name: "gameState";
-      discriminator: [144, 94, 208, 172, 248, 99, 134, 120];
+      "name": "gameState",
+      "discriminator": [
+        144,
+        94,
+        208,
+        172,
+        248,
+        99,
+        134,
+        120
+      ]
     },
     {
-      name: "playerState";
-      discriminator: [56, 3, 60, 86, 174, 16, 244, 195];
+      "name": "playerState",
+      "discriminator": [
+        56,
+        3,
+        60,
+        86,
+        174,
+        16,
+        244,
+        195
+      ]
     }
-  ];
-  events: [
+  ],
+  "events": [
     {
-      name: "socialFeedEvent";
-      discriminator: [229, 17, 83, 185, 10, 200, 58, 189];
+      "name": "socialFeedEvent",
+      "discriminator": [
+        229,
+        17,
+        83,
+        185,
+        10,
+        200,
+        58,
+        189
+      ]
     }
-  ];
-  errors: [
+  ],
+  "errors": [
     {
-      code: 6000;
-      name: "exceedsMaxCards";
-      msg: "Player used too many cards";
+      "code": 6000,
+      "name": "exceedsMaxCards",
+      "msg": "Player used too many cards"
     },
     {
-      code: 6001;
-      name: "duplicateCard";
-      msg: "Player used duplicate card";
+      "code": 6001,
+      "name": "duplicateCard",
+      "msg": "Player used duplicate card"
     },
     {
-      code: 6002;
-      name: "insufficientBalance";
-      msg: "Player has insufficient balance to pay";
+      "code": 6002,
+      "name": "insufficientBalance",
+      "msg": "Player has insufficient balance to pay"
     },
     {
-      code: 6003;
-      name: "insufficientCards";
-      msg: "Player tried to use a card they don't have";
+      "code": 6003,
+      "name": "insufficientCards",
+      "msg": "Player tried to use a card they don't have"
     },
     {
-      code: 6004;
-      name: "invalidCardIndex";
-      msg: "Invalid card index generated";
+      "code": 6004,
+      "name": "invalidCardIndex",
+      "msg": "Invalid card index generated"
     },
     {
-      code: 6005;
-      name: "negativeCiphersAmount";
-      msg: "Player tries to purchase ciphers with a negative amount";
+      "code": 6005,
+      "name": "negativeCiphersAmount",
+      "msg": "Player tries to purchase ciphers with a negative amount"
     },
     {
-      code: 6006;
-      name: "pathAlreadyCompleted";
-      msg: "Player has already completed the path";
+      "code": 6006,
+      "name": "pathAlreadyCompleted",
+      "msg": "Player has already completed the path"
     },
     {
-      code: 6007;
-      name: "unknownError";
-      msg: "Unknown Error";
+      "code": 6007,
+      "name": "arithmeticOverflow",
+      "msg": "Arithmetic overflow occurred during calculation"
     },
     {
-      code: 6008;
-      name: "noCardsLeft";
-      msg: "No cards left to use";
+      "code": 6008,
+      "name": "unknownError",
+      "msg": "Unknown Error"
     },
     {
-      code: 6009;
-      name: "invalidMove";
-      msg: "Invalid move";
+      "code": 6009,
+      "name": "noCardsLeft",
+      "msg": "No cards left to use"
     },
     {
-      code: 6010;
-      name: "invalidCardSelection";
-      msg: "Invalid card selection";
+      "code": 6010,
+      "name": "invalidMove",
+      "msg": "Invalid move"
     },
     {
-      code: 6011;
-      name: "notEnoughCiphers";
-      msg: "Not enough ciphers to make this move";
+      "code": 6011,
+      "name": "invalidCardSelection",
+      "msg": "Invalid card selection"
     },
     {
-      code: 6012;
-      name: "notAtEndOfPath";
-      msg: "Player not at end of path yet";
+      "code": 6012,
+      "name": "notEnoughCiphers",
+      "msg": "Not enough ciphers to make this move"
     },
     {
-      code: 6013;
-      name: "randomnessAccountParsing";
-      msg: "Failed to parse randomness account";
+      "code": 6013,
+      "name": "notAtEndOfPath",
+      "msg": "Player not at end of path yet"
     },
     {
-      code: 6014;
-      name: "randomnessAccountParsingReveal";
-      msg: "Failed to parse randomness account for reveal";
+      "code": 6014,
+      "name": "randomnessAccountParsing",
+      "msg": "Failed to parse randomness account"
     },
     {
-      code: 6015;
-      name: "randomnessUnavailable";
-      msg: "Randomness data is unavailable";
+      "code": 6015,
+      "name": "randomnessAccountParsingReveal",
+      "msg": "Failed to parse randomness account for reveal"
     },
     {
-      code: 6016;
-      name: "randomnessFinished";
-      msg: "Randomness finished";
+      "code": 6016,
+      "name": "randomnessUnavailable",
+      "msg": "Randomness data is unavailable"
     },
     {
-      code: 6017;
-      name: "randomnessNotResolved";
-      msg: "Randomness not resolved";
+      "code": 6017,
+      "name": "randomnessFinished",
+      "msg": "Randomness finished"
     },
     {
-      code: 6018;
-      name: "randomnessStale";
-      msg: "Randomness is stale";
+      "code": 6018,
+      "name": "randomnessNotResolved",
+      "msg": "Randomness not resolved"
     },
     {
-      code: 6019;
-      name: "randomnessExpired";
-      msg: "Randomness is expired";
+      "code": 6019,
+      "name": "randomnessStale",
+      "msg": "Randomness is stale"
     },
     {
-      code: 6020;
-      name: "unauthorized";
-      msg: "unauthorized";
+      "code": 6020,
+      "name": "randomnessExpired",
+      "msg": "Randomness is expired"
     },
     {
-      code: 6021;
-      name: "moveNotCommitted";
-      msg: "Move not committed";
+      "code": 6021,
+      "name": "unauthorized",
+      "msg": "unauthorized"
+    },
+    {
+      "code": 6022,
+      "name": "moveNotCommitted",
+      "msg": "Move not committed"
     }
-  ];
-  types: [
+  ],
+  "types": [
     {
-      name: "card";
-      type: {
-        kind: "enum";
-        variants: [
+      "name": "card",
+      "type": {
+        "kind": "enum",
+        "variants": [
           {
-            name: "shield";
+            "name": "shield"
           },
           {
-            name: "doubler";
+            "name": "doubler"
           },
           {
-            name: "swift";
+            "name": "swift"
           }
-        ];
-      };
+        ]
+      }
     },
     {
-      name: "cardUsage";
-      type: {
-        kind: "struct";
-        fields: [
+      "name": "cardUsage",
+      "type": {
+        "kind": "struct",
+        "fields": [
           {
-            name: "shield";
-            type: "bool";
+            "name": "shield",
+            "type": "bool"
           },
           {
-            name: "doubler";
-            type: "bool";
+            "name": "doubler",
+            "type": "bool"
           },
           {
-            name: "swift";
-            type: "bool";
+            "name": "swift",
+            "type": "bool"
           }
-        ];
-      };
+        ]
+      }
     },
     {
-      name: "gameState";
-      type: {
-        kind: "struct";
-        fields: [
+      "name": "gameState",
+      "type": {
+        "kind": "struct",
+        "fields": [
           {
-            name: "authority";
-            docs: ["Authority"];
-            type: "pubkey";
+            "name": "authority",
+            "docs": [
+              "Authority"
+            ],
+            "type": "pubkey"
           },
           {
-            name: "prizePool";
-            docs: ["The current prize pool amount in lamports"];
-            type: "u64";
+            "name": "prizePool",
+            "docs": [
+              "The current prize pool amount in lamports"
+            ],
+            "type": "u64"
           },
           {
-            name: "pathLength";
-            docs: ["The length of the path players need to navigate"];
-            type: "u8";
+            "name": "pathLength",
+            "docs": [
+              "The length of the path players need to navigate"
+            ],
+            "type": "u8"
           },
           {
-            name: "gameEvents";
-            type: {
-              vec: {
-                defined: {
-                  name: "socialFeedEvent";
-                };
-              };
-            };
+            "name": "start",
+            "docs": [
+              "The Unix timestamp when the current game started"
+            ],
+            "type": "i64"
+          },
+          {
+            "name": "gameEvents",
+            "type": {
+              "vec": {
+                "defined": {
+                  "name": "socialFeedEvent"
+                }
+              }
+            }
           }
-        ];
-      };
+        ]
+      }
     },
     {
-      name: "pathDirection";
-      type: {
-        kind: "enum";
-        variants: [
+      "name": "pathDirection",
+      "type": {
+        "kind": "enum",
+        "variants": [
           {
-            name: "left";
+            "name": "left"
           },
           {
-            name: "right";
+            "name": "right"
           }
-        ];
-      };
+        ]
+      }
     },
     {
-      name: "playerState";
-      type: {
-        kind: "struct";
-        fields: [
+      "name": "playerState",
+      "type": {
+        "kind": "struct",
+        "fields": [
           {
-            name: "ciphers";
-            docs: ["Number of ciphers owned"];
-            type: "u64";
+            "name": "ciphers",
+            "docs": [
+              "Number of ciphers owned"
+            ],
+            "type": "u64"
           },
           {
-            name: "cards";
-            docs: ["Cards owned"];
-            type: {
-              vec: {
-                defined: {
-                  name: "card";
-                };
-              };
-            };
+            "name": "cards",
+            "docs": [
+              "Cards owned"
+            ],
+            "type": {
+              "vec": {
+                "defined": {
+                  "name": "card"
+                }
+              }
+            }
           },
           {
-            name: "position";
-            docs: ["Current position"];
-            type: "u8";
+            "name": "position",
+            "docs": [
+              "Current position"
+            ],
+            "type": "u8"
           },
           {
-            name: "bump";
-            docs: ["Store bump to save compute"];
-            type: "u8";
+            "name": "bump",
+            "docs": [
+              "Store bump to save compute"
+            ],
+            "type": "u8"
           },
           {
-            name: "playerEvents";
-            docs: ["Social feed events history"];
-            type: {
-              vec: {
-                defined: {
-                  name: "socialFeedEvent";
-                };
-              };
-            };
+            "name": "gameStart",
+            "docs": [
+              "tommy: The Unix timestamp of the game instance this player is part of i think"
+            ],
+            "type": "i64"
           },
           {
-            name: "inGame";
-            docs: ["The player has joined the game or not"];
-            type: "bool";
+            "name": "playerEvents",
+            "docs": [
+              "Social feed events history"
+            ],
+            "type": {
+              "vec": {
+                "defined": {
+                  "name": "socialFeedEvent"
+                }
+              }
+            }
           },
           {
-            name: "randomnessAccount";
-            docs: ["Switchboard randomness account for player-specific randomness"];
-            type: {
-              option: "pubkey";
-            };
+            "name": "inGame",
+            "docs": [
+              "The player has joined the game or not"
+            ],
+            "type": "bool"
           },
           {
-            name: "randomnessSlot";
-            docs: ["The slot at which the randomness was committed"];
-            type: {
-              option: "u64";
-            };
+            "name": "firstLogin",
+            "docs": [
+              "Player statistics"
+            ],
+            "type": "i64"
           },
           {
-            name: "randomnessValue";
-            docs: ["The randomness values generated for the player"];
-            type: {
-              option: "bytes";
-            };
+            "name": "lastLogin",
+            "type": "i64"
           },
           {
-            name: "moveDirection";
-            docs: ["Commitment to the move direction"];
-            type: {
-              option: {
-                defined: {
-                  name: "pathDirection";
-                };
-              };
-            };
+            "name": "gamesWon",
+            "type": "u64"
           },
           {
-            name: "moveCards";
-            docs: ["Commitment to use cards"];
-            type: {
-              option: {
-                defined: {
-                  name: "cardUsage";
-                };
-              };
-            };
+            "name": "totalCiphersBought",
+            "type": "u64"
+          },
+          {
+            "name": "randomnessAccount",
+            "docs": [
+              "Switchboard randomness account for player-specific randomness"
+            ],
+            "type": {
+              "option": "pubkey"
+            }
+          },
+          {
+            "name": "randomnessSlot",
+            "docs": [
+              "The slot at which the randomness was committed"
+            ],
+            "type": {
+              "option": "u64"
+            }
+          },
+          {
+            "name": "randomnessValue",
+            "docs": [
+              "The randomness values generated for the player"
+            ],
+            "type": {
+              "option": "bytes"
+            }
+          },
+          {
+            "name": "moveDirection",
+            "docs": [
+              "Commitment to the move direction"
+            ],
+            "type": {
+              "option": {
+                "defined": {
+                  "name": "pathDirection"
+                }
+              }
+            }
+          },
+          {
+            "name": "moveCards",
+            "docs": [
+              "Commitment to use cards"
+            ],
+            "type": {
+              "option": {
+                "defined": {
+                  "name": "cardUsage"
+                }
+              }
+            }
           }
-        ];
-      };
+        ]
+      }
     },
     {
-      name: "socialFeedEvent";
-      type: {
-        kind: "struct";
-        fields: [
+      "name": "socialFeedEvent",
+      "type": {
+        "kind": "struct",
+        "fields": [
           {
-            name: "eventType";
-            type: {
-              defined: {
-                name: "socialFeedEventType";
-              };
-            };
+            "name": "eventType",
+            "type": {
+              "defined": {
+                "name": "socialFeedEventType"
+              }
+            }
           },
           {
-            name: "message";
-            type: "string";
+            "name": "message",
+            "type": "string"
           },
           {
-            name: "timestamp";
-            type: "i64";
+            "name": "timestamp",
+            "type": "i64"
           }
-        ];
-      };
+        ]
+      }
     },
     {
-      name: "socialFeedEventType";
-      type: {
-        kind: "enum";
-        variants: [
+      "name": "socialFeedEventType",
+      "type": {
+        "kind": "enum",
+        "variants": [
           {
-            name: "cardUsed";
+            "name": "cardUsed"
           },
           {
-            name: "ciphersPurchased";
+            "name": "ciphersPurchased"
           },
           {
-            name: "gameWon";
+            "name": "gameWon"
           },
           {
-            name: "playerCardCollected";
+            "name": "playerCardCollected"
           },
           {
-            name: "playerJoined";
+            "name": "playerJoined"
           },
           {
-            name: "playerCardsMaxRange";
+            "name": "playerCardsMaxRange"
           },
           {
-            name: "playerMoved";
+            "name": "playerMoved"
           }
-        ];
-      };
+        ]
+      }
     }
-  ];
-  constants: [
+  ],
+  "constants": [
     {
-      name: "cardTypesCount";
-      type: "u8";
-      value: "3";
+      "name": "cardTypesCount",
+      "type": "u8",
+      "value": "3"
     },
     {
-      name: "cipherCost";
-      type: "u64";
-      value: "1000";
+      "name": "cipherCost",
+      "type": "u64",
+      "value": "1000"
     },
     {
-      name: "discriminatorSize";
-      type: "u8";
-      value: "8";
+      "name": "discriminatorSize",
+      "type": "u8",
+      "value": "8"
     },
     {
-      name: "gameStateSeed";
-      type: "bytes";
-      value: "[103, 97, 109, 101, 95, 115, 116, 97, 116, 101]";
+      "name": "gameStateSeed",
+      "type": "bytes",
+      "value": "[103, 97, 109, 101, 95, 115, 116, 97, 116, 101]"
     },
     {
-      name: "initialPathLength";
-      type: "u8";
-      value: "20";
+      "name": "initialPathLength",
+      "type": "u8",
+      "value": "20"
     },
     {
-      name: "initialPrizePool";
-      type: "u64";
-      value: "0";
+      "name": "initialPrizePool",
+      "type": "u64",
+      "value": "0"
     },
     {
-      name: "maxFeedEvents";
-      type: "u8";
-      value: "20";
+      "name": "maxFeedEvents",
+      "type": "u8",
+      "value": "20"
     },
     {
-      name: "maxRandomnessValues";
-      type: "u8";
-      value: "32";
+      "name": "maxRandomnessValues",
+      "type": "u8",
+      "value": "32"
     },
     {
-      name: "maxTotalCards";
-      type: "u8";
-      value: "40";
+      "name": "maxTotalCards",
+      "type": "u8",
+      "value": "40"
     },
     {
-      name: "playerStateSeed";
-      type: "bytes";
-      value: "[112, 108, 97, 121, 101, 114, 95, 115, 116, 97, 116, 101]";
+      "name": "playerStateSeed",
+      "type": "bytes",
+      "value": "[112, 108, 97, 121, 101, 114, 95, 115, 116, 97, 116, 101]"
     }
-  ];
+  ]
 };

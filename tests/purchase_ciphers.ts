@@ -4,7 +4,7 @@ import { Keypair, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import { expect } from "chai";
 import { Blockrunners } from "../target/types/blockrunners";
 import { GAME_STATE_SEED, PLAYER_STATE_SEED, CIPHER_COST } from "./helpers/constants";
-import { airdropSol, getMsgLogs } from "./helpers/utils";
+import { airdropSol, getMsgLogs, sleep } from "./helpers/utils";
 
 describe("Purchase ciphers", () => {
   // Configure the client to use the local cluster.

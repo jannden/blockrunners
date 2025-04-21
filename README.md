@@ -140,40 +140,10 @@ anchor run copy_idl
 anchor run frontend
 # anchor run frontend_devnet
 # anchor run frontend_mainnet
-```
 
-### Publish the IDL
-To publish your IDL file, all you need to do is run the following in the terminal.
-
+# Publish the IDL
 anchor idl init <programId> -f <target/idl/program.json>
-And if your program changes in the future, you can upgrade the published IDL by running:
 
+# Upgrade the IDL
 anchor idl upgrade <programId> -f <target/idl/program.json>
-
-### Project structure
-
-The Anchor project is structured like this:
-- The entry point is in the lib.rs file.
-- The instructions are defined in the instructions folder.
-- The state is defined in the state folder.
-
-So the calls arrive in the lib.rs file and are then forwarded to the instructions.
-The instructions then call the state to get the data and update it.
-
-```shell
-├── src
-│   ├── instructions
-│   │   ├── chop_tree.rs
-│   │   ├── init_player.rs
-│   │   └── update_energy.rs
-│   ├── state
-│   │   ├── game_data.rs
-│   │   ├── mod.rs
-│   │   └── player_data.rs
-│   ├── lib.rs
-│   └── constants.rs
-│   └── errors.rs
-
 ```
-
-The project uses session keys (maintained by Magic Block) for auto approving transactions using an expiring token.

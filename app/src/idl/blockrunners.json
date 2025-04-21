@@ -1,5 +1,5 @@
 {
-  "address": "HiYeEKsFdW3k4dcLYsSewYmeZ1bHoiWa45tSZ7kdDXeV",
+  "address": "77A9RGGRna9FVHYhHhwmEi39JmsQ886kqSFfTTWfTEAE",
   "metadata": {
     "name": "blockrunners",
     "version": "0.1.0",
@@ -98,6 +98,28 @@
               {
                 "kind": "account",
                 "path": "player"
+              }
+            ]
+          }
+        },
+        {
+          "name": "game_state",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  103,
+                  97,
+                  109,
+                  101,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  101
+                ]
               }
             ]
           }
@@ -215,6 +237,7 @@
       "accounts": [
         {
           "name": "player",
+          "writable": true,
           "signer": true
         },
         {
@@ -248,6 +271,7 @@
         },
         {
           "name": "game_state",
+          "writable": true,
           "pda": {
             "seeds": [
               {
@@ -270,6 +294,10 @@
         },
         {
           "name": "randomness_account"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
         }
       ],
       "args": []
@@ -438,78 +466,88 @@
     },
     {
       "code": 6007,
+      "name": "ArithmeticOverflow",
+      "msg": "Arithmetic overflow occurred during calculation"
+    },
+    {
+      "code": 6008,
       "name": "UnknownError",
       "msg": "Unknown Error"
     },
     {
-      "code": 6008,
+      "code": 6009,
       "name": "NoCardsLeft",
       "msg": "No cards left to use"
     },
     {
-      "code": 6009,
+      "code": 6010,
       "name": "InvalidMove",
       "msg": "Invalid move"
     },
     {
-      "code": 6010,
+      "code": 6011,
       "name": "InvalidCardSelection",
       "msg": "Invalid card selection"
     },
     {
-      "code": 6011,
+      "code": 6012,
       "name": "NotEnoughCiphers",
       "msg": "Not enough ciphers to make this move"
     },
     {
-      "code": 6012,
+      "code": 6013,
       "name": "NotAtEndOfPath",
       "msg": "Player not at end of path yet"
     },
     {
-      "code": 6013,
+      "code": 6014,
       "name": "RandomnessAccountParsing",
       "msg": "Failed to parse randomness account"
     },
     {
-      "code": 6014,
+      "code": 6015,
       "name": "RandomnessAccountParsingReveal",
       "msg": "Failed to parse randomness account for reveal"
     },
     {
-      "code": 6015,
+      "code": 6016,
       "name": "RandomnessUnavailable",
       "msg": "Randomness data is unavailable"
     },
     {
-      "code": 6016,
+      "code": 6017,
       "name": "RandomnessFinished",
       "msg": "Randomness finished"
     },
     {
-      "code": 6017,
+      "code": 6018,
       "name": "RandomnessNotResolved",
       "msg": "Randomness not resolved"
     },
     {
-      "code": 6018,
+      "code": 6019,
       "name": "RandomnessStale",
       "msg": "Randomness is stale"
     },
     {
-      "code": 6019,
+      "code": 6020,
       "name": "RandomnessExpired",
       "msg": "Randomness is expired"
     },
     {
-      "code": 6020,
+      "code": 6021,
       "name": "Unauthorized",
       "msg": "Unauthorized"
     },
     {
-      "code": 6021,
+      "code": 6022,
       "name": "MoveNotCommitted",
       "msg": "Move not committed"
+    },
+    {
+      "code": 6023,
+      "name": "PlayingInDifferentGame",
+      "msg": "Player is playing in a different game"
     }
   ],
   "types": [
@@ -575,6 +613,13 @@
               "The length of the path players need to navigate"
             ],
             "type": "u8"
+          },
+          {
+            "name": "start",
+            "docs": [
+              "The Unix timestamp when the current game started"
+            ],
+            "type": "i64"
           },
           {
             "name": "game_events",
@@ -643,6 +688,13 @@
             "type": "u8"
           },
           {
+            "name": "game_start",
+            "docs": [
+              "The Unix timestamp of the game instance this player is part of"
+            ],
+            "type": "i64"
+          },
+          {
             "name": "player_events",
             "docs": [
               "Social feed events history"
@@ -661,6 +713,25 @@
               "The player has joined the game or not"
             ],
             "type": "bool"
+          },
+          {
+            "name": "first_login",
+            "docs": [
+              "Player statistics"
+            ],
+            "type": "i64"
+          },
+          {
+            "name": "last_login",
+            "type": "i64"
+          },
+          {
+            "name": "games_won",
+            "type": "u64"
+          },
+          {
+            "name": "total_ciphers_bought",
+            "type": "u64"
           },
           {
             "name": "randomness_account",

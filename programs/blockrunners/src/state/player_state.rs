@@ -53,7 +53,7 @@ pub struct PlayerState {
     /// Store bump to save compute
     pub bump: u8,
 
-    /// tommy: The Unix timestamp of the game instance this player is part of i think
+    /// The Unix timestamp of the game instance this player is part of
     pub game_start: i64,
 
     /// Social feed events history

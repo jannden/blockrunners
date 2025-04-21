@@ -1,9 +1,9 @@
 import { useState, useEffect, ReactNode } from "react";
 import { useConnection, useAnchorWallet } from "@solana/wallet-adapter-react";
 import { BN } from "@coral-xyz/anchor";
-import { PublicKey, Keypair, SystemProgram } from "@solana/web3.js";
+import { PublicKey, Keypair } from "@solana/web3.js";
 import { gameStatePDA, getPlayerStatePDA } from "../lib/constants";
-import type { GameState, PlayerState } from "../types/types";
+import type { GameState, PlayerState, SocialFeedEvent } from "../types/types";
 import { BlockrunnersContext } from "../hooks/useBlockrunners";
 import { useProgram, useSwitchboardProgram } from "@/hooks/useProgram";
 import * as sb from "@switchboard-xyz/on-demand";
@@ -127,8 +127,6 @@ function BlockrunnersProvider({ children }: { children: ReactNode }) {
       .initializeGame()
       .accounts({
         admin: wallet.publicKey,
-        gameState: gameStatePDA,
-        systemProgram: SystemProgram.programId,
       })
       .rpc()
       .then((tx) => {
@@ -137,6 +135,33 @@ function BlockrunnersProvider({ children }: { children: ReactNode }) {
       .catch((err) => {
         console.error("Initialize game:", err);
       });
+  };
+
+  // Instruction: Initialize player
+  const initializePlayer = async () => {
+    if (!program) return;
+
+    console.log("Initialize player: Wallet", wallet?.publicKey);
+    console.log("Initialize player: PlayerStatePDA", playerStatePDA);
+    if (!wallet?.publicKey || !playerStatePDA) {
+      console.error("Initialize player: Wallet or PlayerStatePDA not found");
+      return;
+    }
+
+    try {
+      // Initialize the player account - this will first attempt to reveal randomness
+      // but it's okay if it's not ready yet
+      await program.methods
+        .initializePlayer()
+        .accounts({
+          player: wallet.publicKey,
+        })
+        .rpc();
+
+      console.log("Player initialized successfully", playerStatePDA);
+    } catch (error) {
+      console.error("Error in initialize player flow:", error);
+    }
   };
 
   // Create randomness account
@@ -201,7 +226,7 @@ function BlockrunnersProvider({ children }: { children: ReactNode }) {
       // Blockrunners program request instruction
       const blockrunnersRequestIx = await program.methods
         .moveCommit(
-          { right: true },
+          { right: {} },
           {
             shield: false,
             doubler: false,
@@ -211,7 +236,6 @@ function BlockrunnersProvider({ children }: { children: ReactNode }) {
         .accounts({
           player: wallet.publicKey,
           randomnessAccount: randomnessAccount.pubkey,
-          playerState: playerStatePDA,
         })
         .instruction();
 
@@ -282,7 +306,6 @@ function BlockrunnersProvider({ children }: { children: ReactNode }) {
         .accounts({
           player: wallet.publicKey,
           randomnessAccount: randomnessAccountAddress,
-          playerState: playerStatePDA,
         })
         .instruction();
 
@@ -337,35 +360,6 @@ function BlockrunnersProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Instruction: Initialize player
-  const initializePlayer = async () => {
-    if (!program) return;
-
-    console.log("Initialize player: Wallet", wallet?.publicKey);
-    console.log("Initialize player: PlayerStatePDA", playerStatePDA);
-    if (!wallet?.publicKey || !playerStatePDA) {
-      console.error("Initialize player: Wallet or PlayerStatePDA not found");
-      return;
-    }
-
-    try {
-      // Initialize the player account - this will first attempt to reveal randomness
-      // but it's okay if it's not ready yet
-      await program.methods
-        .initializePlayer()
-        .accounts({
-          player: wallet.publicKey,
-          playerState: playerStatePDA,
-          systemProgram: SystemProgram.programId,
-        })
-        .rpc();
-
-      console.log("Player initialized successfully", playerStatePDA);
-    } catch (error) {
-      console.error("Error in initialize player flow:", error);
-    }
-  };
-
   // Instruction: Purchase ciphers
   const purchaseCiphers = async (amount: number) => {
     if (!program) return;
@@ -379,9 +373,6 @@ function BlockrunnersProvider({ children }: { children: ReactNode }) {
       .purchaseCiphers(new BN(amount))
       .accounts({
         player: wallet.publicKey,
-        playerState: playerStatePDA,
-        gameState: gameStatePDA,
-        systemProgram: SystemProgram.programId,
       })
       .rpc()
       .then((tx) => {

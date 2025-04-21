@@ -25,7 +25,6 @@ pub struct InitializeGame<'info> {
 pub fn initialize_game(ctx: Context<InitializeGame>) -> Result<()> {
     let game_state = &mut ctx.accounts.game_state;
 
-    // tommy: get current time for initial game start in initialize_game function
     let clock = Clock::get()?;
 
     game_state.authority = ctx.accounts.admin.key();

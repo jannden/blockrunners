@@ -3,9 +3,9 @@ use anchor_lang::{prelude::*, system_program};
 use crate::{
     constants::{CIPHER_COST, GAME_STATE_SEED, PLAYER_STATE_SEED},
     errors::BlockrunnersError,
-    instructions::{collect_player_card, save_and_emit_event, update_last_login},
+    instructions::update_last_login,
     state::{Card, GameState, PlayerState, SocialFeedEventType},
-    utils::{give_cards, randomness_request, randomness_reveal, save_and_emit_event},
+    utils::save_and_emit_event,
 };
 
 #[derive(Accounts)]

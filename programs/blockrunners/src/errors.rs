@@ -70,4 +70,7 @@ pub enum BlockrunnersError {
 
     #[msg("Move not committed")]
     MoveNotCommitted,
+
+    #[msg("Player is playing in a different game")]
+    PlayingInDifferentGame,
 }

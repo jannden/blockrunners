@@ -4,8 +4,6 @@ pub mod initialize_player;
 pub mod move_commit;
 pub mod move_reveal;
 pub mod purchase_ciphers;
-pub mod temp_rand_request;
-pub mod temp_rand_reveal;
 pub mod update_last_login;
 
 pub use debug_give_card::*;
@@ -14,6 +12,4 @@ pub use initialize_player::*;
 pub use move_commit::*;
 pub use move_reveal::*;
 pub use purchase_ciphers::*;
-pub use temp_rand_request::*;
-pub use temp_rand_reveal::*;
 pub use update_last_login::*;

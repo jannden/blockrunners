@@ -35,17 +35,18 @@ pub struct MoveReveal<'info> {
 }
 
 pub fn move_reveal(ctx: Context<MoveReveal>) -> Result<()> {
+    let player = &mut ctx.accounts.player;
     let game_state = &mut ctx.accounts.game_state;
     let player_state = &mut ctx.accounts.player_state;
     let randomness_account = &ctx.accounts.randomness_account;
 
-    // tommy: check if player needs to be reset due to game completion
+    update_last_login(player_state)?;
+
+    // Check if player is part of the current game
     require!(
         player_state.game_start == game_state.start,
-        BlockrunnersError::InsufficientBalance
+        BlockrunnersError::PlayingInDifferentGame
     );
-
-    update_last_login(player_state)?;
 
     // Check if player has already completed the path
     require!(
@@ -64,10 +65,10 @@ pub fn move_reveal(ctx: Context<MoveReveal>) -> Result<()> {
     );
     player_state.ciphers -= total_cost;
 
+    // TODO: Remove used cards from player's inventory and make player_state.cards HashMap
+
     // Reveal randomness
     randomness_reveal(player_state, randomness_account)?;
-
-    // TODO: Remove used cards from player's inventory and make player_state.cards HashMap
 
     // Determine the correct direction based on the randomness value
     let correct_direction = if randomness_use(player_state)? % 2 == 0 {
@@ -77,7 +78,11 @@ pub fn move_reveal(ctx: Context<MoveReveal>) -> Result<()> {
     };
 
     if player_state.move_direction == Some(correct_direction) {
-        handle_correct_move(game_state, player_state, used_cards)?;
+        handle_correct_move(player_state, used_cards)?;
+
+        if player_state.position == game_state.path_length {
+            handle_win(player, game_state, player_state)?;
+        }
     } else {
         handle_incorrect_move(player_state, used_cards)?;
     }
@@ -86,7 +91,6 @@ pub fn move_reveal(ctx: Context<MoveReveal>) -> Result<()> {
 }
 
 fn handle_correct_move(
-    game_state: &mut Account<GameState>,
     player_state: &mut Account<PlayerState>,
     card_usage: CardUsage,
 ) -> Result<()> {
@@ -195,6 +199,89 @@ fn handle_incorrect_move(
             event_message,
         )?;
     }
+
+    Ok(())
+}
+
+fn handle_win(
+    player: &Signer,
+    game_state: &mut Account<GameState>,
+    player_state: &mut Account<PlayerState>,
+) -> Result<()> {
+    player_state.games_won = player_state
+        .games_won
+        .checked_add(1)
+        .ok_or(BlockrunnersError::UnknownError)?;
+
+    // Verify we have enough lamports before transfer
+    let current_lamports = game_state.to_account_info().lamports();
+    require!(
+        current_lamports >= game_state.prize_pool,
+        BlockrunnersError::InsufficientBalance
+    );
+
+    // check if there's any prize to distribute from the pool
+    let prize_amount = game_state.prize_pool;
+
+    if prize_amount > 0 {
+        msg!(
+            "Yay! We are distributing prize of {} lamports",
+            prize_amount
+        );
+
+        // Subtract prize from game state
+        **game_state.to_account_info().try_borrow_mut_lamports()? = game_state
+            .to_account_info()
+            .lamports()
+            .checked_sub(prize_amount)
+            .ok_or(BlockrunnersError::ArithmeticOverflow)?;
+
+        // Add prize to player
+        **player.try_borrow_mut_lamports()? = player
+            .lamports()
+            .checked_add(prize_amount)
+            .ok_or(BlockrunnersError::ArithmeticOverflow)?;
+
+        msg!("Prize transferred successfully!");
+
+        // Reset the prize pool
+        game_state.prize_pool = 0;
+        msg!("Prize pool reset to 0.");
+    } else {
+        msg!("Player won, but there's no money in the pool dang.");
+    }
+
+    // Create global win message for everyone
+    let global_message = format!(
+        "Player {} has won the game with {} correct moves and collected {} SOL!",
+        player.key(), // use the signer's key
+        player_state.position,
+        prize_amount
+    );
+
+    // Announce to global feed
+    save_and_emit_event(
+        &mut game_state.game_events,
+        SocialFeedEventType::GameWon,
+        global_message,
+    )?;
+
+    // Create personal congrats for winner
+    let personal_message = format!(
+        "Congratulations! You won the game and collected {} SOL!",
+        prize_amount
+    );
+
+    // Announce to player's feed
+    save_and_emit_event(
+        &mut player_state.player_events,
+        SocialFeedEventType::GameWon,
+        personal_message,
+    )?;
+
+    // Update game start time to trigger resets for all players with a new timestamp set
+    let clock = Clock::get()?;
+    game_state.start = clock.unix_timestamp;
 
     Ok(())
 }
