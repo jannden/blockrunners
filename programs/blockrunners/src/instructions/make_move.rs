@@ -9,16 +9,20 @@ use crate::{
 
 #[derive(Accounts)]
 pub struct MakeMove<'info> {
+    #[account(mut)]
     pub player: Signer<'info>,
 
     #[account(mut)]
     pub player_state: Account<'info, PlayerState>,
 
     #[account(
+        mut,
         seeds = [GAME_STATE_SEED],
         bump
     )]
     pub game_state: Account<'info, GameState>,
+
+    pub system_program: Program<'info, System>,
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug)]
@@ -33,11 +37,17 @@ pub fn make_move(
     direction: PathDirection,
     card_usage: CardUsage,
 ) -> Result<()> {
-    let game_state = &ctx.accounts.game_state;
+    let game_state = &mut ctx.accounts.game_state;
     let player_state = &mut ctx.accounts.player_state;
+    
+    // tommy: check if player needs to be reset due to game completion
+    require!(
+        player_state.game_start == game_state.start,
+        BlockrunnersError::InsufficientBalance
+    );
 
     update_last_login(player_state)?;
-
+    
     // Check if player has already completed the path
     require!(
         player_state.position < game_state.path_length,
@@ -56,14 +66,87 @@ pub fn make_move(
     let correct_direction = generate_next_direction_for_path(player_state);
 
     if direction == correct_direction {
+        // tommy: step 1 - handle the move first
         handle_correct_move(game_state, player_state, card_usage)?;
         
-        // If player completed the path, increment games won
-        if player_state.position >= game_state.path_length {
+        // tommy: step 2 - check win condition directly with it's own function as you suggested!
+        let player_won = player_state.position == game_state.path_length;
+        
+        // tommy: step 3 - handle the win celebration stuff:
+        if player_won {
+            // tommy: move increment games won counter here
             player_state.games_won = player_state.games_won.checked_add(1)
                 .ok_or(BlockrunnersError::UnknownError)?;
+
+            // Verify we have enough lamports before transfer
+            let current_lamports = game_state.to_account_info().lamports();
+            require!(
+                current_lamports >= game_state.prize_pool,
+                BlockrunnersError::InsufficientBalance
+            );
+
+            // check if there's any prize to distribute from the pool
+            let prize_amount = game_state.prize_pool;
+
+            if prize_amount > 0 {
+                msg!("Yay! We are distributing prize of {} lamports", prize_amount);
+
+                // tommy: use checked arithmetic for game state subtraction
+                **game_state.to_account_info().try_borrow_mut_lamports()? = game_state
+                    .to_account_info()
+                    .lamports()
+                    .checked_sub(prize_amount)
+                    .ok_or(BlockrunnersError::ArithmeticOverflow)?;
+
+                // tommy: use checked arithmetic for player addition
+                **ctx.accounts.player.try_borrow_mut_lamports()? = ctx
+                    .accounts
+                    .player
+                    .lamports()
+                    .checked_add(prize_amount)
+                    .ok_or(BlockrunnersError::ArithmeticOverflow)?;
+
+                msg!("Prize transferred successfully!");
+
+                // reeset the prize pool back to zero!
+                game_state.prize_pool = 0;
+                msg!("Prize pool reset to 0.");
+            } else {
+                msg!("Player won, but there's no money in the pool dang.");
+            }
+
+            // tommy: create global win message for everyone
+            let global_message = format!(
+                "Player {} has won the game with {} correct moves and collected {} SOL!",
+                ctx.accounts.player.key(),  // use the signer's key
+                player_state.position,
+                prize_amount
+            );
+
+            // tommy: announce to global feed
+            save_and_emit_event(
+                &mut game_state.game_events,
+                SocialFeedEventType::GameWon,
+                global_message,
+            )?;
+
+            // tommy: create personal congrats for winner as suggested
+            let personal_message = format!(
+                "Congratulations! You won the game and collected {} SOL!",
+                prize_amount
+            );
+
+            // tommy: announce to player's feed
+            save_and_emit_event(
+                &mut player_state.player_events,
+                SocialFeedEventType::GameWon,
+                personal_message,
+            )?;
+
+            // tommy: update game start time to trigger resets for all players with a new timestamp set
+            let clock = Clock::get()?;
+            game_state.start = clock.unix_timestamp;
         }
-        
     } else {
         handle_incorrect_move(player_state, card_usage)?;
     }
@@ -126,27 +209,13 @@ fn process_cards(player_state: &mut PlayerState, card_usage: &CardUsage) -> Resu
 }
 
 fn handle_correct_move(
-    game_state: &Account<GameState>,
+    game_state: &mut Account<GameState>,
     player_state: &mut Account<PlayerState>,
     card_usage: CardUsage,
-) -> Result<()> {
+) -> Result<()> { // changed return type since we don't check win here anymore
     // Correct move: advance one step
     player_state.position += 1;
     let new_position = player_state.position;
-
-    // Check if player has reached the end of the path (victory condition)
-    if new_position >= game_state.path_length {
-        save_and_emit_event(
-            &mut player_state.player_events,
-            SocialFeedEventType::GameWon,
-            format!(
-                "Player has completed the path and won with {} correct moves!",
-                new_position
-            ),
-        )?;
-
-        return Ok(());
-    }
 
     // Base message
     let mut event_message = format!("Player advanced to position {}!", new_position);

@@ -23,6 +23,9 @@ pub enum BlockrunnersError {
     #[msg("Player has already completed the path")]
     PathAlreadyCompleted,
 
+    #[msg("Arithmetic overflow occurred during calculation")]
+    ArithmeticOverflow,
+
     #[msg("Unknown Error")]
     UnknownError,
 }

@@ -3,10 +3,11 @@ use anchor_lang::prelude::*;
 use crate::{
     constants::{
         DISCRIMINATOR_SIZE, 
-        PLAYER_STATE_SEED
+        PLAYER_STATE_SEED,
+        GAME_STATE_SEED
     }, 
     instructions::update_last_login,
-    state::PlayerState
+    state::{PlayerState, GameState}
 };
 
 #[derive(Accounts)]
@@ -23,6 +24,12 @@ pub struct InitializePlayer<'info> {
     )]
     pub player_state: Account<'info, PlayerState>,
 
+    #[account(
+        seeds = [GAME_STATE_SEED],
+        bump
+    )]
+    pub game_state: Account<'info, GameState>,
+
     pub system_program: Program<'info, System>,
 }
 
@@ -38,6 +45,9 @@ pub fn initialize_player(ctx: Context<InitializePlayer>) -> Result<()> {
     player_state.bump = ctx.bumps.player_state;
     player_state.player_events = Vec::new();
     player_state.in_game = false;
+
+    // Initialize game start time
+    player_state.game_start = ctx.accounts.game_state.start;
 
     // Initialize player statistics
     player_state.first_login = clock.unix_timestamp;
