@@ -5,7 +5,7 @@
  * IDL can be found at `target/idl/blockrunners.json`.
  */
 export type Blockrunners = {
-  "address": "HiYeEKsFdW3k4dcLYsSewYmeZ1bHoiWa45tSZ7kdDXeV",
+  "address": "77A9RGGRna9FVHYhHhwmEi39JmsQ886kqSFfTTWfTEAE",
   "metadata": {
     "name": "blockrunners",
     "version": "0.1.0",
@@ -13,6 +13,65 @@ export type Blockrunners = {
     "description": "Created with Anchor"
   },
   "instructions": [
+    {
+      "name": "debugGiveCard",
+      "discriminator": [
+        194,
+        238,
+        180,
+        20,
+        144,
+        241,
+        112,
+        80
+      ],
+      "accounts": [
+        {
+          "name": "player",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "playerState",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  108,
+                  97,
+                  121,
+                  101,
+                  114,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "player"
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "card",
+          "type": {
+            "defined": {
+              "name": "card"
+            }
+          }
+        }
+      ]
+    },
     {
       "name": "initializeGame",
       "discriminator": [
@@ -549,6 +608,11 @@ export type Blockrunners = {
       "code": 6022,
       "name": "moveNotCommitted",
       "msg": "Move not committed"
+    },
+    {
+      "code": 6023,
+      "name": "playingInDifferentGame",
+      "msg": "Player is playing in a different game"
     }
   ],
   "types": [
@@ -691,7 +755,7 @@ export type Blockrunners = {
           {
             "name": "gameStart",
             "docs": [
-              "tommy: The Unix timestamp of the game instance this player is part of i think"
+              "The Unix timestamp of the game instance this player is part of"
             ],
             "type": "i64"
           },

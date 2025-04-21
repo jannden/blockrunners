@@ -129,11 +129,6 @@ describe("Move Commit-Reveal", () => {
     const playerStateAfter = await program.account.playerState.fetch(playerStatePda);
     console.log(`Player position after move: ${playerStateAfter.position}`);
 
-    // Verify lastLogin was updated
-    expect(playerStateAfter.lastLogin.toString()).to.not.equal(
-      playerStateBefore.lastLogin.toString()
-    );
-
     // If the position increased, it was a correct move
     if (playerStateAfter.position > initialPosition) {
       console.log("Correct move! Position increased.");
@@ -166,7 +161,6 @@ describe("Move Commit-Reveal", () => {
       // Fetch player state to get the current position
       const playerStateBefore = await program.account.playerState.fetch(playerStatePda);
       const currentPosition = playerStateBefore.position;
-      const lastLoginBefore = playerStateBefore.lastLogin.toString();
       console.log(`Move ${i + 1}: Player position before move: ${currentPosition}`);
 
       // Make a move (direction doesn't matter, the program will generate the correct direction)
@@ -196,9 +190,6 @@ describe("Move Commit-Reveal", () => {
       // Fetch player state after the move
       const playerStateAfter = await program.account.playerState.fetch(playerStatePda);
 
-      // Verify lastLogin was updated
-      expect(playerStateAfter.lastLogin.toString()).to.not.equal(lastLoginBefore);
-
       // If the position changed, it was correct
       if (playerStateAfter.position > currentPosition) {
         console.log(`Move ${i + 1}: Correct! Advanced to position ${playerStateAfter.position}`);
@@ -207,14 +198,65 @@ describe("Move Commit-Reveal", () => {
         // Break the loop if we got reset
         break;
       }
+
+      // TODO: What makes sense to test here?
     }
+  });
+
+  it("Tests lastLogin update", async () => {
+    // Fetch player state to get the current position
+    const playerStateBefore = await program.account.playerState.fetch(playerStatePda);
+    const lastLoginBefore = playerStateBefore.lastLogin.toString();
+    console.log(`Player lastLogin before move: ${lastLoginBefore}`);
+
+    // Wait a moment to ensure timestamp will be different
+    await sleep(1000);
+
+    // Move
+    const direction = { right: {} };
+    await program.methods
+      .moveCommit(direction, CARD_USAGE_EMPTY_MOCK)
+      .accounts({
+        player: playerKeypair.publicKey,
+        randomnessAccount: randomnessKeypair.publicKey,
+      })
+      .signers([playerKeypair])
+      .rpc();
+
+    // Check lastLogin after commit
+    const playerStateAfterCommit = await program.account.playerState.fetch(playerStatePda);
+    const lastLoginAfterCommit = playerStateAfterCommit.lastLogin.toString();
+    console.log(`Player lastLogin after move: ${lastLoginAfterCommit}`);
+
+    // Verify lastLogin was updated
+    expect(Number(lastLoginAfterCommit)).to.be.greaterThan(Number(lastLoginBefore));
+
+    // Wait a moment to ensure timestamp will be different
+    await sleep(1000);
+
+    // Complete the move by revealing
+    await program.methods
+      .moveReveal()
+      .accounts({
+        player: playerKeypair.publicKey,
+        randomnessAccount: randomnessKeypair.publicKey,
+      })
+      .signers([playerKeypair])
+      .rpc();
+
+    // Check lastLogin after reveal
+    const playerStateAfterReveal = await program.account.playerState.fetch(playerStatePda);
+    const lastLoginAfterReveal = playerStateAfterReveal.lastLogin.toString();
+    console.log(`Player lastLogin after move: ${lastLoginAfterReveal}`);
+
+    // Verify lastLogin was updated
+    expect(Number(lastLoginAfterReveal)).to.be.greaterThan(Number(lastLoginAfterCommit));
   });
 
   it("Tests incorrect move behavior", async () => {
     // Fetch player state to get the current position
     const playerStateBefore = await program.account.playerState.fetch(playerStatePda);
     const currentPosition = playerStateBefore.position;
-    const lastLoginBefore = playerStateBefore.lastLogin.toString();
     console.log(`Player position before move: ${currentPosition}`);
 
     // Make a move (direction doesn't matter, the program will generate the correct direction)
@@ -230,9 +272,6 @@ describe("Move Commit-Reveal", () => {
       })
       .signers([playerKeypair])
       .rpc();
-
-    // Sleep for 1 seconds to ensure timestamp changes
-    await sleep(1000);
 
     // Step 2: Reveal the move
     const txReveal = await program.methods
@@ -250,9 +289,6 @@ describe("Move Commit-Reveal", () => {
     // Fetch player state after the move
     const playerStateAfter = await program.account.playerState.fetch(playerStatePda);
     console.log(`Player position after move: ${playerStateAfter.position}`);
-
-    // Verify lastLogin was updated
-    expect(playerStateAfter.lastLogin.toString()).to.not.equal(lastLoginBefore);
 
     // If the position didn't increase, it was an incorrect move
     if (playerStateAfter.position <= currentPosition) {
@@ -316,9 +352,6 @@ describe("Move Commit-Reveal", () => {
 
     // TODO: Temporary disabling to refactor cards from vector to hashmap
     // expect(afterMove.cards.length).to.be.equal(stateBefore.cards.length); // doubler effect
-
-    // Verify lastLogin was updated
-    expect(afterMove.lastLogin.toString()).to.not.equal(stateBefore.lastLogin.toString());
   });
 
   it("Applies card effects correctly on invalid move", async () => {
@@ -356,9 +389,6 @@ describe("Move Commit-Reveal", () => {
     console.log("State after move DEBUG -> ", stateAfterBad);
 
     expect(stateAfterBad.position).to.equal(stateBefore.position); // no reset
-
-    // Verify lastLogin was updated
-    expect(stateAfterBad.lastLogin.toString()).to.not.equal(stateBefore.lastLogin.toString());
   });
 
   it("Verifies game completion and prize distribution", async () => {
@@ -414,7 +444,7 @@ describe("Move Commit-Reveal", () => {
         .rpc();
 
       // Wait a small amount of time between moves
-      await sleep(500);
+      await sleep(100);
     }
 
     // Get final state

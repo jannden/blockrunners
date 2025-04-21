@@ -87,9 +87,6 @@ describe("Purchase ciphers", () => {
     const playerBalanceBefore = await provider.connection.getBalance(playerKeypair.publicKey);
     const gameBalanceBefore = await provider.connection.getBalance(gameStatePda);
 
-    // Sleep for 1 seconds to ensure timestamp changes
-    await sleep(1000);
-
     // Purchase ciphers
     const tx = await program.methods
       .purchaseCiphers(new anchor.BN(ciphersToPurchase))
@@ -139,11 +136,6 @@ describe("Purchase ciphers", () => {
     expect(playerStateBefore.inGame).to.equal(false);
     expect(playerStateAfter.inGame).to.equal(true);
 
-    // Verify lastLogin was updated
-    expect(playerStateAfter.lastLogin.toString()).to.not.equal(
-      playerStateBefore.lastLogin.toString()
-    );
-
     // Verify the amount of cards did not increase
     expect(playerStateAfter.cards.length).to.equal(playerStateBefore.cards.length);
 
@@ -168,9 +160,6 @@ describe("Purchase ciphers", () => {
 
     const additionalCiphers = 3;
     const expectedCost = additionalCiphers * CIPHER_COST;
-
-    // Sleep for 1 seconds to ensure timestamp changes
-    await sleep(1000);
 
     // Purchase more ciphers as the first player
     const tx = await program.methods
@@ -201,11 +190,6 @@ describe("Purchase ciphers", () => {
     // Verify totalCiphersBought was increased by the correct amount
     expect(playerStateAfter.totalCiphersBought.toNumber()).to.equal(
       playerStateBefore.totalCiphersBought.toNumber() + additionalCiphers
-    );
-
-    // Verify lastLogin was updated
-    expect(playerStateAfter.lastLogin.toString()).to.not.equal(
-      playerStateBefore.lastLogin.toString()
     );
 
     // Verify prize pool was increased by the correct amount
@@ -370,5 +354,33 @@ describe("Purchase ciphers", () => {
       return;
     }
     expect.fail("Should not reach this point");
+  });
+
+  it("Tests lastLogin update when purchasing ciphers", async () => {
+    // Fetch player state to get the current lastLogin value
+    const playerStateBefore = await program.account.playerState.fetch(playerStatePda);
+    const lastLoginBefore = playerStateBefore.lastLogin.toString();
+    console.log(`Player lastLogin before purchase: ${lastLoginBefore}`);
+
+    // Wait a moment to ensure timestamp will be different
+    await sleep(1000);
+
+    // Purchase ciphers
+    const ciphersToPurchase = 1;
+    await program.methods
+      .purchaseCiphers(new anchor.BN(ciphersToPurchase))
+      .accounts({
+        player: playerKeypair.publicKey,
+      })
+      .signers([playerKeypair])
+      .rpc();
+
+    // Check lastLogin after purchase
+    const playerStateAfter = await program.account.playerState.fetch(playerStatePda);
+    const lastLoginAfter = playerStateAfter.lastLogin.toString();
+    console.log(`Player lastLogin after purchase: ${lastLoginAfter}`);
+
+    // Verify lastLogin was updated
+    expect(Number(lastLoginAfter)).to.be.greaterThan(Number(lastLoginBefore));
   });
 });
