@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card } from "@/components/ui/card";
-import { FeedMessage } from "@/types/game";
+import { FeedMessage } from "@/lib/types";
 
 interface GameFeedProps {
   messages: FeedMessage[];

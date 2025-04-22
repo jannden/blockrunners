@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { useWallet } from "@solana/wallet-adapter-react";
 
@@ -7,56 +7,56 @@ import { GameFeed } from "./game-feed";
 import { AbilityCards } from "./ability-cards";
 import { GameControls } from "./game-controls";
 import { InfoModal } from "./info-modal";
-import { BuyCiphersModal } from "./buy-ciphers-modal";
+import { PurchaseCiphersModal } from "./purchase-ciphers-modal";
 import { CostInfoModal } from "./cost-info-modal";
-import { useStore } from "@/lib/game-store";
-import { AbilityCard } from "@/types/game";
-import { useSocialFeedStore } from "@/lib/social-feed-store";
+import { AbilityCard } from "@/lib/types";
 import { useBlockrunners } from "@/hooks/useBlockrunners";
+import { InfoContent } from "./info-content";
+import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
+import { transformBlockchainCards } from "@/lib/utils";
+import { INITIAL_PATH_LENGTH } from "@/lib/constants";
 
 export function GameInterface() {
   const { connected } = useWallet();
-  const { socialFeeds } = useBlockrunners();
-
-  // State from store
   const {
-    ciphers,
-    cards,
-    playerPosition,
-    pathLength,
-    prizePool,
-    socialFeed,
+    playerState,
+    gameState,
+    // UI state
     selectedCards,
-    initializeGame,
-    makeMove,
-    buyCiphers,
+    socialFeed,
+    // Actions
     selectCard,
     deselectCard,
-  } = useStore();
+  } = useBlockrunners();
 
   // Modal state
   const [infoModalOpen, setInfoModalOpen] = useState(false);
-  const [buyCiphersModalOpen, setBuyCiphersModalOpen] = useState(false);
+  const [purchaseCiphersModalOpen, setPurchaseCiphersModalOpen] = useState(false);
   const [costInfoModalOpen, setCostInfoModalOpen] = useState(false);
 
-  // Access the feed
-  const feedMessages = useSocialFeedStore((state) => state.feedMessages);
-  const addMessage = useSocialFeedStore((state) => state.addMessage);
+  // Get the game's prize pool from context
+  const gamePrizePool = gameState?.prizePool ? Number(gameState.prizePool) : 0;
 
-  // Initialize game
-  useEffect(() => {
-    initializeGame();
-  }, [initializeGame]);
+  // Get the player's cipher count from context
+  const ciphers = playerState?.ciphers ? Number(playerState.ciphers) : 0;
 
-  // Add social feeds to the feed messages
-  useEffect(() => {
-    if (socialFeeds.length > 0) {
-      addMessage(socialFeeds[socialFeeds.length - 1].message);
-    }
-  }, [socialFeeds, addMessage ]);
+  // Transform player cards from blockchain format to our app format
+  const playerCards = transformBlockchainCards(playerState?.cards);
 
   // Calculate progress
+  const playerPosition = playerState?.position ? Number(playerState.position) : 0;
+  const pathLength = gameState?.pathLength || INITIAL_PATH_LENGTH;
   const progress = Math.floor((playerPosition / pathLength) * 100);
+
+  // Determine if the player is in the game
+  const inTheGame: boolean =
+    connected &&
+    !!playerState &&
+    !!playerState.gameStart &&
+    playerState.gameStart.toString() === gameState?.start.toString();
+
+  // Determine if cards should be selectable (only when player is in the game and not waiting for move reveal)
+  const isCardsSelectable = inTheGame && !playerState?.moveDirection; // TODO: Change to randomnessAccount
 
   // Calculate the total cost for the next move
   // Base cost is 1 + number of selected cards
@@ -67,66 +67,65 @@ export function GameInterface() {
     nextMoveCost = Math.max(0, nextMoveCost - 2);
   }
 
-  // Game actions
-  const handleBuyMoreCiphers = (amount: number) => {
-    buyCiphers(amount);
-    setBuyCiphersModalOpen(false);
-  };
-
-  const handleMakeMove = (direction: "left" | "right") => {
-    makeMove(direction);
-  };
-
   const handleToggleCardSelection = (card: AbilityCard) => {
-    if (selectedCards.some((c) => c.id === card.id)) {
-      deselectCard(card.id);
+    // Don't allow card selection during move reveal state
+    if (!isCardsSelectable) return;
+
+    // Check if any card of this type is already selected
+    const isTypeSelected = selectedCards.some((sc) => sc.type === card.type);
+
+    if (isTypeSelected) {
+      // Find the selected card of this type to deselect
+      const selectedCard = selectedCards.find((sc) => sc.type === card.type);
+      if (selectedCard) {
+        deselectCard(selectedCard.id);
+      }
     } else {
       selectCard(card);
     }
   };
 
   return (
-    <div className="flex flex-col h-screen max-w-md mx-auto w-full">
+    <div className="flex flex-col overflow-hidden h-screen max-w-md mx-auto w-full">
       <GameHeader
         ciphers={ciphers}
-        prizePool={prizePool}
+        prizePool={gamePrizePool}
         onInfoClick={() => setInfoModalOpen(true)}
-        onBuyCiphersClick={() => setBuyCiphersModalOpen(true)}
+        onPurchaseCiphersClick={() => setPurchaseCiphersModalOpen(true)}
       />
 
       {!connected && (
-        <div className="flex flex-col justify-center items-center h-full">
-          <p className="text-center text-gray-500">Connect your wallet to play</p>
-        </div>
+        <>
+          <div className="my-4">
+            <InfoContent />
+          </div>
+          <WalletMultiButton />
+        </>
       )}
 
       {connected && (
         <>
-          <div className="flex-1 overflow-hidden flex flex-col py-4 pr-1 gap-4">
-            <GameFeed messages={[...socialFeed, ...feedMessages]} />
+          <div className="flex-1 flex flex-col py-4 pr-1 gap-4">
+            <GameFeed messages={[...socialFeed]} />
 
-            <div className="flex flex-col justify-center">
-              <AbilityCards
-                cards={cards}
-                selectedCards={selectedCards}
-                onCardSelect={handleToggleCardSelection}
-              />
-            </div>
+            <AbilityCards
+              cards={playerCards}
+              selectedCards={selectedCards}
+              onCardSelect={handleToggleCardSelection}
+              inTheGame={inTheGame}
+              isSelectable={isCardsSelectable}
+            />
 
             <GameControls
-              onMove={handleMakeMove}
               nextMoveCost={nextMoveCost}
-              disabled={ciphers < nextMoveCost}
               onCostInfoClick={() => setCostInfoModalOpen(true)}
               progress={progress}
             />
           </div>
 
-          <InfoModal open={infoModalOpen} onClose={() => setInfoModalOpen(false)} />
-          <BuyCiphersModal
-            open={buyCiphersModalOpen}
-            onClose={() => setBuyCiphersModalOpen(false)}
-            onBuy={handleBuyMoreCiphers}
+          <PurchaseCiphersModal
+            open={purchaseCiphersModalOpen}
+            onClose={() => setPurchaseCiphersModalOpen(false)}
           />
           <CostInfoModal
             open={costInfoModalOpen}
@@ -136,6 +135,7 @@ export function GameInterface() {
           />
         </>
       )}
+      <InfoModal open={infoModalOpen} onClose={() => setInfoModalOpen(false)} />
     </div>
   );
 }

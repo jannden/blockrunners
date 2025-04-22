@@ -1,8 +1,8 @@
 import { PublicKey } from "@solana/web3.js";
 import { createContext, useContext } from "react";
 import { gameStatePDA } from "../lib/constants";
-import { GameState, PlayerState } from "../types/types";
-import type { SocialFeedEvent } from "../types/types";
+import { GameState, PlayerState, CardUsage } from "../lib/types";
+import { AbilityCard } from "@/lib/types";
 
 // Define the types for React context
 interface BlockrunnersContextType {
@@ -10,13 +10,18 @@ interface BlockrunnersContextType {
   playerState: PlayerState | null;
   gameStatePDA: PublicKey | null;
   playerStatePDA: PublicKey | null;
-  socialFeeds: SocialFeedEvent[];
-  initializeGame: () => Promise<void>;
-  initializePlayer: () => Promise<void>;
-  joinGame: () => Promise<void>;
+  // UI state
+  selectedCards: AbilityCard[];
+  socialFeed: { id: string; message: string; timestamp: number; isNew: boolean }[];
+  // Card usage for blockchain transactions
+  cardUsage: CardUsage;
+  setCardUsage: (cardUsage: CardUsage) => void;
+  // Game actions
   purchaseCiphers: (amount: number) => Promise<void>;
-  moveRequest: () => Promise<void>;
-  moveReveal: () => Promise<void>;
+  // UI actions
+  selectCard: (card: AbilityCard) => void;
+  deselectCard: (cardId: string) => void;
+  addToFeed: (message: string) => void;
 }
 
 // Create context with default values
@@ -25,13 +30,18 @@ export const BlockrunnersContext = createContext<BlockrunnersContextType>({
   playerState: null,
   gameStatePDA: gameStatePDA,
   playerStatePDA: null,
-  socialFeeds: [],
-  initializeGame: async () => {},
-  initializePlayer: async () => {},
-  joinGame: async () => {},
+  // UI state
+  selectedCards: [],
+  socialFeed: [],
+  // Card usage
+  cardUsage: { shield: false, doubler: false, swift: false },
+  setCardUsage: () => {},
+  // Game actions
   purchaseCiphers: async () => {},
-  moveRequest: async () => {},
-  moveReveal: async () => {},
+  // UI actions
+  selectCard: () => {},
+  deselectCard: () => {},
+  addToFeed: () => {},
 });
 
 export const useBlockrunners = () => useContext(BlockrunnersContext);

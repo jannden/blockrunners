@@ -1,34 +1,51 @@
-import { useCallback, useState } from "react";
-import { useWallet } from "@solana/wallet-adapter-react";
+import { useState } from "react";
+import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { Button } from "./ui/button";
-import { useBlockrunners } from "@/hooks/useBlockrunners";
+import { useProgram } from "@/hooks/useProgram";
 
 export const InitGameButton = () => {
   const { publicKey } = useWallet();
-  const { gameState, initializeGame } = useBlockrunners();
-
+  const { connection } = useConnection();
   const [isLoading, setIsLoading] = useState(false);
+  const program = useProgram();
 
-  const handleInitGame = useCallback(async () => {
-    if (!publicKey) return;
+  const handleInitGame = async () => {
+    if (!publicKey || !program) return;
 
     setIsLoading(true);
-    initializeGame()
-      .catch((error) => {
-        console.log("Error initializing game:", error);
-      })
-      .finally(() => {
-        setIsLoading(false);
+
+    try {
+      const latestBlockHash = await connection.getLatestBlockhash();
+
+      const signature = await program.methods
+        .initializeGame()
+        .accounts({
+          admin: publicKey,
+        })
+        .rpc();
+
+      console.log("Initialize game: Transaction sent", signature);
+
+      // Wait to confirm the transaction
+      const confirmResult = await connection.confirmTransaction({
+        blockhash: latestBlockHash.blockhash,
+        lastValidBlockHeight: latestBlockHash.lastValidBlockHeight,
+        signature,
       });
-  }, [publicKey, initializeGame]);
+
+      if (confirmResult) {
+        console.log("Initialize game transaction was confirmed");
+      }
+    } catch (err) {
+      console.error("Initialize game error:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
-    <>
-      {publicKey && !gameState && (
-        <Button onClick={handleInitGame} disabled={isLoading || !!gameState}>
-          {isLoading ? "Loading..." : "Init Game"}
-        </Button>
-      )}
-    </>
+    <Button onClick={handleInitGame} disabled={isLoading}>
+      {isLoading ? "Loading..." : "Init Game"}
+    </Button>
   );
 };

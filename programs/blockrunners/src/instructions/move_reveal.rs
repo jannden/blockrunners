@@ -65,7 +65,26 @@ pub fn move_reveal(ctx: Context<MoveReveal>) -> Result<()> {
     );
     player_state.ciphers = player_state.ciphers.saturating_sub(total_cost);
 
-    // TODO: Remove used cards from player's inventory and make player_state.cards HashMap
+    // Remove one of each used card from player's inventory, considering that usedCards is a struct (we can't iterate over) and player_state.cards is a vector
+    // TODO: This is a bit of a hack, we should probably change the player_state.cards to a HashMap
+    let mut cards_to_remove = Vec::new();
+    if used_cards.shield {
+        cards_to_remove.push(Card::Shield);
+    }
+    if used_cards.doubler {
+        cards_to_remove.push(Card::Doubler);
+    }
+    if used_cards.swift {
+        cards_to_remove.push(Card::Swift);
+    }
+    player_state.cards.retain(|card| {
+        if let Some(pos) = cards_to_remove.iter().position(|c| c == card) {
+            cards_to_remove.remove(pos);
+            false
+        } else {
+            true
+        }
+    });
 
     // Reveal randomness
     randomness_reveal(player_state, randomness_account)?;
@@ -90,6 +109,9 @@ pub fn move_reveal(ctx: Context<MoveReveal>) -> Result<()> {
     // Reset player's move & cards commitment
     player_state.move_direction = None;
     player_state.move_cards = None;
+    player_state.randomness_account = None;
+    player_state.randomness_slot = None;
+    player_state.randomness_value = None;
 
     Ok(())
 }

@@ -1,17 +1,13 @@
 import { useState, useEffect, ReactNode } from "react";
 import { useConnection, useAnchorWallet } from "@solana/wallet-adapter-react";
 import { BN } from "@coral-xyz/anchor";
-import { PublicKey, Keypair } from "@solana/web3.js";
-import { gameStatePDA, getPlayerStatePDA } from "../lib/constants";
-import type { GameState, PlayerState, SocialFeedEvent } from "../types/types";
+import { PublicKey } from "@solana/web3.js";
+import { EMPTY_CARD_USAGE, gameStatePDA, getPlayerStatePDA } from "../lib/constants";
+import type { CardUsage, GameState, PlayerState, SocialFeedEvent } from "../lib/types";
 import { BlockrunnersContext } from "../hooks/useBlockrunners";
-import { useProgram, useSwitchboardProgram } from "@/hooks/useProgram";
-import * as sb from "@switchboard-xyz/on-demand";
-import { setupQueue } from "@/lib/utils";
-
-export const computeUnitPrice = 100_000;
-export const computeUnitLimitMultiple = 1.3;
-export const COMMITMENT = "processed";
+import { useProgram } from "@/hooks/useProgram";
+import { generateId } from "@/lib/utils";
+import { AbilityCard } from "@/lib/types";
 
 function BlockrunnersProvider({ children }: { children: ReactNode }) {
   const { connection } = useConnection();
@@ -21,10 +17,75 @@ function BlockrunnersProvider({ children }: { children: ReactNode }) {
   const [playerState, setPlayerState] = useState<PlayerState | null>(null);
   const [playerStatePDA, setPlayerStatePDA] = useState<PublicKey | null>(null);
   const [socialFeeds, setSocialFeeds] = useState<SocialFeedEvent[]>([]);
-  const [randomnessAccountAddress, setRandomnessAccountAddress] = useState<PublicKey | null>(null);
+  const [cardUsage, setCardUsage] = useState<CardUsage>(EMPTY_CARD_USAGE);
+
+  // UI state for cards and selection
+  const [selectedCards, setSelectedCards] = useState<AbilityCard[]>([]);
+  const [socialFeed, setSocialFeed] = useState<
+    { id: string; message: string; timestamp: number; isNew: boolean }[]
+  >([{ id: generateId(), message: "Welcome Runner!", timestamp: Date.now(), isNew: false }]);
 
   const program = useProgram();
-  const { switchboardProgram } = useSwitchboardProgram();
+
+  const selectCard = (card: AbilityCard) => {
+    if (!selectedCards.some((c) => c.id === card.id)) {
+      setSelectedCards((prev) => [...prev, card]);
+
+      // Update card usage state for the on-chain transaction
+      if (card.type === "shield") {
+        setCardUsage((prev) => ({ ...prev, shield: true }));
+      } else if (card.type === "doubler") {
+        setCardUsage((prev) => ({ ...prev, doubler: true }));
+      } else if (card.type === "swift") {
+        setCardUsage((prev) => ({ ...prev, swift: true }));
+      }
+    }
+  };
+
+  const deselectCard = (cardId: string) => {
+    const card = selectedCards.find((c) => c.id === cardId);
+    setSelectedCards((prev) => prev.filter((card) => card.id !== cardId));
+
+    // Update card usage state for the on-chain transaction
+    if (card?.type === "shield") {
+      setCardUsage((prev) => ({ ...prev, shield: false }));
+    } else if (card?.type === "doubler") {
+      setCardUsage((prev) => ({ ...prev, doubler: false }));
+    } else if (card?.type === "swift") {
+      setCardUsage((prev) => ({ ...prev, swift: false }));
+    }
+  };
+
+  // Keep track of available cards from blockchain and handle selection by type
+  // TODO: Should be checking randomnessAccount instead of moveDirection
+  useEffect(() => {
+    // If player state changes and there are new cards, update selection state if needed
+    if (playerState && playerState.cards) {
+      // Reset selections when player state changes significantly
+      if (playerState.moveDirection === null && selectedCards.length > 0) {
+        // Only reset if we've completed a move
+        setSelectedCards([]);
+        setCardUsage(EMPTY_CARD_USAGE);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [playerState?.moveDirection]);
+
+  const addToFeed = (message: string) => {
+    setSocialFeed((prevFeed) => {
+      const newFeed = [
+        ...prevFeed.map((item) => ({ ...item, isNew: false })),
+        { id: generateId(), message, timestamp: Date.now(), isNew: true },
+      ];
+
+      // Keep only the last 20 messages
+      if (newFeed.length > 20) {
+        newFeed.splice(0, newFeed.length - 20);
+      }
+
+      return newFeed;
+    });
+  };
 
   // Get GameState on load
   useEffect(() => {
@@ -32,8 +93,12 @@ function BlockrunnersProvider({ children }: { children: ReactNode }) {
 
     // Set up subscription to GameState PDA
     const gameSubscriptionId = connection.onAccountChange(gameStatePDA, (accountInfo) => {
-      console.log("GameState changed", accountInfo.data);
-      setGameState(program.coder.accounts.decode<GameState>("gameState", accountInfo.data));
+      const decodedGameState = program.coder.accounts.decode<GameState>(
+        "gameState",
+        accountInfo.data
+      );
+      console.log("GameState changed", decodedGameState);
+      setGameState(decodedGameState);
     });
 
     // Set up subscription to SocialFeed PDA
@@ -83,8 +148,12 @@ function BlockrunnersProvider({ children }: { children: ReactNode }) {
 
     // Set up subscription to PlayerState PDA
     const playerSubscriptionId = connection.onAccountChange(pda, (accountInfo) => {
-      console.log("PlayerState changed", accountInfo.data);
-      setPlayerState(program.coder.accounts.decode<PlayerState>("playerState", accountInfo.data));
+      const decodedPlayerState = program.coder.accounts.decode<PlayerState>(
+        "playerState",
+        accountInfo.data
+      );
+      console.log("PlayerState changed", decodedPlayerState);
+      setPlayerState(decodedPlayerState);
     });
 
     // Fetch PlayerState PDA initially
@@ -109,272 +178,6 @@ function BlockrunnersProvider({ children }: { children: ReactNode }) {
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [connection, wallet?.publicKey]);
-
-  // Instruction: Initialize game
-  const initializeGame = async () => {
-    if (!program) return;
-    if (gameState) {
-      console.error("Initialize game: GameState already exists");
-      return;
-    }
-
-    if (!wallet?.publicKey) {
-      console.error("Initialize game: Wallet not found");
-      return;
-    }
-
-    program.methods
-      .initializeGame()
-      .accounts({
-        admin: wallet.publicKey,
-      })
-      .rpc()
-      .then((tx) => {
-        console.log("Initialize game: Transaction sent", tx);
-      })
-      .catch((err) => {
-        console.error("Initialize game:", err);
-      });
-  };
-
-  // Instruction: Initialize player
-  const initializePlayer = async () => {
-    if (!program) return;
-
-    if (!wallet?.publicKey) {
-      console.error("Initialize player: Wallet not found");
-      return;
-    }
-
-    program.methods
-      .initializePlayer()
-      .accounts({
-        player: wallet.publicKey,
-      })
-      .rpc()
-      .then((tx) => {
-        console.log("Initialize player: Transaction sent", tx);
-      })
-      .catch((err) => {
-        console.error("Initialize player:", err);
-      });
-  };
-
-  // Instruction: Join game
-  const joinGame = async () => {
-    if (!program) return;
-
-    if (!wallet?.publicKey || !playerStatePDA) {
-      console.error("Join game: Wallet or PlayerStatePDA not found");
-      return;
-    }
-
-    program.methods
-      .joinGame()
-      .accounts({
-        player: wallet.publicKey,
-      })
-      .rpc()
-      .then((tx) => {
-        console.log("Join game: Transaction sent", tx);
-      })
-      .catch((err) => {
-        console.error("Join game:", err);
-      });
-  };
-
-  // Create randomness account
-  const moveRequest = async () => {
-    if (!program || !wallet?.publicKey || !playerStatePDA) {
-      console.error("Create randomness account: Wallet not connected or program not available");
-      return;
-    }
-
-    try {
-      const rngKeypair = Keypair.generate();
-
-      if (!switchboardProgram) {
-        console.error("Switchboard program not available");
-        return;
-      }
-
-      // Create randomness account
-      const queue = await setupQueue(switchboardProgram);
-      console.log("Queue:", queue.toString());
-      const [randomnessAccount, createRandomnessIx] = await sb.Randomness.create(
-        switchboardProgram,
-        rngKeypair,
-        queue
-      );
-      console.log("Created randomness account", randomnessAccount.pubkey.toString());
-      setRandomnessAccountAddress(randomnessAccount.pubkey);
-
-      // Create randomness initialization transaction
-      const createRandomnessTx = await sb.asV0Tx({
-        connection: switchboardProgram.provider.connection,
-        ixs: [createRandomnessIx],
-        payer: wallet.publicKey,
-        signers: [rngKeypair], // Wallet will be added as signer by wallet adapter
-        computeUnitPrice: computeUnitPrice,
-        computeUnitLimitMultiple: computeUnitLimitMultiple,
-      });
-      console.log("Randomness initialization transaction", createRandomnessTx);
-
-      // Sign and send randomness initialization transaction using wallet adapter
-      const createRandomnessSig = await sendTransactionWithWallet(createRandomnessTx);
-      if (!createRandomnessSig) {
-        console.error("Error sending randomness initialization transaction");
-        return;
-      }
-      console.log("Randomness initialization transaction sent", createRandomnessSig);
-
-      // Wait to confirm the randomness initialization transaction
-      const latestBlockHash = await connection.getLatestBlockhash();
-      await connection.confirmTransaction({
-        blockhash: latestBlockHash.blockhash,
-        lastValidBlockHeight: latestBlockHash.lastValidBlockHeight,
-        signature: createRandomnessSig,
-      });
-      console.log("Randomness initialization transaction confirmed");
-
-      // Commit randomness instruction
-      const commitIx = await randomnessAccount.commitIx(queue);
-
-      // Blockrunners program request instruction
-      const blockrunnersRequestIx = await program.methods
-        .moveCommit(
-          { right: {} },
-          {
-            shield: false,
-            doubler: false,
-            swift: false,
-          }
-        )
-        .accounts({
-          player: wallet.publicKey,
-          randomnessAccount: randomnessAccount.pubkey,
-        })
-        .instruction();
-
-      // Create transaction with both instructions
-      const commitTx = await sb.asV0Tx({
-        connection,
-        ixs: [commitIx, blockrunnersRequestIx],
-        payer: wallet.publicKey,
-        signers: [], // Wallet will be added by wallet adapter
-        computeUnitPrice: computeUnitPrice,
-        computeUnitLimitMultiple: computeUnitLimitMultiple,
-      });
-      console.log("Randomness commit transaction", commitTx);
-
-      // Send the commit transaction
-      const commitSig = await sendTransactionWithWallet(commitTx);
-      if (!commitSig) {
-        console.error("Error sending randomness commit transaction");
-        return;
-      }
-      console.log("Randomness commit transaction sent", commitSig);
-
-      // Extract and filter logs
-      const txDetails = await connection.getTransaction(commitSig, {
-        maxSupportedTransactionVersion: 0,
-        commitment: "confirmed",
-      });
-      const logs = txDetails?.meta?.logMessages
-        ?.filter((log) => log.includes("Program log:"))
-        .map((log) => log.replace("Program log: ", ""));
-      console.log("Logs:", logs);
-      console.log("Full tx:", txDetails);
-
-      // Wait to confirm the randomness commit transaction
-      await connection.confirmTransaction({
-        blockhash: latestBlockHash.blockhash,
-        lastValidBlockHeight: latestBlockHash.lastValidBlockHeight,
-        signature: commitSig,
-      });
-      console.log("Randomness commit transaction confirmed");
-    } catch (error) {
-      console.error("Error requesting randomness:", error);
-    }
-  };
-
-  const moveReveal = async () => {
-    if (!program || !wallet?.publicKey || !randomnessAccountAddress || !playerStatePDA) {
-      console.error("Reveal randomness: Wallet not connected or program not available");
-      return;
-    }
-
-    try {
-      if (!switchboardProgram) {
-        console.error("Switchboard program not available");
-        return;
-      }
-
-      // Create a Randomness instance from the public key
-      const randomness = new sb.Randomness(switchboardProgram, randomnessAccountAddress);
-
-      // Reveal randomness instruction
-      const revealIx = await randomness.revealIx();
-
-      // Blockrunners program reveal instruction
-      const blockrunnersRevealIx = await program.methods
-        .moveReveal()
-        .accounts({
-          player: wallet.publicKey,
-          randomnessAccount: randomnessAccountAddress,
-        })
-        .instruction();
-
-      // Create transaction with both instructions
-      const revealTx = await sb.asV0Tx({
-        connection: switchboardProgram.provider.connection,
-        ixs: [revealIx, blockrunnersRevealIx],
-        payer: wallet.publicKey,
-        signers: [], // Wallet will be added by wallet adapter
-        computeUnitPrice: computeUnitPrice,
-        computeUnitLimitMultiple: computeUnitLimitMultiple,
-      });
-
-      // Send the reveal transaction
-      const revealSig = await sendTransactionWithWallet(revealTx);
-      if (!revealSig) {
-        console.error("Error sending randomness reveal transaction");
-        return;
-      }
-      console.log("Randomness reveal transaction sent", revealSig);
-
-      // Wait to confirm the randomness reveal transaction
-      const latestBlockHash = await connection.getLatestBlockhash();
-      await connection.confirmTransaction({
-        blockhash: latestBlockHash.blockhash,
-        lastValidBlockHeight: latestBlockHash.lastValidBlockHeight,
-        signature: revealSig,
-      });
-      console.log("Randomness reveal transaction confirmed");
-    } catch (error) {
-      console.error("Error revealing randomness:", error);
-    }
-  };
-
-  // Helper function to send transaction using wallet adapter
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const sendTransactionWithWallet = async (transaction: any) => {
-    if (!wallet?.signTransaction) {
-      console.error("Wallet doesn't support signTransaction");
-      return null;
-    }
-
-    try {
-      // Sign with the wallet adapter
-      const signedTx = await wallet.signTransaction(transaction);
-      // Send the signed transaction
-      const signature = await connection.sendRawTransaction(signedTx.serialize());
-      return signature;
-    } catch (error) {
-      console.error("Error sending transaction:", error);
-      return null;
-    }
-  };
 
   // Instruction: Purchase ciphers
   const purchaseCiphers = async (amount: number) => {
@@ -406,13 +209,15 @@ function BlockrunnersProvider({ children }: { children: ReactNode }) {
     gameStatePDA,
     playerStatePDA,
     socialFeeds,
-    initializeGame,
-    initializePlayer,
-    joinGame,
+    cardUsage,
+    selectedCards,
+    socialFeed,
+    setCardUsage,
     purchaseCiphers,
-    moveRequest,
-    moveReveal,
-  };
+    selectCard,
+    deselectCard,
+    addToFeed,
+  }; // Context value containing only necessary properties and methods
 
   return <BlockrunnersContext.Provider value={value}>{children}</BlockrunnersContext.Provider>;
 }

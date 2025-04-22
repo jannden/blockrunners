@@ -395,8 +395,7 @@ describe("Move Commit-Reveal", () => {
     expect(afterMove.ciphers.toNumber()).to.equal(stateBefore.ciphers.toNumber() - 1); // Used 1 cipher for move, 2 for cards, but got 2 back for using swift
     expect(afterMove.position).to.equal(stateBefore.position + 1);
 
-    // TODO: Temporary disabling to refactor cards from vector to hashmap
-    // expect(afterMove.cards.length).to.be.equal(stateBefore.cards.length); // doubler effect
+    expect(afterMove.cards.length).to.be.equal(stateBefore.cards.length); // 2 cards used, 2 cards received due to doubler
   });
 
   it("Applies card effects correctly on invalid move", async () => {
@@ -443,6 +442,8 @@ describe("Move Commit-Reveal", () => {
     console.log("State after move DEBUG -> ", stateAfterBad);
 
     expect(stateAfterBad.position).to.equal(stateBefore.position); // no reset
+
+    expect(stateAfterBad.cards.length).to.be.equal(stateBefore.cards.length - 1); // No new card, one used
   });
 
   it("Validates randomness account correctly", async () => {

@@ -1,14 +1,22 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Shield, Copy, Zap } from "lucide-react";
-import { AbilityCard } from "@/types/game";
+import { AbilityCard } from "@/lib/types";
 
 interface AbilityCardsProps {
   cards: AbilityCard[];
   selectedCards: AbilityCard[];
   onCardSelect: (card: AbilityCard) => void;
+  inTheGame: boolean;
+  isSelectable?: boolean;
 }
 
-export function AbilityCards({ cards, selectedCards, onCardSelect }: AbilityCardsProps) {
+export function AbilityCards({
+  cards,
+  selectedCards,
+  onCardSelect,
+  inTheGame,
+  isSelectable = true,
+}: AbilityCardsProps) {
   // Group cards by type to display counts
   const groupedCards = (() => {
     const result = new Map<string, AbilityCard[]>();
@@ -58,41 +66,49 @@ export function AbilityCards({ cards, selectedCards, onCardSelect }: AbilityCard
 
   // Check if any card of the type is selected
   const isCardTypeSelected = (cardsOfType: AbilityCard[]) => {
-    return cardsOfType.some((card) => selectedCards.some((sc) => sc.id === card.id));
+    if (cardsOfType.length === 0) return false;
+    const cardType = cardsOfType[0].type;
+    // Check if any card of this type is in the selectedCards array
+    return selectedCards.some((sc) => sc.type === cardType);
   };
 
   // Handle selection or deselection of cards
   const handleCardSelect = (cardsOfType: AbilityCard[]) => {
-    // Check if any card of this type is already selected
-    const selectedCard = cardsOfType.find((card) => selectedCards.some((sc) => sc.id === card.id));
+    if (cardsOfType.length === 0 || !isSelectable) return;
 
-    if (selectedCard) {
-      // If a card of this type is selected, deselect it
-      onCardSelect(selectedCard);
+    const cardType = cardsOfType[0].type;
+    // Check if any card of this type is already selected
+    const isTypeSelected = selectedCards.some((sc) => sc.type === cardType);
+
+    if (isTypeSelected) {
+      // If a card of this type is selected, deselect it by passing the first card
+      // The context will handle finding the correct card to deselect
+      onCardSelect(cardsOfType[0]);
     } else {
       // Otherwise select the first available card of this type
-      const nonSelectedCard = cardsOfType[0];
-      if (nonSelectedCard) {
-        onCardSelect(nonSelectedCard);
-      }
+      onCardSelect(cardsOfType[0]);
     }
   };
 
   return (
     <div className="space-y-2">
-      {groupedCards.length === 0 ? (
+      {groupedCards.length === 0 || !inTheGame ? (
         <div className="text-center p-4 border-2 border-dashed border-gray-300 rounded-md">
-          <p className="text-gray-500">No ability cards available</p>
+          <p className="text-gray-500">&nbsp;</p>
         </div>
       ) : (
         <div className="grid grid-cols-3 gap-4">
           {groupedCards.map(({ type, cards: cardsOfType, representativeCard, count }) => (
             <Card
               key={type}
-              className={`cursor-pointer border-3 border-black transition-all ${
+              className={`${
+                isSelectable && "cursor-pointer"
+              } border-3 border-black transition-all ${
                 isCardTypeSelected(cardsOfType)
                   ? "animate-pulse border-[#ffeb3b] shadow-[0_0_8px_2px_rgba(255,235,59,0.6)]"
-                  : "hover:translate-y-[-4px]"
+                  : isSelectable
+                  ? "hover:translate-y-[-4px]"
+                  : ""
               } shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] rounded-lg`}
               onClick={() => handleCardSelect(cardsOfType)}
             >

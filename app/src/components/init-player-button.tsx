@@ -1,34 +1,51 @@
-import { useCallback, useState } from "react";
-import { useWallet } from "@solana/wallet-adapter-react";
+import { useState } from "react";
+import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { Button } from "./ui/button";
-import { useBlockrunners } from "@/hooks/useBlockrunners";
+import { useProgram } from "@/hooks/useProgram";
 
 export const InitPlayerButton = () => {
   const { publicKey } = useWallet();
-  const { gameState, initializePlayer, playerState } = useBlockrunners();
-
+  const { connection } = useConnection();
   const [isLoading, setIsLoading] = useState(false);
+  const program = useProgram();
 
-  const handleInitPlayer = useCallback(async () => {
-    if (!publicKey || !gameState) return;
+  const handleInitPlayer = async () => {
+    if (!publicKey || !program) return;
 
     setIsLoading(true);
-    initializePlayer()
-      .catch((error) => {
-        console.log("Error initializing player:", error);
-      })
-      .finally(() => {
-        setIsLoading(false);
+
+    try {
+      const latestBlockHash = await connection.getLatestBlockhash();
+
+      const signature = await program.methods
+        .initializePlayer()
+        .accounts({
+          player: publicKey,
+        })
+        .rpc();
+
+      console.log("Initialize player: Transaction sent", signature);
+
+      // Wait to confirm the transaction
+      const confirmResult = await connection.confirmTransaction({
+        blockhash: latestBlockHash.blockhash,
+        lastValidBlockHeight: latestBlockHash.lastValidBlockHeight,
+        signature,
       });
-  }, [publicKey, gameState, initializePlayer]);
+
+      if (confirmResult) {
+        console.log("Initialize player transaction was confirmed");
+      }
+    } catch (err) {
+      console.error("Initialize player error:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
-    <>
-      {publicKey && !playerState && (
-        <Button onClick={handleInitPlayer} disabled={isLoading || !gameState}>
-          {isLoading ? "Loading..." : "Init Player"}
-        </Button>
-      )}
-    </>
+    <Button onClick={handleInitPlayer} disabled={isLoading}>
+      {isLoading ? "Loading..." : "Init Player"}
+    </Button>
   );
 };

@@ -1,5 +1,4 @@
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
-import { LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { ReactNode, useCallback, useEffect, useState } from "react";
 import { BalanceContext } from "../hooks/useBalance";
 
@@ -17,7 +16,7 @@ function BalanceProvider({ children }: { children: ReactNode }) {
 
     try {
       const lamports = await connection.getBalance(publicKey);
-      setBalance(lamports / LAMPORTS_PER_SOL);
+      setBalance(lamports);
     } catch (error) {
       console.error("Error fetching balance:", error);
     }

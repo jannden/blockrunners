@@ -1,15 +1,21 @@
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { useStore } from "@/lib/game-store";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { useBlockrunners } from "@/hooks/useBlockrunners";
 
 interface CostInfoModalProps {
-  open: boolean
-  onClose: () => void
-  baseCost: number
-  selectedCardsCount: number
+  open: boolean;
+  onClose: () => void;
+  baseCost: number;
+  selectedCardsCount: number;
 }
 
 export function CostInfoModal({ open, onClose, baseCost, selectedCardsCount }: CostInfoModalProps) {
-  const { selectedCards } = useStore();
+  const { selectedCards } = useBlockrunners();
   const hasSwiftCard = selectedCards.some((card) => card.type === "swift");
   const swiftDiscount = hasSwiftCard ? 2 : 0;
   const totalCost = Math.max(0, baseCost + selectedCardsCount - swiftDiscount);
@@ -66,4 +72,3 @@ export function CostInfoModal({ open, onClose, baseCost, selectedCardsCount }: C
     </Dialog>
   );
 }
-

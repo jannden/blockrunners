@@ -2,23 +2,20 @@ import { useEffect, useState } from "react";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { Button } from "./ui/button";
 import { LAMPORTS_PER_SOL } from "@solana/web3.js";
+import { useBalance } from "@/hooks/useBalance";
+import { lamportsShortString } from "@/lib/utils";
 
 export const AirdropButton = () => {
   const { publicKey } = useWallet();
+  const { balance, refreshBalance } = useBalance();
   const { connection } = useConnection();
-
   const [isLoading, setIsLoading] = useState(false);
-  const [balance, setBalance] = useState<number>(0);
-
-  const refreshBalance = async () => {
-    if (!publicKey) return;
-    const newBalance = await connection.getBalance(publicKey);
-    setBalance(newBalance / LAMPORTS_PER_SOL);
-  };
 
   useEffect(() => {
     if (!publicKey) return;
+
     refreshBalance();
+
     const interval = setInterval(async () => {
       await refreshBalance();
     }, 10000);
@@ -59,7 +56,7 @@ export const AirdropButton = () => {
     <>
       {publicKey && (
         <Button onClick={handleAirdrop} disabled={isLoading}>
-          {isLoading ? "Loading..." : `Airdrop (now ${balance.toFixed(1)} SOL)`}
+          {isLoading ? "Loading..." : `Airdrop (now ${lamportsShortString(balance)})`}
         </Button>
       )}
     </>

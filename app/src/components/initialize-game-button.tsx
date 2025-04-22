@@ -3,13 +3,13 @@ import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { Button } from "./ui/button";
 import { useProgram } from "@/hooks/useProgram";
 
-export const JoinGameButton = () => {
+export const InitializeGameButton = () => {
   const { publicKey } = useWallet();
   const { connection } = useConnection();
   const [isLoading, setIsLoading] = useState(false);
   const program = useProgram();
 
-  const handleJoinGame = async () => {
+  const handleInitializeGame = async () => {
     if (!publicKey || !program) return;
 
     setIsLoading(true);
@@ -18,13 +18,13 @@ export const JoinGameButton = () => {
       const latestBlockHash = await connection.getLatestBlockhash();
 
       const signature = await program.methods
-        .joinGame()
+        .initializeGame()
         .accounts({
-          player: publicKey,
+          admin: publicKey,
         })
         .rpc();
 
-      console.log("Join game: Transaction sent", signature);
+      console.log("Initialize game: Transaction sent", signature);
 
       // Wait to confirm the transaction
       const confirmResult = await connection.confirmTransaction({
@@ -34,18 +34,18 @@ export const JoinGameButton = () => {
       });
 
       if (confirmResult) {
-        console.log("Join game transaction was confirmed");
+        console.log("Initialize game transaction was confirmed");
       }
     } catch (err) {
-      console.error("Join game error:", err);
+      console.error("Initialize game error:", err);
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <Button onClick={handleJoinGame} disabled={isLoading} variant="primary">
-      {isLoading ? "Loading..." : "Join Game"}
+    <Button onClick={handleInitializeGame} disabled={isLoading}>
+      {isLoading ? "Loading..." : "Init Game"}
     </Button>
   );
 };

@@ -4,7 +4,7 @@ import { useAnchorProvider } from "./useAnchorProvider";
 import IDL from "@/idl/blockrunners.json";
 import { Blockrunners } from "@/idl/blockrunners";
 import { useEffect, useMemo, useState } from "react";
-import { loadSbProgram } from "@/lib/utils";
+import * as sb from "@switchboard-xyz/on-demand";
 
 /**
  * Hook to get the Anchor Program instance
@@ -17,11 +17,9 @@ export function useProgram() {
   return useMemo(() => {
     if (provider) {
       // For write operations with wallet connected
-      // @ts-expect-error - IDL type compatibility issue
       return new Program<Blockrunners>(IDL, provider);
     } else {
       // For read-only operations with no wallet
-      // @ts-expect-error - IDL type compatibility issue
       return new Program<Blockrunners>(IDL, {
         connection,
       });
@@ -36,10 +34,19 @@ export function useSwitchboardProgramPromise() {
     if (!provider) return undefined;
 
     const loadProgram = async () => {
-      const sbProgram = await loadSbProgram(provider);
-      const sbIdl = await Program.fetchIdl(sbProgram.programId, provider);
-      if (!sbIdl) throw new Error("IDL not found for program");
-      return new Program(sbIdl, provider);
+      const sbProgramId = await sb.getProgramId(provider.connection);
+      if (!sbProgramId) {
+        throw new Error("Switchboard program ID not found");
+      } else {
+        console.log("Switchboard program ID", sbProgramId.toString());
+      }
+      const sbIdl = await Program.fetchIdl(sbProgramId, provider);
+      if (!sbIdl) {
+        throw new Error("Switchboard IDL not found");
+      }
+      const sbProgram = new Program(sbIdl!, provider);
+
+      return sbProgram;
     };
 
     return loadProgram();
@@ -64,11 +71,16 @@ export function useSwitchboardProgram() {
 
     const fetchProgram = async () => {
       try {
-        // First load the Switchboard program
-        const sbProgram = await loadSbProgram(provider);
-
-        // Then fetch the IDL for the program
-        const sbIdl = await Program.fetchIdl(sbProgram.programId, provider);
+        const sbProgramId = await sb.getProgramId(provider.connection);
+        if (!sbProgramId) {
+          throw new Error("Switchboard program ID not found");
+        } else {
+          console.log("Switchboard program ID", sbProgramId.toString());
+        }
+        const sbIdl = await Program.fetchIdl(sbProgramId, provider);
+        if (!sbIdl) {
+          throw new Error("Switchboard IDL not found");
+        }
 
         if (!sbIdl) {
           if (isMounted) {
@@ -92,6 +104,8 @@ export function useSwitchboardProgram() {
         }
       }
     };
+
+    console.log("Fetching Switchboard program");
 
     fetchProgram();
 

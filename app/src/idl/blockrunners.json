@@ -621,6 +621,11 @@
       "code": 6023,
       "name": "PlayingInDifferentGame",
       "msg": "Player is playing in a different game"
+    },
+    {
+      "code": 6024,
+      "name": "PlayerAlreadyJoinedGame",
+      "msg": "Player has already joined the game"
     }
   ],
   "types": [

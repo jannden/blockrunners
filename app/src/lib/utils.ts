@@ -4,9 +4,22 @@ import * as anchor from "@coral-xyz/anchor";
 import { Keypair, PublicKey, LAMPORTS_PER_SOL } from "@solana/web3.js";
 import * as sb from "@switchboard-xyz/on-demand";
 import IDL from "@/idl/blockrunners.json";
+import { AbilityCard } from "@/lib/types";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
+}
+
+export function lamportsShortString(lamports: number): string {
+  if (lamports >= 1_000_000_000) {
+    return `${(lamports / 1_000_000_000).toFixed(3)} SOL`;
+  } else if (lamports >= 1_000_000) {
+    return `${(lamports / 1_000_000).toFixed(3)}M lamports`;
+  } else if (lamports >= 1_000) {
+    return `${(lamports / 1_000).toFixed(0)}K lamports`;
+  } else {
+    return lamports.toFixed(0) + " lamports";
+  }
 }
 
 /**
@@ -105,13 +118,6 @@ export const getMsgLogs = async (
   }
 };
 
-export async function loadSbProgram(provider: anchor.Provider): Promise<anchor.Program> {
-  const sbProgramId = await sb.getProgramId(provider.connection);
-  const sbIdl = await anchor.Program.fetchIdl(sbProgramId, provider);
-  const sbProgram = new anchor.Program(sbIdl!, provider);
-  return sbProgram;
-}
-
 export async function loadSVMSwitchboardProgram(
   provider: anchor.Provider
 ): Promise<anchor.Program> {
@@ -136,7 +142,7 @@ export async function setupQueue(program: anchor.Program): Promise<PublicKey> {
 export async function setupSVMQueue(program: anchor.Program, queue: PublicKey): Promise<PublicKey> {
   const queuePDA = sb.Queue.queuePDA(program, queue);
   console.log("Queue:", queuePDA.toString());
-  
+
   try {
     // Try to fetch queue data to verify it exists
     const queueAccountInfo = await program.provider.connection.getAccountInfo(queuePDA);
@@ -152,6 +158,67 @@ export async function setupSVMQueue(program: anchor.Program, queue: PublicKey): 
     console.error("SVM Queue not found or not properly initialized:", err);
     throw new Error("Failed to setup SVM Queue. Please check your configuration and network.");
   }
-  
+
   return queuePDA;
 }
+
+// Card helper functions
+export const getCardDescription = (type: string): string => {
+  switch (type) {
+    case "shield":
+      return "Protects you from a wrong move.";
+    case "doubler":
+      return "Awards two cards instead of one on a correct move.";
+    case "swift":
+      return "Reduces your move cost by 2.";
+    default:
+      return "Unknown card type";
+  }
+};
+
+export const getCardIcon = (type: string): string => {
+  switch (type) {
+    case "shield":
+      return "🛡️";
+    case "doubler":
+      return "✌️";
+    case "swift":
+      return "⚡";
+    default:
+      return "❓";
+  }
+};
+
+// Generate a random ID for cards and messages
+export const generateId = () => Math.random().toString(36).substring(2, 11);
+
+// Convert blockchain card data to client-side AbilityCard format
+export const transformBlockchainCards = (cards: unknown[] | undefined): AbilityCard[] => {
+  if (!cards || !Array.isArray(cards)) return [];
+
+  return cards.map((card, index) => {
+    // Determine the card type from the blockchain data
+    let cardType: "shield" | "doubler" | "swift" = "shield";
+
+    // Use type checking to determine the card type
+    if (typeof card === "object" && card !== null) {
+      if ("shield" in card) {
+        cardType = "shield";
+      } else if ("doubler" in card) {
+        cardType = "doubler";
+      } else if ("swift" in card) {
+        cardType = "swift";
+      }
+    }
+
+    return {
+      id: `${cardType}-${index}-${generateId()}`,
+      type: cardType,
+      name: cardType.charAt(0).toUpperCase() + cardType.slice(1),
+      description: getCardDescription(cardType),
+      icon: getCardIcon(cardType),
+      used: false,
+      result: null,
+    };
+  });
+};
