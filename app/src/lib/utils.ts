@@ -136,5 +136,22 @@ export async function setupQueue(program: anchor.Program): Promise<PublicKey> {
 export async function setupSVMQueue(program: anchor.Program, queue: PublicKey): Promise<PublicKey> {
   const queuePDA = sb.Queue.queuePDA(program, queue);
   console.log("Queue:", queuePDA.toString());
+  
+  try {
+    // Try to fetch queue data to verify it exists
+    const queueAccountInfo = await program.provider.connection.getAccountInfo(queuePDA);
+    if (!queueAccountInfo) {
+      throw new Error("SVM Queue account not found");
+    }
+
+    // Check if the account is owned by the expected program
+    if (!queueAccountInfo.owner.equals(program.programId)) {
+      throw new Error("SVM Queue is not owned by the expected program");
+    }
+  } catch (err) {
+    console.error("SVM Queue not found or not properly initialized:", err);
+    throw new Error("Failed to setup SVM Queue. Please check your configuration and network.");
+  }
+  
   return queuePDA;
 }

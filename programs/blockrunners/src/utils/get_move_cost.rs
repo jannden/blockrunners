@@ -1,4 +1,5 @@
 use anchor_lang::prelude::*;
+use std::collections::HashMap;
 
 use crate::{
     errors::BlockrunnersError,
@@ -6,6 +7,8 @@ use crate::{
 };
 
 pub fn get_move_cost(player_state: &PlayerState, used_cards: &CardUsage) -> Result<u64> {
+    let mut total_cost = 1; // Base cost for move
+
     // Get card usage flags
     let used_cards_flags = vec![
         (Card::Shield, used_cards.shield),
@@ -15,7 +18,7 @@ pub fn get_move_cost(player_state: &PlayerState, used_cards: &CardUsage) -> Resu
 
     // Early exit if no cards used
     if !used_cards_flags.iter().any(|(_, is_used)| *is_used) {
-        return Ok(0);
+        return Ok(total_cost);
     }
 
     // Count required cards and calculate cost
@@ -23,12 +26,12 @@ pub fn get_move_cost(player_state: &PlayerState, used_cards: &CardUsage) -> Resu
         .iter()
         .filter_map(|(card, is_used)| if *is_used { Some(card.clone()) } else { None })
         .collect();
-    let mut total_cost = needed_cards.len() as u64;
+    total_cost = total_cost.saturating_add(needed_cards.len() as u64);
 
     // Count player's cards
-    let mut card_counts = std::collections::HashMap::new();
+    let mut card_counts: HashMap<Card, u8> = HashMap::new();
     for card in &player_state.cards {
-        *card_counts.entry(card).or_insert(0) += 1;
+        *card_counts.entry(card.clone()).or_insert(0) += 1;
     }
 
     // Ensure player has all required cards
@@ -39,11 +42,8 @@ pub fn get_move_cost(player_state: &PlayerState, used_cards: &CardUsage) -> Resu
 
     // Apply swift card effect
     if used_cards.swift {
-        total_cost -= 2;
+        total_cost = total_cost.saturating_sub(2);
     }
-
-    // Base cost for move
-    total_cost += 1;
 
     Ok(total_cost)
 }

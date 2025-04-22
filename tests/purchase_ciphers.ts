@@ -34,7 +34,8 @@ describe("Purchase ciphers", () => {
   before(async () => {
     // Logs subscription
     playerLogsSubscription = provider.connection.onLogs(playerKeypair.publicKey, (logs) => {
-      console.log("Player logs changed:", logs);
+      // ENABLE THIS TO SEE THE PLAYER LOGS
+      // console.log("Player logs changed:", logs);
     });
 
     // Airdrop SOL to the admin and player
@@ -298,64 +299,6 @@ describe("Purchase ciphers", () => {
     expect(player2StateAfter.cards.length).to.equal(player2StateBefore.cards.length);
   });
 
-  it("Fails if player doesn't have enough balance", async () => {
-    try {
-      const ciphersToPurchase = LAMPORTS_PER_SOL / CIPHER_COST + 1;
-
-      const tx = await program.methods
-        .purchaseCiphers(new anchor.BN(ciphersToPurchase))
-        .accounts({
-          player: playerKeypair.publicKey,
-        })
-        .signers([playerKeypair])
-        .rpc();
-    } catch (error) {
-      console.error("Error purchasing ciphers:", error);
-      expect(error.error.errorCode.code).to.equal("InsufficientBalance");
-      return;
-    }
-    expect.fail("Should not reach this point");
-  });
-
-  it("Fails if player tries to purchase ciphers with a zero amount", async () => {
-    try {
-      const ciphersToPurchase = 0;
-
-      const tx = await program.methods
-        .purchaseCiphers(new anchor.BN(ciphersToPurchase))
-        .accounts({
-          player: playerKeypair.publicKey,
-        })
-        .signers([playerKeypair])
-        .rpc();
-    } catch (error) {
-      expect(error.error.errorCode.code).to.equal("NegativeCiphersAmount");
-      return;
-    }
-    expect.fail("Should not reach this point");
-  });
-
-  it("Fails if player without player state account tries to purchase ciphers", async () => {
-    try {
-      const ciphersToPurchase = 1;
-
-      const player2Keypair = Keypair.generate();
-      const randomness2Keypair = Keypair.generate();
-
-      const tx = await program.methods
-        .purchaseCiphers(new anchor.BN(ciphersToPurchase))
-        .accounts({
-          player: player2Keypair.publicKey,
-        })
-        .signers([player2Keypair])
-        .rpc();
-    } catch (error) {
-      expect(error.error.errorCode.code).to.equal("AccountNotInitialized");
-      return;
-    }
-    expect.fail("Should not reach this point");
-  });
-
   it("Tests lastLogin update when purchasing ciphers", async () => {
     // Fetch player state to get the current lastLogin value
     const playerStateBefore = await program.account.playerState.fetch(playerStatePda);
@@ -382,5 +325,65 @@ describe("Purchase ciphers", () => {
 
     // Verify lastLogin was updated
     expect(Number(lastLoginAfter)).to.be.greaterThan(Number(lastLoginBefore));
+  });
+
+  it("Fails if player doesn't have enough balance", async () => {
+    try {
+      const ciphersToPurchase = LAMPORTS_PER_SOL / CIPHER_COST + 1;
+
+      const tx = await program.methods
+        .purchaseCiphers(new anchor.BN(ciphersToPurchase))
+        .accounts({
+          player: playerKeypair.publicKey,
+        })
+        .signers([playerKeypair])
+        .rpc();
+
+      // If we get here, no error was thrown
+      expect.fail("Expected an error but none was thrown");
+    } catch (error) {
+      expect(error.error.errorCode.code).to.equal("InsufficientBalance");
+    }
+  });
+
+  it("Fails if player tries to purchase ciphers with a zero amount", async () => {
+    try {
+      const ciphersToPurchase = 0;
+
+      const tx = await program.methods
+        .purchaseCiphers(new anchor.BN(ciphersToPurchase))
+        .accounts({
+          player: playerKeypair.publicKey,
+        })
+        .signers([playerKeypair])
+        .rpc();
+
+      // If we get here, no error was thrown
+      expect.fail("Expected an error but none was thrown");
+    } catch (error) {
+      expect(error.error.errorCode.code).to.equal("NegativeCiphersAmount");
+    }
+  });
+
+  it("Fails if player without player state account tries to purchase ciphers", async () => {
+    try {
+      const ciphersToPurchase = 1;
+
+      const player2Keypair = Keypair.generate();
+      const randomness2Keypair = Keypair.generate();
+
+      const tx = await program.methods
+        .purchaseCiphers(new anchor.BN(ciphersToPurchase))
+        .accounts({
+          player: player2Keypair.publicKey,
+        })
+        .signers([player2Keypair])
+        .rpc();
+
+      // If we get here, no error was thrown
+      expect.fail("Expected an error but none was thrown");
+    } catch (error) {
+      expect(error.error.errorCode.code).to.equal("AccountNotInitialized");
+    }
   });
 });

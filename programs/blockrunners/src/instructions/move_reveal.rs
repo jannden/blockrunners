@@ -44,7 +44,7 @@ pub fn move_reveal(ctx: Context<MoveReveal>) -> Result<()> {
 
     // Check if player is part of the current game
     require!(
-        player_state.game_start == game_state.start,
+        player_state.game_start == Some(game_state.start),
         BlockrunnersError::PlayingInDifferentGame
     );
 
@@ -63,7 +63,7 @@ pub fn move_reveal(ctx: Context<MoveReveal>) -> Result<()> {
         player_state.ciphers >= total_cost,
         BlockrunnersError::InsufficientBalance
     );
-    player_state.ciphers -= total_cost;
+    player_state.ciphers = player_state.ciphers.saturating_sub(total_cost);
 
     // TODO: Remove used cards from player's inventory and make player_state.cards HashMap
 
@@ -87,6 +87,10 @@ pub fn move_reveal(ctx: Context<MoveReveal>) -> Result<()> {
         handle_incorrect_move(player_state, used_cards)?;
     }
 
+    // Reset player's move & cards commitment
+    player_state.move_direction = None;
+    player_state.move_cards = None;
+
     Ok(())
 }
 
@@ -94,7 +98,6 @@ fn handle_correct_move(
     player_state: &mut Account<PlayerState>,
     card_usage: CardUsage,
 ) -> Result<()> {
-    // changed return type since we don't check win here anymore
     // Correct move: advance one step
     player_state.position += 1;
     let new_position = player_state.position;
@@ -138,19 +141,6 @@ fn handle_incorrect_move(
     card_usage: CardUsage,
 ) -> Result<()> {
     if card_usage.shield {
-        // Still collect one card on incorrect move with shield
-        // For the same reason as in handle_correct_move, we'll simplify this for now
-        if player_state.cards.len() < crate::constants::MAX_TOTAL_CARDS as usize {
-            player_state.cards.push(Card::Shield);
-
-            save_and_emit_event(
-                &mut player_state.player_events,
-                SocialFeedEventType::PlayerCardCollected,
-                format!("You have collected a new card: {:?}", Card::Shield),
-            )?;
-        }
-
-        // Build event message
         let mut event_message = format!(
             "Player used a Shield card! Staying at position {}.",
             player_state.position

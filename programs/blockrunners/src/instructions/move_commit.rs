@@ -42,7 +42,7 @@ pub fn move_commit(
 
     // Check if player is part of the current game
     require!(
-        player_state.game_start == game_state.start,
+        player_state.game_start == Some(game_state.start),
         BlockrunnersError::PlayingInDifferentGame
     );
 

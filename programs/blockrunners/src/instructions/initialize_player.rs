@@ -40,16 +40,14 @@ pub fn initialize_player(ctx: Context<InitializePlayer>) -> Result<()> {
     player_state.position = 0;
     player_state.bump = ctx.bumps.player_state;
     player_state.player_events = Vec::new();
-    player_state.in_game = false;
-
-    // Initialize game start time
-    player_state.game_start = game_state.start;
 
     // Initialize player statistics
     player_state.first_login = clock.unix_timestamp;
     player_state.games_won = 0;
     player_state.total_ciphers_bought = 0;
     update_last_login(player_state)?;
+
+    player_state.game_start = None;
 
     player_state.randomness_account = None;
     player_state.randomness_slot = None;

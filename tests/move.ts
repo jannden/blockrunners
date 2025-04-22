@@ -36,7 +36,8 @@ describe("Move Commit-Reveal", () => {
   before(async () => {
     // Logs subscription
     playerLogsSubscription = provider.connection.onLogs(playerKeypair.publicKey, (logs) => {
-      console.log("Player logs changed:", logs);
+      // ENABLE THIS TO SEE THE PLAYER LOGS
+      // console.log("Player logs changed:", logs);
     });
 
     // Airdrop SOL to the admin and player
@@ -347,8 +348,8 @@ describe("Move Commit-Reveal", () => {
     const afterMove = await program.account.playerState.fetch(playerStatePda);
     console.log("State after move -> ", afterMove);
 
-    expect(afterMove.ciphers.toNumber()).to.be.equal(9);
-    expect(afterMove.position).to.be.greaterThan(stateBefore.position); // moved forward
+    expect(afterMove.ciphers.toNumber()).to.equal(stateBefore.ciphers.toNumber()); // Used 1 cipher for move, 2 for cards, but got 2 back for using swift
+    expect(afterMove.position).to.equal(stateBefore.position + 1);
 
     // TODO: Temporary disabling to refactor cards from vector to hashmap
     // expect(afterMove.cards.length).to.be.equal(stateBefore.cards.length); // doubler effect
@@ -393,7 +394,7 @@ describe("Move Commit-Reveal", () => {
 
   it("Verifies game completion and prize distribution", async () => {
     await program.methods
-      .purchaseCiphers(new anchor.BN(10))
+      .purchaseCiphers(new anchor.BN(25))
       .accounts({
         player: playerKeypair.publicKey,
       })
@@ -468,5 +469,35 @@ describe("Move Commit-Reveal", () => {
 
     // Cleanup
     await program.removeEventListener(socialFeedEventListener);
+  });
+
+  it("Validates randomness account correctly", async () => {
+    await program.methods
+      .purchaseCiphers(new anchor.BN(25))
+      .accounts({
+        player: playerKeypair.publicKey,
+      })
+      .signers([playerKeypair])
+      .rpc();
+
+    const invalidRandomnessKeypair = Keypair.generate();
+
+    // Try to make a move with an invalid randomness account
+    try {
+      await program.methods
+        .moveCommit({ left: {} }, CARD_USAGE_EMPTY_MOCK)
+        .accounts({
+          player: playerKeypair.publicKey,
+          randomnessAccount: invalidRandomnessKeypair.publicKey,
+        })
+        .signers([playerKeypair])
+        .rpc();
+
+      // If we get here, no error was thrown
+      expect.fail("Expected an error but none was thrown");
+    } catch (error) {
+      // Verify the error is related to randomness account validation
+      expect(error.error.errorCode.code).to.equal("RandomnessAccountParsing");
+    }
   });
 });

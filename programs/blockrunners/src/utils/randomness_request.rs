@@ -9,6 +9,8 @@ pub fn randomness_request(
     player_state: &mut Account<PlayerState>,
     randomness_account: &AccountInfo,
 ) -> Result<()> {
+    // TODO ??? verify the randomness account, eg. (randomness_account.owner == &get_sb_program_id(cluster) || randomness_account.owner == &SWITCHBOARD_PROGRAM_ID) && randomness_account.data_len() == RandomnessAccountData::size()
+
     // Save randomness account to verify later
     player_state.randomness_account = Some(randomness_account.key());
 
@@ -43,9 +45,9 @@ pub fn randomness_request(
 ) -> Result<()> {
     msg!("TEST MODE: Running randomness_request");
 
-    let clock = Clock::get()?;
-    player_state.randomness_slot = Some(clock.slot - 1);
     player_state.randomness_account = Some(randomness_account.key());
+    player_state.randomness_value = None;
+    player_state.randomness_slot = Some((Clock::get()?).slot - 1);
 
     Ok(())
 }

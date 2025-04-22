@@ -24,7 +24,7 @@ function BlockrunnersProvider({ children }: { children: ReactNode }) {
   const [randomnessAccountAddress, setRandomnessAccountAddress] = useState<PublicKey | null>(null);
 
   const program = useProgram();
-  const sbProgram = useSwitchboardProgram();
+  const { switchboardProgram } = useSwitchboardProgram();
 
   // Get GameState on load
   useEffect(() => {
@@ -174,8 +174,6 @@ function BlockrunnersProvider({ children }: { children: ReactNode }) {
     try {
       const rngKeypair = Keypair.generate();
 
-      // Get the Switchboard program
-      const switchboardProgram = await sbProgram;
       if (!switchboardProgram) {
         console.error("Switchboard program not available");
         return;
@@ -288,7 +286,6 @@ function BlockrunnersProvider({ children }: { children: ReactNode }) {
     }
 
     try {
-      const switchboardProgram = await sbProgram;
       if (!switchboardProgram) {
         console.error("Switchboard program not available");
         return;

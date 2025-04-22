@@ -33,6 +33,7 @@ pub fn randomness_reveal(
     let clock = Clock::get()?;
 
     // Call the switchboard on-demand get_value function to get the revealed random value
+    // TODO: Refactor not to store the randomness value in the player state
     player_state.randomness_value = Some(
         randomness_data
             .get_value(&clock)

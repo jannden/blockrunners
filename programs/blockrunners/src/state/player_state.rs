@@ -53,21 +53,18 @@ pub struct PlayerState {
     /// Store bump to save compute
     pub bump: u8,
 
-    /// The Unix timestamp of the game instance this player is part of
-    pub game_start: i64,
-
     /// Social feed events history
     #[max_len(MAX_FEED_EVENTS)]
     pub player_events: Vec<SocialFeedEvent>,
-
-    /// The player has joined the game or not
-    pub in_game: bool,
 
     /// Player statistics
     pub first_login: i64,
     pub last_login: i64,
     pub games_won: u64,
     pub total_ciphers_bought: u64,
+
+    /// The Unix timestamp of the game instance this player is part of
+    pub game_start: Option<i64>,
 
     /// Switchboard randomness account for player-specific randomness
     pub randomness_account: Option<Pubkey>,
