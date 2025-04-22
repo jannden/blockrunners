@@ -13,6 +13,7 @@ interface BlockrunnersContextType {
   socialFeeds: SocialFeedEvent[];
   initializeGame: () => Promise<void>;
   initializePlayer: () => Promise<void>;
+  joinGame: () => Promise<void>;
   purchaseCiphers: (amount: number) => Promise<void>;
   moveRequest: () => Promise<void>;
   moveReveal: () => Promise<void>;
@@ -27,6 +28,7 @@ export const BlockrunnersContext = createContext<BlockrunnersContextType>({
   socialFeeds: [],
   initializeGame: async () => {},
   initializePlayer: async () => {},
+  joinGame: async () => {},
   purchaseCiphers: async () => {},
   moveRequest: async () => {},
   moveReveal: async () => {},

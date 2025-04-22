@@ -73,10 +73,6 @@ describe("Purchase ciphers", () => {
   });
 
   it("Allows player to purchase ciphers", async () => {
-    const socialFeedEventListener = program.addEventListener("socialFeedEvent", (event) => {
-      console.log("Purchase ciphers events:", event.message);
-    });
-
     const ciphersToPurchase = 5;
     const expectedCost = ciphersToPurchase * CIPHER_COST;
 
@@ -133,23 +129,10 @@ describe("Purchase ciphers", () => {
       playerStateBefore.totalCiphersBought.toNumber() + ciphersToPurchase
     );
 
-    // Verify player has joined the game
-    expect(playerStateBefore.inGame).to.equal(false);
-    expect(playerStateAfter.inGame).to.equal(true);
-
-    // Verify the amount of cards did not increase
-    expect(playerStateAfter.cards.length).to.equal(playerStateBefore.cards.length);
-
     // Verify player events were increased
     expect(playerStateAfter.playerEvents.length).to.be.greaterThan(
       playerStateBefore.playerEvents.length
     );
-
-    // Verify game events were increased
-    expect(gameStateAfter.gameEvents.length).to.be.greaterThan(gameStateBefore.gameEvents.length);
-
-    // Remove listener
-    await program.removeEventListener(socialFeedEventListener);
   });
 
   it("Allows player to purchase ciphers again", async () => {
@@ -204,9 +187,6 @@ describe("Purchase ciphers", () => {
     // Verify game balance increased by exactly the cost of the ciphers
     expect(gameBalanceAfter - gameBalanceBefore).to.equal(expectedCost);
 
-    // Verify player inGame status does not change
-    expect(playerStateAfter.inGame).to.equal(true);
-
     // Verify the amount of cards did not increase
     expect(playerStateAfter.cards.length).to.equal(playerStateBefore.cards.length);
 
@@ -222,7 +202,6 @@ describe("Purchase ciphers", () => {
   it("Allows second player to purchase ciphers", async () => {
     // Create a second player
     const player2Keypair = Keypair.generate();
-    const randomness2Keypair = Keypair.generate();
 
     // Get the player2 state PDA
     const [player2StatePda] = PublicKey.findProgramAddressSync(
@@ -290,13 +269,6 @@ describe("Purchase ciphers", () => {
 
     // Verify game balance increased by exactly the cost of the ciphers
     expect(gameBalanceAfter - gameBalanceBefore).to.equal(expectedCost);
-
-    // Verify player has joined the game
-    expect(player2StateBefore.inGame).to.equal(false);
-    expect(player2StateAfter.inGame).to.equal(true);
-
-    // Verify the amount of cards did not increase
-    expect(player2StateAfter.cards.length).to.equal(player2StateBefore.cards.length);
   });
 
   it("Tests lastLogin update when purchasing ciphers", async () => {
@@ -338,12 +310,11 @@ describe("Purchase ciphers", () => {
         })
         .signers([playerKeypair])
         .rpc();
-
-      // If we get here, no error was thrown
-      expect.fail("Expected an error but none was thrown");
     } catch (error) {
       expect(error.error.errorCode.code).to.equal("InsufficientBalance");
+      return;
     }
+    expect.fail("Expected an error but none was thrown");
   });
 
   it("Fails if player tries to purchase ciphers with a zero amount", async () => {
@@ -357,12 +328,11 @@ describe("Purchase ciphers", () => {
         })
         .signers([playerKeypair])
         .rpc();
-
-      // If we get here, no error was thrown
-      expect.fail("Expected an error but none was thrown");
     } catch (error) {
       expect(error.error.errorCode.code).to.equal("NegativeCiphersAmount");
+      return;
     }
+    expect.fail("Expected an error but none was thrown");
   });
 
   it("Fails if player without player state account tries to purchase ciphers", async () => {
@@ -379,11 +349,10 @@ describe("Purchase ciphers", () => {
         })
         .signers([player2Keypair])
         .rpc();
-
-      // If we get here, no error was thrown
-      expect.fail("Expected an error but none was thrown");
     } catch (error) {
       expect(error.error.errorCode.code).to.equal("AccountNotInitialized");
+      return;
     }
+    expect.fail("Expected an error but none was thrown");
   });
 });

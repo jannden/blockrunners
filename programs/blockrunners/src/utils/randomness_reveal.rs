@@ -55,6 +55,18 @@ pub fn randomness_reveal(
 ) -> Result<()> {
     msg!("TEST MODE: Running randomness_reveal");
 
+    // Verify that the randomness account matches the one stored in player_state
+    if let Some(randomness_account_key) = player_state.randomness_account {
+        require_keys_eq!(
+            randomness_account.key(),
+            randomness_account_key,
+            BlockrunnersError::Unauthorized
+        );
+    } else {
+        // No randomness account stored, this is a state error
+        return Err(BlockrunnersError::RandomnessUnavailable.into());
+    }
+
     // All randomness values are 1 in test mode
     // This means the correct direction is always "Right"
     // And the card given is always "Doubler"

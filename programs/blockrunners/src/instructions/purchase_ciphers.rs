@@ -4,7 +4,7 @@ use crate::{
     constants::{CIPHER_COST, GAME_STATE_SEED, PLAYER_STATE_SEED},
     errors::BlockrunnersError,
     instructions::update_last_login,
-    state::{Card, GameState, PlayerState, SocialFeedEventType},
+    state::{GameState, PlayerState, SocialFeedEventType},
     utils::save_and_emit_event,
 };
 
@@ -55,18 +55,6 @@ pub fn purchase_ciphers(ctx: Context<PurchaseCiphers>, amount: u64) -> Result<()
         },
     );
     system_program::transfer(cpi_context, cost)?;
-
-    // Check if the player is not already in the game
-    if player_state.game_start.is_none() {
-        save_and_emit_event(
-            &mut game_state.game_events,
-            SocialFeedEventType::PlayerJoined,
-            format!("Player {} joining the game!", ctx.accounts.player.key()),
-        )?;
-
-        player_state.game_start = Some(game_state.start);
-        player_state.cards = vec![Card::Shield, Card::Doubler, Card::Swift]
-    }
 
     // Update player's cipher count
     player_state.ciphers = player_state

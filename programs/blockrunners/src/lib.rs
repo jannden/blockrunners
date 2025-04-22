@@ -25,6 +25,10 @@ pub mod blockrunners {
         initialize_player::initialize_player(ctx)
     }
 
+    pub fn join_game(ctx: Context<JoinGame>) -> Result<()> {
+        join_game::join_game(ctx)
+    }
+
     pub fn purchase_ciphers(ctx: Context<PurchaseCiphers>, amount: u64) -> Result<()> {
         purchase_ciphers::purchase_ciphers(ctx, amount)
     }

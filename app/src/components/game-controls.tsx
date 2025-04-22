@@ -11,6 +11,7 @@ import { MoveRevealButton } from "./move-reveal";
 import { useBlockrunners } from "@/hooks/useBlockrunners";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { GetCiphersButton } from "./get-ciphers";
+import { JoinGameButton } from "./join-game-button";
 
 interface GameControlsProps {
   onMove: (direction: "left" | "right") => void;
@@ -36,6 +37,7 @@ export function GameControls({
         {connected && <AirdropButton />}
         {connected && <InitGameButton />}
         {connected && <InitPlayerButton />}
+        {connected && <JoinGameButton />}
         {connected && <MoveRequestButton />}
         {connected && <MoveRevealButton />}
         {connected && <GetCiphersButton />}

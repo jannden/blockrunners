@@ -69,6 +69,17 @@ describe("Move Commit-Reveal", () => {
 
     console.log("Player initialized");
 
+    // Join the game
+    await program.methods
+      .joinGame()
+      .accounts({
+        player: playerKeypair.publicKey,
+      })
+      .signers([playerKeypair])
+      .rpc();
+
+    console.log("Player joined the game");
+
     // Purchase ciphers
     const ciphersToPurchase = 10;
     await program.methods
@@ -87,6 +98,15 @@ describe("Move Commit-Reveal", () => {
   });
 
   it("Allows successful player movement with correct choice and no cards", async () => {
+    // Purchase ciphers for the test
+    await program.methods
+      .purchaseCiphers(new anchor.BN(1))
+      .accounts({
+        player: playerKeypair.publicKey,
+      })
+      .signers([playerKeypair])
+      .rpc();
+
     const socialFeedEventListener = program.addEventListener("socialFeedEvent", (event) => {
       console.log("Make move events:", event.message);
     });
@@ -96,11 +116,8 @@ describe("Move Commit-Reveal", () => {
     const initialPosition = playerStateBefore.position;
     console.log(`Player position before move: ${initialPosition}`);
 
-    // Make a move (direction doesn't matter, the program will generate the correct direction)
-    const direction = { left: {} }; // Just pick a direction
-    console.log(`Direction chosen: ${JSON.stringify(direction)}`);
-
     // Step 1: Commit the move
+    const direction = { right: {} };
     const txCommit = await program.methods
       .moveCommit(direction, CARD_USAGE_EMPTY_MOCK)
       .accounts({
@@ -157,6 +174,15 @@ describe("Move Commit-Reveal", () => {
   });
 
   it("Makes multiple moves", async () => {
+    // Purchase ciphers for the test
+    await program.methods
+      .purchaseCiphers(new anchor.BN(3))
+      .accounts({
+        player: playerKeypair.publicKey,
+      })
+      .signers([playerKeypair])
+      .rpc();
+
     // Make three more moves to test the game logic
     for (let i = 0; i < 3; i++) {
       // Fetch player state to get the current position
@@ -205,6 +231,15 @@ describe("Move Commit-Reveal", () => {
   });
 
   it("Tests lastLogin update", async () => {
+    // Purchase ciphers for the test
+    await program.methods
+      .purchaseCiphers(new anchor.BN(1))
+      .accounts({
+        player: playerKeypair.publicKey,
+      })
+      .signers([playerKeypair])
+      .rpc();
+
     // Fetch player state to get the current position
     const playerStateBefore = await program.account.playerState.fetch(playerStatePda);
     const lastLoginBefore = playerStateBefore.lastLogin.toString();
@@ -255,6 +290,15 @@ describe("Move Commit-Reveal", () => {
   });
 
   it("Tests incorrect move behavior", async () => {
+    // Purchase ciphers for the test
+    await program.methods
+      .purchaseCiphers(new anchor.BN(1))
+      .accounts({
+        player: playerKeypair.publicKey,
+      })
+      .signers([playerKeypair])
+      .rpc();
+
     // Fetch player state to get the current position
     const playerStateBefore = await program.account.playerState.fetch(playerStatePda);
     const currentPosition = playerStateBefore.position;
@@ -348,7 +392,7 @@ describe("Move Commit-Reveal", () => {
     const afterMove = await program.account.playerState.fetch(playerStatePda);
     console.log("State after move -> ", afterMove);
 
-    expect(afterMove.ciphers.toNumber()).to.equal(stateBefore.ciphers.toNumber()); // Used 1 cipher for move, 2 for cards, but got 2 back for using swift
+    expect(afterMove.ciphers.toNumber()).to.equal(stateBefore.ciphers.toNumber() - 1); // Used 1 cipher for move, 2 for cards, but got 2 back for using swift
     expect(afterMove.position).to.equal(stateBefore.position + 1);
 
     // TODO: Temporary disabling to refactor cards from vector to hashmap
@@ -356,6 +400,15 @@ describe("Move Commit-Reveal", () => {
   });
 
   it("Applies card effects correctly on invalid move", async () => {
+    // Purchase ciphers for the test
+    await program.methods
+      .purchaseCiphers(new anchor.BN(2))
+      .accounts({
+        player: playerKeypair.publicKey,
+      })
+      .signers([playerKeypair])
+      .rpc();
+
     await giveCard(program, playerKeypair, playerStatePda, { shield: {} });
     let stateBefore = await program.account.playerState.fetch(playerStatePda);
     console.log("State before move DEBUG -> ", stateBefore);
@@ -392,15 +445,49 @@ describe("Move Commit-Reveal", () => {
     expect(stateAfterBad.position).to.equal(stateBefore.position); // no reset
   });
 
-  it("Verifies game completion and prize distribution", async () => {
+  it("Validates randomness account correctly", async () => {
+    // Purchase ciphers for the test
     await program.methods
-      .purchaseCiphers(new anchor.BN(25))
+      .purchaseCiphers(new anchor.BN(1))
       .accounts({
         player: playerKeypair.publicKey,
       })
       .signers([playerKeypair])
       .rpc();
 
+    const invalidRandomnessKeypair = Keypair.generate();
+
+    // Try to make a move with an invalid randomness account
+    try {
+      // Step 1: Commit the move
+      await program.methods
+        .moveCommit({ left: {} }, CARD_USAGE_EMPTY_MOCK)
+        .accounts({
+          player: playerKeypair.publicKey,
+          randomnessAccount: randomnessKeypair.publicKey,
+        })
+        .signers([playerKeypair])
+        .rpc();
+
+      // Step 2: Reveal the move - but supply wrong randomness account
+      await program.methods
+        .moveReveal()
+        .accounts({
+          player: playerKeypair.publicKey,
+          randomnessAccount: invalidRandomnessKeypair.publicKey,
+        })
+        .signers([playerKeypair])
+        .rpc();
+    } catch (error) {
+      expect(error.error.errorCode.code).to.equal("Unauthorized");
+      return;
+    }
+
+    // If we get here, no error was thrown
+    expect.fail("Expected an error but none was thrown");
+  });
+
+  it("Verifies game completion and prize distribution", async () => {
     // Get initial balances
     const gameStateBefore = await program.account.gameState.fetch(gameStatePda);
     const playerBalanceBefore = await provider.connection.getBalance(playerKeypair.publicKey);
@@ -419,6 +506,15 @@ describe("Move Commit-Reveal", () => {
     // Move player to winning position (path_length - 1)
     const playerStateBefore = await program.account.playerState.fetch(playerStatePda);
     const movesNeeded = gameStateBefore.pathLength - playerStateBefore.position;
+
+    // Purchase ciphers for the test
+    await program.methods
+      .purchaseCiphers(new anchor.BN(movesNeeded))
+      .accounts({
+        player: playerKeypair.publicKey,
+      })
+      .signers([playerKeypair])
+      .rpc();
 
     console.log(`Moving player ${movesNeeded} times to reach the end...`);
     for (let i = 0; i < movesNeeded; i++) {
@@ -469,35 +565,5 @@ describe("Move Commit-Reveal", () => {
 
     // Cleanup
     await program.removeEventListener(socialFeedEventListener);
-  });
-
-  it("Validates randomness account correctly", async () => {
-    await program.methods
-      .purchaseCiphers(new anchor.BN(25))
-      .accounts({
-        player: playerKeypair.publicKey,
-      })
-      .signers([playerKeypair])
-      .rpc();
-
-    const invalidRandomnessKeypair = Keypair.generate();
-
-    // Try to make a move with an invalid randomness account
-    try {
-      await program.methods
-        .moveCommit({ left: {} }, CARD_USAGE_EMPTY_MOCK)
-        .accounts({
-          player: playerKeypair.publicKey,
-          randomnessAccount: invalidRandomnessKeypair.publicKey,
-        })
-        .signers([playerKeypair])
-        .rpc();
-
-      // If we get here, no error was thrown
-      expect.fail("Expected an error but none was thrown");
-    } catch (error) {
-      // Verify the error is related to randomness account validation
-      expect(error.error.errorCode.code).to.equal("RandomnessAccountParsing");
-    }
   });
 });

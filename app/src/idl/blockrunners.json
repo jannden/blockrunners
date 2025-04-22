@@ -132,6 +132,79 @@
       "args": []
     },
     {
+      "name": "join_game",
+      "discriminator": [
+        107,
+        112,
+        18,
+        38,
+        56,
+        173,
+        60,
+        128
+      ],
+      "accounts": [
+        {
+          "name": "player",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "player_state",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  108,
+                  97,
+                  121,
+                  101,
+                  114,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "player"
+              }
+            ]
+          }
+        },
+        {
+          "name": "game_state",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  103,
+                  97,
+                  109,
+                  101,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  101
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "args": []
+    },
+    {
       "name": "move_commit",
       "discriminator": [
         83,
@@ -688,13 +761,6 @@
             "type": "u8"
           },
           {
-            "name": "game_start",
-            "docs": [
-              "The Unix timestamp of the game instance this player is part of"
-            ],
-            "type": "i64"
-          },
-          {
             "name": "player_events",
             "docs": [
               "Social feed events history"
@@ -706,13 +772,6 @@
                 }
               }
             }
-          },
-          {
-            "name": "in_game",
-            "docs": [
-              "The player has joined the game or not"
-            ],
-            "type": "bool"
           },
           {
             "name": "first_login",
@@ -732,6 +791,15 @@
           {
             "name": "total_ciphers_bought",
             "type": "u64"
+          },
+          {
+            "name": "game_start",
+            "docs": [
+              "The Unix timestamp of the game instance this player is part of"
+            ],
+            "type": {
+              "option": "i64"
+            }
           },
           {
             "name": "randomness_account",

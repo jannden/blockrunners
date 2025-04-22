@@ -73,4 +73,7 @@ pub enum BlockrunnersError {
 
     #[msg("Player is playing in a different game")]
     PlayingInDifferentGame,
+
+    #[msg("Player has already joined the game")]
+    PlayerAlreadyJoinedGame,
 }

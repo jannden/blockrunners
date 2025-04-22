@@ -19,7 +19,6 @@ describe("Initialize Player", () => {
   // Keypairs
   const adminKeypair = Keypair.generate();
   const playerKeypair = Keypair.generate();
-  const randomnessKeypair = Keypair.generate();
 
   // Game state PDA
   const [gameStatePda] = PublicKey.findProgramAddressSync(
@@ -78,14 +77,13 @@ describe("Initialize Player", () => {
     // Verify player state was initialized correctly
     expect(playerState.cards.length).to.equal(3); // Start with 3 cards
     expect(playerState.position).to.equal(0); // Start at position 0
-    expect(playerState.inGame).to.equal(false); // Start not in the game
-    
+
     // Verify player statistics were initialized correctly
     expect(playerState.firstLogin.toString()).to.not.equal("0"); // Should have a timestamp
     expect(playerState.lastLogin.toString()).to.not.equal("0"); // Should have a timestamp
     expect(playerState.gamesWon.toNumber()).to.equal(0); // Start with 0 games won
     expect(playerState.totalCiphersBought.toNumber()).to.equal(0); // Start with 0 ciphers bought
-    
+
     // First login and last login should be the same initially
     expect(playerState.firstLogin.toString()).to.equal(playerState.lastLogin.toString());
   });

@@ -197,6 +197,79 @@ export type Blockrunners = {
       "args": []
     },
     {
+      "name": "joinGame",
+      "discriminator": [
+        107,
+        112,
+        18,
+        38,
+        56,
+        173,
+        60,
+        128
+      ],
+      "accounts": [
+        {
+          "name": "player",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "playerState",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  108,
+                  97,
+                  121,
+                  101,
+                  114,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "player"
+              }
+            ]
+          }
+        },
+        {
+          "name": "gameState",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  103,
+                  97,
+                  109,
+                  101,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  101
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "args": []
+    },
+    {
       "name": "moveCommit",
       "discriminator": [
         83,
@@ -613,6 +686,11 @@ export type Blockrunners = {
       "code": 6023,
       "name": "playingInDifferentGame",
       "msg": "Player is playing in a different game"
+    },
+    {
+      "code": 6024,
+      "name": "playerAlreadyJoinedGame",
+      "msg": "Player has already joined the game"
     }
   ],
   "types": [
@@ -753,13 +831,6 @@ export type Blockrunners = {
             "type": "u8"
           },
           {
-            "name": "gameStart",
-            "docs": [
-              "The Unix timestamp of the game instance this player is part of"
-            ],
-            "type": "i64"
-          },
-          {
             "name": "playerEvents",
             "docs": [
               "Social feed events history"
@@ -771,13 +842,6 @@ export type Blockrunners = {
                 }
               }
             }
-          },
-          {
-            "name": "inGame",
-            "docs": [
-              "The player has joined the game or not"
-            ],
-            "type": "bool"
           },
           {
             "name": "firstLogin",
@@ -797,6 +861,15 @@ export type Blockrunners = {
           {
             "name": "totalCiphersBought",
             "type": "u64"
+          },
+          {
+            "name": "gameStart",
+            "docs": [
+              "The Unix timestamp of the game instance this player is part of"
+            ],
+            "type": {
+              "option": "i64"
+            }
           },
           {
             "name": "randomnessAccount",

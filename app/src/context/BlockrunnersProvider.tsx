@@ -141,27 +141,46 @@ function BlockrunnersProvider({ children }: { children: ReactNode }) {
   const initializePlayer = async () => {
     if (!program) return;
 
-    console.log("Initialize player: Wallet", wallet?.publicKey);
-    console.log("Initialize player: PlayerStatePDA", playerStatePDA);
-    if (!wallet?.publicKey || !playerStatePDA) {
-      console.error("Initialize player: Wallet or PlayerStatePDA not found");
+    if (!wallet?.publicKey) {
+      console.error("Initialize player: Wallet not found");
       return;
     }
 
-    try {
-      // Initialize the player account - this will first attempt to reveal randomness
-      // but it's okay if it's not ready yet
-      await program.methods
-        .initializePlayer()
-        .accounts({
-          player: wallet.publicKey,
-        })
-        .rpc();
+    program.methods
+      .initializePlayer()
+      .accounts({
+        player: wallet.publicKey,
+      })
+      .rpc()
+      .then((tx) => {
+        console.log("Initialize player: Transaction sent", tx);
+      })
+      .catch((err) => {
+        console.error("Initialize player:", err);
+      });
+  };
 
-      console.log("Player initialized successfully", playerStatePDA);
-    } catch (error) {
-      console.error("Error in initialize player flow:", error);
+  // Instruction: Join game
+  const joinGame = async () => {
+    if (!program) return;
+
+    if (!wallet?.publicKey || !playerStatePDA) {
+      console.error("Join game: Wallet or PlayerStatePDA not found");
+      return;
     }
+
+    program.methods
+      .joinGame()
+      .accounts({
+        player: wallet.publicKey,
+      })
+      .rpc()
+      .then((tx) => {
+        console.log("Join game: Transaction sent", tx);
+      })
+      .catch((err) => {
+        console.error("Join game:", err);
+      });
   };
 
   // Create randomness account
@@ -389,6 +408,7 @@ function BlockrunnersProvider({ children }: { children: ReactNode }) {
     socialFeeds,
     initializeGame,
     initializePlayer,
+    joinGame,
     purchaseCiphers,
     moveRequest,
     moveReveal,
