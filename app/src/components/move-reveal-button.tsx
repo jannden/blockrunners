@@ -85,7 +85,7 @@ export const MoveRevealButton = () => {
   };
 
   return (
-    <Button onClick={handleMoveReveal} disabled={isLoading}>
+    <Button onClick={handleMoveReveal} disabled={isLoading} variant="primary">
       {isLoading ? "Loading..." : "Reveal Move Result"}
     </Button>
   );

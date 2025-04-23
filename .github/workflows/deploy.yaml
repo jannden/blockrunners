@@ -27,7 +27,7 @@ jobs:
     - name: Build
       run: |
         cd app
-        yarn build
+        yarn build:devnet
     
     - name: Upload artifact
       uses: actions/upload-pages-artifact@v3

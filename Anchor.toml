@@ -8,16 +8,16 @@ resolution = true
 skip-lint = false
 
 [programs.devnet]
-blockrunners = "77A9RGGRna9FVHYhHhwmEi39JmsQ886kqSFfTTWfTEAE"
+blockrunners = "4daaULsebqDAFfASzX1YoTwF1rn4ZMxKdfLtLKfyjwcE"
 
 [programs.localnet]
-blockrunners = "77A9RGGRna9FVHYhHhwmEi39JmsQ886kqSFfTTWfTEAE"
+blockrunners = "4daaULsebqDAFfASzX1YoTwF1rn4ZMxKdfLtLKfyjwcE"
 
 [registry]
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "localnet"
+cluster = "devnet"
 wallet = "~/.config/solana/id.json"
 
 [workspace]
