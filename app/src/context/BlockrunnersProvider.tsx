@@ -40,11 +40,11 @@ function BlockrunnersProvider({ children }: { children: ReactNode }) {
 
       // Update card usage state for the on-chain transaction
       if (card.type === "shield") {
-        setCardUsage((prev) => ({ ...prev, shield: true }));
+        setCardUsage((prev: CardUsage) => ({ ...prev, shield: true }));
       } else if (card.type === "doubler") {
-        setCardUsage((prev) => ({ ...prev, doubler: true }));
+        setCardUsage((prev: CardUsage) => ({ ...prev, doubler: true }));
       } else if (card.type === "swift") {
-        setCardUsage((prev) => ({ ...prev, swift: true }));
+        setCardUsage((prev: CardUsage) => ({ ...prev, swift: true }));
       }
     }
   };
@@ -55,11 +55,11 @@ function BlockrunnersProvider({ children }: { children: ReactNode }) {
 
     // Update card usage state for the on-chain transaction
     if (card?.type === "shield") {
-      setCardUsage((prev) => ({ ...prev, shield: false }));
+      setCardUsage((prev: CardUsage) => ({ ...prev, shield: false }));
     } else if (card?.type === "doubler") {
-      setCardUsage((prev) => ({ ...prev, doubler: false }));
+      setCardUsage((prev: CardUsage) => ({ ...prev, doubler: false }));
     } else if (card?.type === "swift") {
-      setCardUsage((prev) => ({ ...prev, swift: false }));
+      setCardUsage((prev: CardUsage) => ({ ...prev, swift: false }));
     }
   };
 
