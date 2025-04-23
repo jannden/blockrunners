@@ -3,7 +3,13 @@ import { useConnection, useAnchorWallet } from "@solana/wallet-adapter-react";
 import { BN } from "@coral-xyz/anchor";
 import { PublicKey } from "@solana/web3.js";
 import { EMPTY_CARD_USAGE, gameStatePDA, getPlayerStatePDA } from "../lib/constants";
-import type { CardUsage, GameState, PlayerState, SocialFeedEvent } from "../lib/types";
+import type {
+  CardUsage,
+  GameState,
+  PlayerState,
+  SocialFeedEvent,
+  SocialFeedEventInState,
+} from "../lib/types";
 import { BlockrunnersContext } from "../hooks/useBlockrunners";
 import { useProgram } from "@/hooks/useProgram";
 import { generateId } from "@/lib/utils";
@@ -12,20 +18,21 @@ import { AbilityCard } from "@/lib/types";
 function BlockrunnersProvider({ children }: { children: ReactNode }) {
   const { connection } = useConnection();
   const wallet = useAnchorWallet();
+  const program = useProgram();
 
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [playerState, setPlayerState] = useState<PlayerState | null>(null);
   const [playerStatePDA, setPlayerStatePDA] = useState<PublicKey | null>(null);
-  const [socialFeeds, setSocialFeeds] = useState<SocialFeedEvent[]>([]);
   const [cardUsage, setCardUsage] = useState<CardUsage>(EMPTY_CARD_USAGE);
-
-  // UI state for cards and selection
   const [selectedCards, setSelectedCards] = useState<AbilityCard[]>([]);
-  const [socialFeed, setSocialFeed] = useState<
-    { id: string; message: string; timestamp: number; isNew: boolean }[]
-  >([{ id: generateId(), message: "Welcome Runner!", timestamp: Date.now(), isNew: false }]);
-
-  const program = useProgram();
+  const [socialFeed, setSocialFeed] = useState<SocialFeedEventInState[]>([
+    {
+      id: generateId(),
+      message: "Welcome Runner!",
+      timestamp: Math.floor(Date.now() / 1000),
+      isNew: false,
+    },
+  ]);
 
   const selectCard = (card: AbilityCard) => {
     if (!selectedCards.some((c) => c.id === card.id)) {
@@ -71,11 +78,22 @@ function BlockrunnersProvider({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [playerState?.moveDirection]);
 
-  const addToFeed = (message: string) => {
+  const addToFeed = (events: SocialFeedEvent[]) => {
+    if (events.length === 0) return;
+
     setSocialFeed((prevFeed) => {
+      const newEvents = events
+        .filter((event) => event.timestamp.toNumber() > prevFeed[prevFeed.length - 1].timestamp)
+        .sort((a, b) => a.timestamp.toNumber() - b.timestamp.toNumber());
+
       const newFeed = [
         ...prevFeed.map((item) => ({ ...item, isNew: false })),
-        { id: generateId(), message, timestamp: Date.now(), isNew: true },
+        ...newEvents.map((event) => ({
+          id: generateId(),
+          message: event.message,
+          timestamp: event.timestamp.toNumber(),
+          isNew: true,
+        })),
       ];
 
       // Keep only the last 20 messages
@@ -86,6 +104,22 @@ function BlockrunnersProvider({ children }: { children: ReactNode }) {
       return newFeed;
     });
   };
+
+  // Set up subscription to emitted events
+  // This is not necessary as we are using the onAccountChange method to get the GameState and PlayerState
+  // useEffect(() => {
+  //   if (!program) return;
+
+  //   const emitLogSubscriptionId = program.addEventListener("socialFeedEvent", (event) => {
+  //     addToFeed(findNewEvents([event]));
+  //   });
+
+  //   return () => {
+  //     program.removeEventListener(emitLogSubscriptionId);
+  //   };
+
+  //   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, [program]);
 
   // Get GameState on load
   useEffect(() => {
@@ -99,18 +133,10 @@ function BlockrunnersProvider({ children }: { children: ReactNode }) {
       );
       console.log("GameState changed", decodedGameState);
       setGameState(decodedGameState);
-    });
 
-    // Set up subscription to SocialFeed PDA
-    const emitLogSubscriptionId = program.addEventListener(
-      "socialFeedEvent", // TODO: Any other events?
-      (event) => {
-        console.log("Event Data:", event);
-        setSocialFeeds((prevState) => {
-          return [...prevState, event];
-        });
-      }
-    );
+      // Extract social feed events from GameState and add to feed
+      addToFeed(decodedGameState.gameEvents);
+    });
 
     // Fetch GameState PDA initially
     program.account.gameState
@@ -129,7 +155,6 @@ function BlockrunnersProvider({ children }: { children: ReactNode }) {
 
     return () => {
       connection.removeAccountChangeListener(gameSubscriptionId);
-      program.removeEventListener(emitLogSubscriptionId);
     };
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -154,6 +179,9 @@ function BlockrunnersProvider({ children }: { children: ReactNode }) {
       );
       console.log("PlayerState changed", decodedPlayerState);
       setPlayerState(decodedPlayerState);
+
+      // Extract social feed events from PlayerState and add to feed
+      addToFeed(decodedPlayerState.playerEvents);
     });
 
     // Fetch PlayerState PDA initially
@@ -208,7 +236,6 @@ function BlockrunnersProvider({ children }: { children: ReactNode }) {
     playerState,
     gameStatePDA,
     playerStatePDA,
-    socialFeeds,
     cardUsage,
     selectedCards,
     socialFeed,
@@ -216,7 +243,6 @@ function BlockrunnersProvider({ children }: { children: ReactNode }) {
     purchaseCiphers,
     selectCard,
     deselectCard,
-    addToFeed,
   }; // Context value containing only necessary properties and methods
 
   return <BlockrunnersContext.Provider value={value}>{children}</BlockrunnersContext.Provider>;

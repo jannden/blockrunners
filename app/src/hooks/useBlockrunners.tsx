@@ -21,7 +21,6 @@ interface BlockrunnersContextType {
   // UI actions
   selectCard: (card: AbilityCard) => void;
   deselectCard: (cardId: string) => void;
-  addToFeed: (message: string) => void;
 }
 
 // Create context with default values
@@ -41,7 +40,6 @@ export const BlockrunnersContext = createContext<BlockrunnersContextType>({
   // UI actions
   selectCard: () => {},
   deselectCard: () => {},
-  addToFeed: () => {},
 });
 
 export const useBlockrunners = () => useContext(BlockrunnersContext);

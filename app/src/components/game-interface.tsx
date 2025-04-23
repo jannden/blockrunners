@@ -23,7 +23,6 @@ export function GameInterface() {
     gameState,
     // UI state
     selectedCards,
-    socialFeed,
     // Actions
     selectCard,
     deselectCard,
@@ -106,7 +105,7 @@ export function GameInterface() {
       {connected && (
         <>
           <div className="flex-1 flex flex-col py-4 pr-1 gap-4">
-            <GameFeed messages={[...socialFeed]} />
+            <GameFeed />
 
             <AbilityCards
               cards={playerCards}

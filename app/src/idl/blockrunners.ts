@@ -14,65 +14,6 @@ export type Blockrunners = {
   },
   "instructions": [
     {
-      "name": "debugGiveCard",
-      "discriminator": [
-        194,
-        238,
-        180,
-        20,
-        144,
-        241,
-        112,
-        80
-      ],
-      "accounts": [
-        {
-          "name": "player",
-          "writable": true,
-          "signer": true
-        },
-        {
-          "name": "playerState",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  112,
-                  108,
-                  97,
-                  121,
-                  101,
-                  114,
-                  95,
-                  115,
-                  116,
-                  97,
-                  116,
-                  101
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "player"
-              }
-            ]
-          }
-        }
-      ],
-      "args": [
-        {
-          "name": "card",
-          "type": {
-            "defined": {
-              "name": "card"
-            }
-          }
-        }
-      ]
-    },
-    {
       "name": "initializeGame",
       "discriminator": [
         44,
