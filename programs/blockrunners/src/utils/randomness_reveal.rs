@@ -1,5 +1,4 @@
 use anchor_lang::prelude::*;
-use switchboard_on_demand::RandomnessAccountData;
 
 use crate::{errors::BlockrunnersError, state::PlayerState};
 
@@ -68,7 +67,7 @@ pub fn randomness_reveal(
     }
 
     // All randomness values are 1 in test mode
-    // This means the correct direction is always "Right"
+    // This means the move is always successful in test mode
     // And the card given is always "Doubler"
     player_state.randomness_value = Some(vec![1; 32]);
 
