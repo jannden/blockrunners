@@ -1,10 +1,10 @@
 use anchor_lang::prelude::*;
 
 use crate::{
-    constants::{GAME_STATE_SEED, PLAYER_STATE_SEED},
+    constants::{GAME_STATE_SEED, MOVE_SUCCESS_PROBABILITY, PLAYER_STATE_SEED},
     errors::BlockrunnersError,
     instructions::update_last_login,
-    state::{Card, CardUsage, GameState, PathDirection, PlayerState, SocialFeedEventType},
+    state::{Card, CardUsage, GameState, PlayerState, SocialFeedEventType},
     utils::{
         get_move_cost, give_random_cards, randomness_reveal, randomness_use, save_and_emit_event,
     },
@@ -89,14 +89,11 @@ pub fn move_reveal(ctx: Context<MoveReveal>) -> Result<()> {
     // Reveal randomness
     randomness_reveal(player_state, randomness_account)?;
 
-    // Determine the correct direction based on the randomness value
-    let correct_direction = if randomness_use(player_state)? % 2 == 0 {
-        PathDirection::Left
-    } else {
-        PathDirection::Right
-    };
+    // Determine the correct direction based on the randomness value and success probability
+    let random_value = randomness_use(player_state)?;
+    let is_move_successful = (random_value % 100) < MOVE_SUCCESS_PROBABILITY;
 
-    if player_state.move_direction == Some(correct_direction) {
+    if is_move_successful {
         handle_correct_move(player_state, used_cards)?;
 
         if player_state.position == game_state.path_length {
@@ -104,7 +101,7 @@ pub fn move_reveal(ctx: Context<MoveReveal>) -> Result<()> {
         }
     } else {
         handle_incorrect_move(player_state, used_cards)?;
-    }
+    };
 
     // Reset player's move & cards commitment
     player_state.move_direction = None;
