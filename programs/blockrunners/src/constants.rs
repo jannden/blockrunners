@@ -29,3 +29,7 @@ pub const CARD_TYPES_COUNT: u8 = 3;
 
 #[constant]
 pub const PLAYER_STATE_SEED: &[u8] = b"player_state";
+
+/// Move success probability as a percentage (out of 100)
+#[constant]
+pub const MOVE_SUCCESS_PROBABILITY: u8 = 75;

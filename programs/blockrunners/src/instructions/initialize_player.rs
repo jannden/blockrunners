@@ -30,7 +30,6 @@ pub struct InitializePlayer<'info> {
 }
 
 pub fn initialize_player(ctx: Context<InitializePlayer>) -> Result<()> {
-    let game_state = &ctx.accounts.game_state;
     let player_state = &mut ctx.accounts.player_state;
     let clock = Clock::get()?;
 
