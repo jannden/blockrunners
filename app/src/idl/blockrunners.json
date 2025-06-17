@@ -816,6 +816,60 @@
             "type": "u64"
           },
           {
+            "name": "best_position",
+            "docs": [
+              "Personal bests and achievements"
+            ],
+            "type": "u8"
+          },
+          {
+            "name": "total_resets",
+            "type": "u64"
+          },
+          {
+            "name": "total_steps",
+            "type": "u64"
+          },
+          {
+            "name": "cards_collected",
+            "type": "u64"
+          },
+          {
+            "name": "shields_used",
+            "type": "u64"
+          },
+          {
+            "name": "system_breaches",
+            "type": "u64"
+          },
+          {
+            "name": "consecutive_wins",
+            "type": "u64"
+          },
+          {
+            "name": "best_win_streak",
+            "type": "u64"
+          },
+          {
+            "name": "ghost_protocol",
+            "docs": [
+              "Cyberpunk achievement flags"
+            ],
+            "type": "bool"
+          },
+          {
+            "name": "data_hoarder",
+            "type": "bool"
+          },
+          {
+            "name": "consensus_breaker",
+            "type": "bool"
+          },
+          {
+            "name": "cipher_lord",
+            "type": "bool"
+          },
+          {
             "name": "game_start",
             "docs": [
               "The Unix timestamp of the game instance this player is part of"
@@ -929,17 +983,42 @@
           },
           {
             "name": "PlayerMoved"
+          },
+          {
+            "name": "ResetAlert"
+          },
+          {
+            "name": "MilestoneReached"
+          },
+          {
+            "name": "PersonalBest"
+          },
+          {
+            "name": "PrizePoolChange"
+          },
+          {
+            "name": "PathLengthChange"
+          },
+          {
+            "name": "StepPriceChange"
+          },
+          {
+            "name": "ConsensusAlert"
+          },
+          {
+            "name": "DataBreach"
+          },
+          {
+            "name": "SystemIntrusion"
+          },
+          {
+            "name": "ProtocolFragment"
           }
         ]
       }
     }
   ],
   "constants": [
-    {
-      "name": "CARD_TYPES_COUNT",
-      "type": "u8",
-      "value": "3"
-    },
     {
       "name": "CIPHER_COST",
       "type": "u64",

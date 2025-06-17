@@ -93,7 +93,7 @@ pub fn move_reveal(ctx: Context<MoveReveal>) -> Result<()> {
     let is_move_successful = (random_value % 100) < MOVE_SUCCESS_PROBABILITY;
 
     if is_move_successful {
-        handle_correct_move(player_state, used_cards)?;
+        handle_correct_move(player_state, game_state, used_cards)?;
 
         if player_state.position == game_state.path_length {
             handle_win(player, game_state, player_state)?;
@@ -114,11 +114,33 @@ pub fn move_reveal(ctx: Context<MoveReveal>) -> Result<()> {
 
 fn handle_correct_move(
     player_state: &mut Account<PlayerState>,
+    game_state: &mut Account<GameState>,
     card_usage: CardUsage,
 ) -> Result<()> {
     // Correct move: advance one step
     player_state.position += 1;
     let new_position = player_state.position;
+
+    // Update statistics
+    player_state.total_steps += 1;
+
+    // Check for personal best position
+    if new_position > player_state.best_position {
+        player_state.best_position = new_position;
+
+        let personal_message = format!(
+            "PERSONAL BEST: New furthest infiltration depth reached: {} steps!",
+            new_position
+        );
+        save_and_emit_event(
+            &mut player_state.player_events,
+            SocialFeedEventType::PersonalBest,
+            personal_message,
+        )?;
+    }
+
+    // Check for milestone notifications
+    crate::utils::check_milestones(player_state, game_state)?;
 
     // Base message
     let mut private_message = format!("Advanced to position {}!", new_position);
@@ -128,6 +150,7 @@ fn handle_correct_move(
 
     // Collect cards based on success and doubler
     give_random_cards(player_state, collect_cards_count)?;
+    player_state.cards_collected += collect_cards_count as u64;
 
     // Build event message
     let mut card_effects = Vec::new();
@@ -136,6 +159,7 @@ fn handle_correct_move(
     }
     if card_usage.shield {
         card_effects.push("Shield");
+        player_state.shields_used += 1;
     }
     if card_usage.swift {
         card_effects.push("Swift (cipher refund)");
@@ -164,7 +188,7 @@ fn handle_incorrect_move(
 ) -> Result<()> {
     if card_usage.shield {
         let mut private_message = format!(
-            "Used a Shield card! Staying at position {}.",
+            "Shield protocol activated! Maintaining position {}.",
             player_state.position
         );
 
@@ -180,6 +204,8 @@ fn handle_incorrect_move(
             private_message = format!("{}. Also used: {}", private_message, other_cards.join(", "));
         }
 
+        player_state.shields_used += 1;
+
         save_and_emit_event(
             &mut player_state.player_events,
             SocialFeedEventType::PlayerMoved,
@@ -187,11 +213,19 @@ fn handle_incorrect_move(
         )?;
     } else {
         // No shield = reset to start
+        let reset_position = player_state.position;
         player_state.position = 0;
         player_state.cards = CardCounts::default();
+        player_state.total_resets += 1;
+
+        // Reset consecutive wins
+        player_state.consecutive_wins = 0;
 
         // Build event message for incorrect move
-        let mut private_message = "Incorrect move, back to start!".to_string();
+        let mut private_message = format!(
+            "CONSENSUS DETECTED: Connection severed at depth {}. Returning to entry point.",
+            reset_position
+        );
 
         let mut cards_used = Vec::new();
         if card_usage.doubler {
@@ -207,7 +241,7 @@ fn handle_incorrect_move(
 
         save_and_emit_event(
             &mut player_state.player_events,
-            SocialFeedEventType::PlayerMoved,
+            SocialFeedEventType::ResetAlert,
             private_message,
         )?;
     }
@@ -220,10 +254,28 @@ fn handle_win(
     game_state: &mut Account<GameState>,
     player_state: &mut Account<PlayerState>,
 ) -> Result<()> {
+    // Update win statistics
     player_state.games_won = player_state
         .games_won
         .checked_add(1)
         .ok_or(BlockrunnersError::UnknownError)?;
+
+    // Update win streak
+    player_state.consecutive_wins += 1;
+    if player_state.consecutive_wins > player_state.best_win_streak {
+        player_state.best_win_streak = player_state.consecutive_wins;
+
+        // Notify about new win streak record
+        let streak_message = format!(
+            "STREAK RECORD: New personal best win streak of {} successful infiltrations!",
+            player_state.consecutive_wins
+        );
+        save_and_emit_event(
+            &mut player_state.player_events,
+            SocialFeedEventType::PersonalBest,
+            streak_message,
+        )?;
+    }
 
     // Verify we have enough lamports before transfer
     let current_lamports = game_state.to_account_info().lamports();
@@ -236,7 +288,8 @@ fn handle_win(
     let prize_amount = game_state.prize_pool;
 
     if prize_amount > 0 {
-        let global_message = format!("Yay! Distributing the prize!");
+        let global_message =
+            format!("PROTOCOL BREACH SUCCESSFUL: Distributing recovered data fragments!");
         save_and_emit_event(
             &mut game_state.game_events,
             SocialFeedEventType::GameWon,
@@ -266,9 +319,11 @@ fn handle_win(
     }
 
     // Create global win message for everyone
+    let player_key_str = player.key().to_string();
     let global_message = format!(
-        "Player {} has won the game with {} correct moves and collected {}!",
-        player.key(), // use the signer's key
+        "CONSENSUS BREACH: Runner {}...{} extracted protocol fragment after {} steps. Reward: {} lamports",
+        &player_key_str[0..4],
+        &player_key_str[player_key_str.len() - 4..],
         player_state.position,
         prize_amount
     );
@@ -281,10 +336,17 @@ fn handle_win(
     )?;
 
     // Create personal congrats for winner
-    let private_message = format!(
-        "Congratulations! You won the game and collected {}!",
-        prize_amount
-    );
+    let private_message = if player_state.consecutive_wins > 1 {
+        format!(
+            "MISSION COMPLETE: Protocol fragment secured! Streak: {} | Reward: {} lamports",
+            player_state.consecutive_wins, prize_amount
+        )
+    } else {
+        format!(
+            "MISSION COMPLETE: Protocol fragment secured! Reward: {} lamports",
+            prize_amount
+        )
+    };
 
     // Announce to player's feed
     save_and_emit_event(
@@ -292,6 +354,9 @@ fn handle_win(
         SocialFeedEventType::GameWon,
         private_message,
     )?;
+
+    // Check for achievements
+    crate::utils::check_and_award_achievements(player_state, game_state)?;
 
     // Update game start time to trigger resets for all players with a new timestamp set
     let clock = Clock::get()?;
