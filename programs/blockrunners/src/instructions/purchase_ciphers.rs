@@ -67,18 +67,53 @@ pub fn purchase_ciphers(ctx: Context<PurchaseCiphers>, amount: u64) -> Result<()
         .checked_add(amount)
         .ok_or(ProgramError::ArithmeticOverflow)?;
 
+    let old_prize_pool = game_state.prize_pool;
+
     // Update prize pool
     game_state.prize_pool = game_state
         .prize_pool
         .checked_add(cost)
         .ok_or(ProgramError::ArithmeticOverflow)?;
 
+    // Check for significant prize pool increases (>10% increase)
+    if old_prize_pool > 0 {
+        let increase_percentage = ((cost as f64 / old_prize_pool as f64) * 100.0) as u64;
+        if increase_percentage >= 10 {
+            let pool_message = format!(
+                "FUNDING SURGE: Protocol recovery fund increased by {}% to {} lamports. Mission priority escalating.",
+                increase_percentage,
+                game_state.prize_pool
+            );
+            save_and_emit_event(
+                &mut game_state.game_events,
+                SocialFeedEventType::PrizePoolChange,
+                pool_message,
+            )?;
+        }
+    }
+
     // Announce to player's feed
-    let private_message = format!("You have successfully purchased {} for {}!", amount, cost);
+    let private_message = format!(
+        "RESOURCES ACQUIRED: {} computational ciphers purchased for {} lamports. Total reserves: {}",
+        amount, cost, player_state.ciphers
+    );
     save_and_emit_event(
         &mut player_state.player_events,
         SocialFeedEventType::CiphersPurchased,
         private_message,
     )?;
+
+    // Check if player achieved Cipher Lord status
+    if player_state.total_ciphers_bought >= 1000 && !player_state.cipher_lord {
+        player_state.cipher_lord = true;
+        let achievement_message =
+            "ACHIEVEMENT UNLOCKED: Cipher Lord - Mastered computational resource acquisition!";
+        save_and_emit_event(
+            &mut player_state.player_events,
+            SocialFeedEventType::ProtocolFragment,
+            achievement_message.to_string(),
+        )?;
+    }
+
     Ok(())
 }
