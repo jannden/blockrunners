@@ -9,6 +9,16 @@ pub enum SocialFeedEventType {
     PlayerJoined,
     PlayerCardsMaxRange,
     PlayerMoved,
+    ResetAlert,
+    MilestoneReached,
+    PersonalBest,
+    PrizePoolChange,
+    PathLengthChange,
+    StepPriceChange,
+    ConsensusAlert,
+    DataBreach,
+    SystemIntrusion,
+    ProtocolFragment,
 }
 
 impl Space for SocialFeedEventType {
@@ -16,13 +26,12 @@ impl Space for SocialFeedEventType {
 }
 
 #[event]
-#[derive(Clone)]
-#[derive(InitSpace)]
+#[derive(Clone, InitSpace)]
 pub struct SocialFeedEvent {
     pub event_type: SocialFeedEventType,
 
     #[max_len(100)]
     pub message: String,
-    
+
     pub timestamp: i64,
 }

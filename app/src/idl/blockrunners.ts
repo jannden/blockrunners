@@ -881,6 +881,60 @@ export type Blockrunners = {
             "type": "u64"
           },
           {
+            "name": "bestPosition",
+            "docs": [
+              "Personal bests and achievements"
+            ],
+            "type": "u8"
+          },
+          {
+            "name": "totalResets",
+            "type": "u64"
+          },
+          {
+            "name": "totalSteps",
+            "type": "u64"
+          },
+          {
+            "name": "cardsCollected",
+            "type": "u64"
+          },
+          {
+            "name": "shieldsUsed",
+            "type": "u64"
+          },
+          {
+            "name": "systemBreaches",
+            "type": "u64"
+          },
+          {
+            "name": "consecutiveWins",
+            "type": "u64"
+          },
+          {
+            "name": "bestWinStreak",
+            "type": "u64"
+          },
+          {
+            "name": "ghostProtocol",
+            "docs": [
+              "Cyberpunk achievement flags"
+            ],
+            "type": "bool"
+          },
+          {
+            "name": "dataHoarder",
+            "type": "bool"
+          },
+          {
+            "name": "consensusBreaker",
+            "type": "bool"
+          },
+          {
+            "name": "cipherLord",
+            "type": "bool"
+          },
+          {
             "name": "gameStart",
             "docs": [
               "The Unix timestamp of the game instance this player is part of"
@@ -994,6 +1048,36 @@ export type Blockrunners = {
           },
           {
             "name": "playerMoved"
+          },
+          {
+            "name": "resetAlert"
+          },
+          {
+            "name": "milestoneReached"
+          },
+          {
+            "name": "personalBest"
+          },
+          {
+            "name": "prizePoolChange"
+          },
+          {
+            "name": "pathLengthChange"
+          },
+          {
+            "name": "stepPriceChange"
+          },
+          {
+            "name": "consensusAlert"
+          },
+          {
+            "name": "dataBreach"
+          },
+          {
+            "name": "systemIntrusion"
+          },
+          {
+            "name": "protocolFragment"
           }
         ]
       }

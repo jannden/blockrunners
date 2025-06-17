@@ -150,6 +150,22 @@ pub struct PlayerState {
     pub games_won: u64,
     pub total_ciphers_bought: u64,
 
+    /// Personal bests and achievements
+    pub best_position: u8, // Furthest position ever reached
+    pub total_resets: u64,     // Times sent back to start
+    pub total_steps: u64,      // Total moves made across all games
+    pub cards_collected: u64,  // Total cards collected
+    pub shields_used: u64,     // Defensive maneuvers executed
+    pub system_breaches: u64,  // Times reached 50%+ of path
+    pub consecutive_wins: u64, // Current win streak
+    pub best_win_streak: u64,  // Best win streak ever
+
+    /// Cyberpunk achievement flags
+    pub ghost_protocol: bool, // Won without using any cards
+    pub data_hoarder: bool,      // Collected 100+ cards total
+    pub consensus_breaker: bool, // Reached 90%+ of path length
+    pub cipher_lord: bool,       // Purchased 1000+ ciphers total
+
     /// The Unix timestamp of the game instance this player is part of
     pub game_start: Option<i64>,
 

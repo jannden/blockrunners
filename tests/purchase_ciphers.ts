@@ -4,7 +4,14 @@ import { Keypair, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import { expect } from "chai";
 import { Blockrunners } from "../target/types/blockrunners";
 import { GAME_STATE_SEED, PLAYER_STATE_SEED, CIPHER_COST } from "./helpers/constants";
-import { airdropSol, getEventLogs, getMsgLogs, getTxDetails, sleep } from "./helpers/utils";
+import {
+  airdropSol,
+  getEventLogs,
+  getMsgLogs,
+  getTotalCards,
+  getTxDetails,
+  sleep,
+} from "./helpers/utils";
 
 describe("Purchase ciphers", () => {
   // Configure the client to use the local cluster.
@@ -194,15 +201,15 @@ describe("Purchase ciphers", () => {
     expect(gameBalanceAfter - gameBalanceBefore).to.equal(expectedCost);
 
     // Verify the amount of cards did not increase
-    expect(playerStateAfter.cards.length).to.equal(playerStateBefore.cards.length);
+    expect(getTotalCards(playerStateAfter.cards)).to.equal(getTotalCards(playerStateBefore.cards));
 
     // Verify the amount of player events increased
     expect(playerStateAfter.playerEvents.length).to.equal(
       playerStateBefore.playerEvents.length + 1
     );
 
-    // Verify the amount of game events didn't increase
-    expect(gameStateAfter.gameEvents.length).to.equal(gameStateBefore.gameEvents.length);
+    // Verify the amount of game events increased due to funding surge
+    expect(gameStateAfter.gameEvents.length).to.equal(gameStateBefore.gameEvents.length + 1);
   });
 
   it("Allows second player to purchase ciphers", async () => {
