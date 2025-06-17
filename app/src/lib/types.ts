@@ -13,6 +13,7 @@ export type Card = IdlTypes<Blockrunners>["card"];
 export type CardUsage = IdlTypes<Blockrunners>["cardUsage"];
 export type PathDirection = IdlTypes<Blockrunners>["pathDirection"];
 export type SocialFeedEventType = IdlTypes<Blockrunners>["socialFeedEventType"];
+export type CardCounts = IdlTypes<Blockrunners>["cardCounts"];
 
 // Custom Frontend Types
 export type SocialFeedEventInState = {

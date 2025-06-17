@@ -3,7 +3,7 @@ use anchor_lang::prelude::*;
 use crate::{
     constants::{GAME_STATE_SEED, PLAYER_STATE_SEED},
     errors::BlockrunnersError,
-    state::{Card, GameState, PlayerState, SocialFeedEventType},
+    state::{Card, CardCounts, GameState, PlayerState, SocialFeedEventType},
     utils::save_and_emit_event,
 };
 
@@ -50,7 +50,7 @@ pub fn join_game(ctx: Context<JoinGame>) -> Result<()> {
     )?;
 
     player_state.game_start = Some(game_state.start);
-    player_state.cards = vec![Card::Shield, Card::Doubler, Card::Swift];
+    player_state.cards = CardCounts::default();
 
     msg!("Player joined the game");
     Ok(())

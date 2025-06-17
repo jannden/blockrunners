@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 
 use crate::{
-    constants::{MAX_FEED_EVENTS, MAX_RANDOMNESS_VALUES, MAX_TOTAL_CARDS},
+    constants::{MAX_FEED_EVENTS, MAX_RANDOMNESS_VALUES},
     state::SocialFeedEvent,
 };
 
@@ -10,6 +10,10 @@ pub enum Card {
     Shield,
     Doubler,
     Swift,
+}
+
+impl Card {
+    pub const COUNT: u8 = 3;
 }
 
 impl Space for Card {
@@ -37,15 +41,98 @@ impl Space for CardUsage {
     const INIT_SPACE: usize = 3;
 }
 
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, Debug)]
+pub struct CardCounts {
+    pub shield: u8,
+    pub doubler: u8,
+    pub swift: u8,
+}
+
+impl Default for CardCounts {
+    fn default() -> Self {
+        Self {
+            shield: 1,
+            doubler: 1,
+            swift: 1,
+        }
+    }
+}
+
+impl Space for CardCounts {
+    const INIT_SPACE: usize = 3;
+}
+
+impl CardCounts {
+    /// Get the count for a specific card type
+    pub fn get_count(&self, card: Card) -> u8 {
+        match card {
+            Card::Shield => self.shield,
+            Card::Doubler => self.doubler,
+            Card::Swift => self.swift,
+        }
+    }
+
+    /// Add a card to the collection, returns true if successful (not at max)
+    pub fn add_card(&mut self, card: Card) -> bool {
+        match card {
+            Card::Shield => {
+                let old_count = self.shield;
+                self.shield = self.shield.saturating_add(1);
+                old_count < u8::MAX
+            }
+            Card::Doubler => {
+                let old_count = self.doubler;
+                self.doubler = self.doubler.saturating_add(1);
+                old_count < u8::MAX
+            }
+            Card::Swift => {
+                let old_count = self.swift;
+                self.swift = self.swift.saturating_add(1);
+                old_count < u8::MAX
+            }
+        }
+    }
+
+    /// Remove a card from the collection, returns true if successful
+    pub fn remove_card(&mut self, card: Card) -> bool {
+        match card {
+            Card::Shield => {
+                let old_count = self.shield;
+                self.shield = self.shield.saturating_sub(1);
+                old_count > 0
+            }
+            Card::Doubler => {
+                let old_count = self.doubler;
+                self.doubler = self.doubler.saturating_sub(1);
+                old_count > 0
+            }
+            Card::Swift => {
+                let old_count = self.swift;
+                self.swift = self.swift.saturating_sub(1);
+                old_count > 0
+            }
+        }
+    }
+
+    /// Get the total number of cards
+    pub fn total_cards(&self) -> u16 {
+        self.shield as u16 + self.doubler as u16 + self.swift as u16
+    }
+
+    /// Check if the player has a specific card
+    pub fn has_card(&self, card: Card) -> bool {
+        self.get_count(card) > 0
+    }
+}
+
 #[account]
 #[derive(InitSpace)]
 pub struct PlayerState {
     /// Number of ciphers owned
     pub ciphers: u64,
 
-    /// Cards owned
-    #[max_len(MAX_TOTAL_CARDS)]
-    pub cards: Vec<Card>,
+    /// Cards owned - using counts instead of Vec for efficiency
+    pub cards: CardCounts,
 
     /// Current position
     pub position: u8,

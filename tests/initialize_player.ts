@@ -78,7 +78,9 @@ describe("Initialize Player", () => {
     const playerState = await program.account.playerState.fetch(playerStatePda);
 
     // Verify player state was initialized correctly
-    expect(playerState.cards.length).to.equal(3); // Start with 3 cards
+    expect(playerState.cards.shield).to.equal(1); // Start with 1 shield card
+    expect(playerState.cards.doubler).to.equal(1); // Start with 1 doubler card
+    expect(playerState.cards.swift).to.equal(1); // Start with 1 swift card
     expect(playerState.position).to.equal(0); // Start at position 0
 
     // Verify player statistics were initialized correctly

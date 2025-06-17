@@ -712,6 +712,26 @@ export type Blockrunners = {
       }
     },
     {
+      "name": "cardCounts",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "shield",
+            "type": "u8"
+          },
+          {
+            "name": "doubler",
+            "type": "u8"
+          },
+          {
+            "name": "swift",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
       "name": "cardUsage",
       "type": {
         "kind": "struct",
@@ -806,13 +826,11 @@ export type Blockrunners = {
           {
             "name": "cards",
             "docs": [
-              "Cards owned"
+              "Cards owned - using counts instead of Vec for efficiency"
             ],
             "type": {
-              "vec": {
-                "defined": {
-                  "name": "card"
-                }
+              "defined": {
+                "name": "cardCounts"
               }
             }
           },
@@ -983,11 +1001,6 @@ export type Blockrunners = {
   ],
   "constants": [
     {
-      "name": "cardTypesCount",
-      "type": "u8",
-      "value": "3"
-    },
-    {
       "name": "cipherCost",
       "type": "u64",
       "value": "1000"
@@ -1021,11 +1034,6 @@ export type Blockrunners = {
       "name": "maxRandomnessValues",
       "type": "u8",
       "value": "32"
-    },
-    {
-      "name": "maxTotalCards",
-      "type": "u8",
-      "value": "40"
     },
     {
       "name": "moveSuccessProbability",

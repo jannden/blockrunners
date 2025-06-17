@@ -164,3 +164,8 @@ export const giveCard = async (
 export async function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
+
+// Helper function to calculate total cards from CardCounts structure
+export function getTotalCards(cards: any): number {
+  return (cards?.shield || 0) + (cards?.doubler || 0) + (cards?.swift || 0);
+}

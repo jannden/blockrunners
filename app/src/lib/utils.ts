@@ -4,7 +4,7 @@ import * as anchor from "@coral-xyz/anchor";
 import { Keypair, PublicKey, LAMPORTS_PER_SOL } from "@solana/web3.js";
 import * as sb from "@switchboard-xyz/on-demand";
 import IDL from "@/idl/blockrunners.json";
-import { AbilityCard } from "@/lib/types";
+import { AbilityCard, CardCounts } from "@/lib/types";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -153,32 +153,53 @@ export const getCardIcon = (type: string): string => {
 export const generateId = () => Math.random().toString(36).substring(2, 11);
 
 // Convert blockchain card data to client-side AbilityCard format
-export const transformBlockchainCards = (cards: unknown[] | undefined): AbilityCard[] => {
-  if (!cards || !Array.isArray(cards)) return [];
+export const transformBlockchainCards = (cards: CardCounts | null | undefined): AbilityCard[] => {
+  if (!cards || typeof cards !== "object") return [];
 
-  return cards.map((card, index) => {
-    // Determine the card type from the blockchain data
-    let cardType: "shield" | "doubler" | "swift" = "shield";
+  const result: AbilityCard[] = [];
 
-    // Use type checking to determine the card type
-    if (typeof card === "object" && card !== null) {
-      if ("shield" in card) {
-        cardType = "shield";
-      } else if ("doubler" in card) {
-        cardType = "doubler";
-      } else if ("swift" in card) {
-        cardType = "swift";
-      }
+  // Create cards for each count
+  if (cards.shield > 0) {
+    for (let i = 0; i < cards.shield; i++) {
+      result.push({
+        id: `shield-${i}-${generateId()}`,
+        type: "shield",
+        name: "Shield",
+        description: getCardDescription("shield"),
+        icon: getCardIcon("shield"),
+        used: false,
+        result: null,
+      });
     }
+  }
 
-    return {
-      id: `${cardType}-${index}-${generateId()}`,
-      type: cardType,
-      name: cardType.charAt(0).toUpperCase() + cardType.slice(1),
-      description: getCardDescription(cardType),
-      icon: getCardIcon(cardType),
-      used: false,
-      result: null,
-    };
-  });
+  if (cards.doubler > 0) {
+    for (let i = 0; i < cards.doubler; i++) {
+      result.push({
+        id: `doubler-${i}-${generateId()}`,
+        type: "doubler",
+        name: "Doubler",
+        description: getCardDescription("doubler"),
+        icon: getCardIcon("doubler"),
+        used: false,
+        result: null,
+      });
+    }
+  }
+
+  if (cards.swift > 0) {
+    for (let i = 0; i < cards.swift; i++) {
+      result.push({
+        id: `swift-${i}-${generateId()}`,
+        type: "swift",
+        name: "Swift",
+        description: getCardDescription("swift"),
+        icon: getCardIcon("swift"),
+        used: false,
+        result: null,
+      });
+    }
+  }
+
+  return result;
 };

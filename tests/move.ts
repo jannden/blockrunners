@@ -10,6 +10,7 @@ import {
   getMsgLogs,
   getTxDetails,
   giveCard,
+  getTotalCards,
   sleep,
 } from "./helpers/utils";
 import { CARD_USAGE_EMPTY_MOCK } from "./mocks/card-usage";
@@ -168,7 +169,9 @@ describe("Move Commit-Reveal", () => {
       expect(playerStateAfter.position).to.equal(initialPosition + 1);
 
       // Verify player cards were increased
-      expect(playerStateAfter.cards.length).to.equal(playerStateBefore.cards.length + 1);
+      expect(getTotalCards(playerStateAfter.cards)).to.equal(
+        getTotalCards(playerStateBefore.cards) + 1
+      );
 
       // Verify gamesWon was not incremented (because the path wasn't completed)
       expect(playerStateAfter.gamesWon.toNumber()).to.equal(playerStateBefore.gamesWon.toNumber());
@@ -179,7 +182,9 @@ describe("Move Commit-Reveal", () => {
       expect(playerStateAfter.position).to.equal(0);
 
       // Verify player cards did not increase
-      expect(playerStateAfter.cards.length).to.equal(playerStateBefore.cards.length);
+      expect(getTotalCards(playerStateAfter.cards)).to.equal(
+        getTotalCards(playerStateBefore.cards)
+      );
     }
 
     // Remove listener
@@ -359,7 +364,9 @@ describe("Move Commit-Reveal", () => {
       expect(playerStateAfter.position).to.equal(0);
 
       // Verify player cards did not increase
-      expect(playerStateAfter.cards.length).to.equal(playerStateBefore.cards.length);
+      expect(getTotalCards(playerStateAfter.cards)).to.equal(
+        getTotalCards(playerStateBefore.cards)
+      );
     } else {
       console.log("Correct move! Position increased.");
 
@@ -367,7 +374,9 @@ describe("Move Commit-Reveal", () => {
       expect(playerStateAfter.position).to.equal(currentPosition + 1);
 
       // Verify player cards were increased
-      expect(playerStateAfter.cards.length).to.equal(playerStateBefore.cards.length + 1);
+      expect(getTotalCards(playerStateAfter.cards)).to.equal(
+        getTotalCards(playerStateBefore.cards) + 1
+      );
     }
   });
 
@@ -412,7 +421,7 @@ describe("Move Commit-Reveal", () => {
     expect(afterMove.ciphers.toNumber()).to.equal(stateBefore.ciphers.toNumber() - 1); // Used 1 cipher for move, 2 for cards, but got 2 back for using swift
     expect(afterMove.position).to.equal(stateBefore.position + 1);
 
-    expect(afterMove.cards.length).to.be.equal(stateBefore.cards.length); // 2 cards used, 2 cards received due to doubler
+    expect(getTotalCards(afterMove.cards)).to.be.equal(getTotalCards(stateBefore.cards)); // 2 cards used, 2 cards received due to doubler
   });
 
   it("Validates randomness account correctly", async () => {

@@ -96,8 +96,9 @@ describe("Join game", () => {
     expect(playerStateAfter.gameStart.toString()).to.equal(gameStateBefore.start.toString());
 
     // Verify the player has the default cards
-    expect(playerStateAfter.cards.length).to.equal(3);
-    expect(playerStateAfter.cards).to.deep.equal([{ shield: {} }, { doubler: {} }, { swift: {} }]);
+    expect(playerStateAfter.cards.shield).to.equal(1);
+    expect(playerStateAfter.cards.doubler).to.equal(1);
+    expect(playerStateAfter.cards.swift).to.equal(1);
 
     // Verify game events were increased
     expect(gameStateAfter.gameEvents.length).to.be.greaterThan(gameStateBefore.gameEvents.length);

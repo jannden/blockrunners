@@ -647,6 +647,26 @@
       }
     },
     {
+      "name": "CardCounts",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "shield",
+            "type": "u8"
+          },
+          {
+            "name": "doubler",
+            "type": "u8"
+          },
+          {
+            "name": "swift",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
       "name": "CardUsage",
       "type": {
         "kind": "struct",
@@ -741,13 +761,11 @@
           {
             "name": "cards",
             "docs": [
-              "Cards owned"
+              "Cards owned - using counts instead of Vec for efficiency"
             ],
             "type": {
-              "vec": {
-                "defined": {
-                  "name": "Card"
-                }
+              "defined": {
+                "name": "CardCounts"
               }
             }
           },
@@ -956,11 +974,6 @@
       "name": "MAX_RANDOMNESS_VALUES",
       "type": "u8",
       "value": "32"
-    },
-    {
-      "name": "MAX_TOTAL_CARDS",
-      "type": "u8",
-      "value": "40"
     },
     {
       "name": "MOVE_SUCCESS_PROBABILITY",

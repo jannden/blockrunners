@@ -3,7 +3,7 @@ use anchor_lang::prelude::*;
 use crate::{
     constants::{DISCRIMINATOR_SIZE, GAME_STATE_SEED, PLAYER_STATE_SEED},
     instructions::update_last_login,
-    state::{Card, GameState, PlayerState},
+    state::{Card, CardCounts, GameState, PlayerState},
 };
 
 #[derive(Accounts)]
@@ -35,7 +35,7 @@ pub fn initialize_player(ctx: Context<InitializePlayer>) -> Result<()> {
 
     // Initialize player state with default values
     player_state.ciphers = 0;
-    player_state.cards = vec![Card::Shield, Card::Doubler, Card::Swift]; // TODO: Implement default for cards
+    player_state.cards = CardCounts::default();
     player_state.position = 0;
     player_state.bump = ctx.bumps.player_state;
     player_state.player_events = Vec::new();

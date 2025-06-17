@@ -4,7 +4,7 @@ use crate::{
     constants::{GAME_STATE_SEED, MOVE_SUCCESS_PROBABILITY, PLAYER_STATE_SEED},
     errors::BlockrunnersError,
     instructions::update_last_login,
-    state::{Card, CardUsage, GameState, PlayerState, SocialFeedEventType},
+    state::{Card, CardCounts, CardUsage, GameState, PlayerState, SocialFeedEventType},
     utils::{
         get_move_cost, give_random_cards, randomness_reveal, randomness_use, save_and_emit_event,
     },
@@ -65,26 +65,25 @@ pub fn move_reveal(ctx: Context<MoveReveal>) -> Result<()> {
     );
     player_state.ciphers = player_state.ciphers.saturating_sub(total_cost);
 
-    // Remove one of each used card from player's inventory, considering that usedCards is a struct (we can't iterate over) and player_state.cards is a vector
-    // TODO: This is a bit of a hack, we should probably change the player_state.cards to a HashMap
-    let mut cards_to_remove = Vec::new();
+    // Remove each used card from player's inventory
     if used_cards.shield {
-        cards_to_remove.push(Card::Shield);
+        require!(
+            player_state.cards.remove_card(Card::Shield),
+            BlockrunnersError::InsufficientCards
+        );
     }
     if used_cards.doubler {
-        cards_to_remove.push(Card::Doubler);
+        require!(
+            player_state.cards.remove_card(Card::Doubler),
+            BlockrunnersError::InsufficientCards
+        );
     }
     if used_cards.swift {
-        cards_to_remove.push(Card::Swift);
+        require!(
+            player_state.cards.remove_card(Card::Swift),
+            BlockrunnersError::InsufficientCards
+        );
     }
-    player_state.cards.retain(|card| {
-        if let Some(pos) = cards_to_remove.iter().position(|c| c == card) {
-            cards_to_remove.remove(pos);
-            false
-        } else {
-            true
-        }
-    });
 
     // Reveal randomness
     randomness_reveal(player_state, randomness_account)?;
@@ -189,7 +188,7 @@ fn handle_incorrect_move(
     } else {
         // No shield = reset to start
         player_state.position = 0;
-        player_state.cards = vec![Card::Shield, Card::Doubler, Card::Swift];
+        player_state.cards = CardCounts::default();
 
         // Build event message for incorrect move
         let mut private_message = "Incorrect move, back to start!".to_string();

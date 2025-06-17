@@ -2,6 +2,7 @@ use anchor_lang::prelude::*;
 
 use crate::{
     constants::PLAYER_STATE_SEED,
+    errors::BlockrunnersError,
     state::{Card, PlayerState},
 };
 
@@ -20,7 +21,11 @@ pub struct DebugGiveCard<'info> {
 
 pub fn debug_give_card(ctx: Context<DebugGiveCard>, card: Card) -> Result<()> {
     let player_state = &mut ctx.accounts.player_state;
-    player_state.cards.push(card);
+    require!(
+        player_state.cards.add_card(card),
+        BlockrunnersError::ExceedsMaxCards
+    );
+    msg!("Added card {:?}", card);
 
     Ok(())
 }

@@ -1,5 +1,4 @@
 use anchor_lang::prelude::*;
-use std::collections::HashMap;
 
 use crate::{
     errors::BlockrunnersError,
@@ -28,16 +27,12 @@ pub fn get_move_cost(player_state: &PlayerState, used_cards: &CardUsage) -> Resu
         .collect();
     total_cost = total_cost.saturating_add(needed_cards.len() as u64);
 
-    // Count player's cards
-    let mut card_counts: HashMap<Card, u8> = HashMap::new();
-    for card in &player_state.cards {
-        *card_counts.entry(card.clone()).or_insert(0) += 1;
-    }
-
     // Ensure player has all required cards
     for card in &needed_cards {
-        let count = card_counts.get(card).unwrap_or(&0);
-        require!(*count > 0, BlockrunnersError::InsufficientCards);
+        require!(
+            player_state.cards.has_card(*card),
+            BlockrunnersError::InsufficientCards
+        );
     }
 
     // Apply swift card effect
