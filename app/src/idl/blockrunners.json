@@ -963,6 +963,14 @@
       "value": "40"
     },
     {
+      "name": "MOVE_SUCCESS_PROBABILITY",
+      "docs": [
+        "Move success probability as a percentage (out of 100)"
+      ],
+      "type": "u8",
+      "value": "75"
+    },
+    {
       "name": "PLAYER_STATE_SEED",
       "type": "bytes",
       "value": "[112, 108, 97, 121, 101, 114, 95, 115, 116, 97, 116, 101]"

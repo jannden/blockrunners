@@ -78,46 +78,6 @@ export function getStringFromByteArray(byteArray: string | undefined): string {
   return Buffer.from(JSON.parse(byteArray)).toString("utf8");
 }
 
-/**
- * Get logs from program's msg! macro obtained from a transaction
- * @param provider The Anchor provider
- * @param signature The transaction signature
- * @returns Promise that resolves with the filtered program logs
- */
-export const getMsgLogs = async (
-  provider: anchor.Provider,
-  txSignature: string
-): Promise<string[] | null> => {
-  try {
-    // Confirm the transaction first
-    const latestBlockHash = await provider.connection.getLatestBlockhash();
-    await provider.connection.confirmTransaction(
-      {
-        blockhash: latestBlockHash.blockhash,
-        lastValidBlockHeight: latestBlockHash.lastValidBlockHeight,
-        signature: txSignature,
-      },
-      "confirmed"
-    );
-
-    // Get transaction details
-    const txDetails = await provider.connection.getTransaction(txSignature, {
-      maxSupportedTransactionVersion: 0,
-      commitment: "confirmed",
-    });
-
-    // Extract and filter logs
-    const logs = txDetails?.meta?.logMessages
-      ?.filter((log) => log.includes("Program log:"))
-      .map((log) => log.replace("Program log: ", ""));
-
-    return logs || null;
-  } catch (error) {
-    console.error("Failed to get transaction logs:", error);
-    return null;
-  }
-};
-
 export async function loadSVMSwitchboardProgram(
   provider: anchor.Provider
 ): Promise<anchor.Program> {

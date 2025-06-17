@@ -73,12 +73,12 @@ pub fn purchase_ciphers(ctx: Context<PurchaseCiphers>, amount: u64) -> Result<()
         .checked_add(cost)
         .ok_or(ProgramError::ArithmeticOverflow)?;
 
+    // Announce to player's feed
+    let private_message = format!("You have successfully purchased {} for {}!", amount, cost);
     save_and_emit_event(
         &mut player_state.player_events,
         SocialFeedEventType::CiphersPurchased,
-        format!("You have successfully purchased {} for {}!", amount, cost),
+        private_message,
     )?;
-
-    msg!("Purchased {} ciphers for {} lamports", amount, cost);
     Ok(())
 }

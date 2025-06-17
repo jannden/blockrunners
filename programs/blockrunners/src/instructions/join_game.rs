@@ -36,14 +36,17 @@ pub fn join_game(ctx: Context<JoinGame>) -> Result<()> {
     );
 
     let player_key = ctx.accounts.player.key();
+
+    // Announce to game feed
+    let global_message = format!(
+        "Player {}...{} joining the game!",
+        &player_key.to_string()[0..2],
+        &player_key.to_string()[player_key.to_string().len() - 4..],
+    );
     save_and_emit_event(
         &mut game_state.game_events,
         SocialFeedEventType::PlayerJoined,
-        format!(
-            "Player {}...{} joining the game!",
-            &player_key.to_string()[0..2],
-            &player_key.to_string()[player_key.to_string().len() - 4..],
-        ),
+        global_message,
     )?;
 
     player_state.game_start = Some(game_state.start);

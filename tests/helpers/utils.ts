@@ -1,5 +1,5 @@
 import * as anchor from "@coral-xyz/anchor";
-import { Program } from "@coral-xyz/anchor";
+import { BorshCoder, EventParser, Program } from "@coral-xyz/anchor";
 import { Keypair, LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { Blockrunners } from "../../target/types/blockrunners";
 
@@ -64,15 +64,12 @@ export function getStringFromByteArray(byteArray: string | undefined): string {
 }
 
 /**
- * Get logs from program's msg! macro obtained from a transaction
+ * Get transaction details
  * @param provider The Anchor provider
- * @param signature The transaction signature
- * @returns Promise that resolves with the filtered program logs
+ * @param txSignature The transaction signature
+ * @returns Promise that resolves with the transaction details
  */
-export const getMsgLogs = async (
-  provider: anchor.Provider,
-  txSignature: string
-): Promise<string[] | null> => {
+export const getTxDetails = async (provider: anchor.Provider, txSignature: string) => {
   try {
     // Confirm the transaction first
     const latestBlockHash = await provider.connection.getLatestBlockhash();
@@ -90,13 +87,52 @@ export const getMsgLogs = async (
       maxSupportedTransactionVersion: 0,
       commitment: "confirmed",
     });
+    return txDetails;
+  } catch (error) {
+    console.error("Failed to get transaction details:", error);
+    return null;
+  }
+};
 
-    // Extract and filter logs
+/**
+ * Get logs from program's msg! macro obtained from a transaction
+ * @param provider The Anchor provider
+ * @param signature The transaction signature
+ * @returns Promise that resolves with the filtered program logs
+ */
+export const getMsgLogs = async (
+  txDetails: anchor.web3.VersionedTransactionResponse
+): Promise<string[] | null> => {
+  try {
     const logs = txDetails?.meta?.logMessages
       ?.filter((log) => log.includes("Program log:"))
       .map((log) => log.replace("Program log: ", ""));
 
     return logs || null;
+  } catch (error) {
+    console.error("Failed to get transaction logs:", error);
+    return null;
+  }
+};
+
+/**
+ * Get logs from program's msg! macro obtained from a transaction
+ * @param provider The Anchor provider
+ * @param signature The transaction signature
+ * @returns Promise that resolves with the filtered program logs
+ */
+export const getEventLogs = async (
+  txDetails: anchor.web3.VersionedTransactionResponse
+): Promise<string[] | null> => {
+  try {
+    const eventParser = new EventParser(program.programId, new BorshCoder(program.idl));
+    const events = eventParser.parseLogs(txDetails.meta.logMessages);
+    let eventLogs: string[] = [];
+    for (let event of events) {
+      eventLogs.push(`${event.name}: ${event.data?.message}`);
+    }
+
+    return eventLogs || null;
   } catch (error) {
     console.error("Failed to get transaction logs:", error);
     return null;

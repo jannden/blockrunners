@@ -7,7 +7,7 @@ import {
   GAME_STATE_SEED, 
   PLAYER_STATE_SEED, 
 } from "./helpers/constants";
-import { airdropSol, getMsgLogs, sleep } from "./helpers/utils";
+import { airdropSol, getEventLogs, getMsgLogs, getTxDetails, sleep } from "./helpers/utils";
 
 describe("Initialize Player", () => {
   // Configure the client to use the local cluster
@@ -64,8 +64,11 @@ describe("Initialize Player", () => {
       })
       .signers([playerKeypair])
       .rpc();
-    const logs = await getMsgLogs(provider, tx);
+    const txDetails = await getTxDetails(provider, tx);
+    const logs = await getMsgLogs(txDetails);
     console.log("Player initialization logs -> ", logs);
+    const events = await getEventLogs(txDetails);
+    console.log("Player initialization events -> ", events);
 
     // Get player balance after initialization
     const playerBalanceAfter = await provider.connection.getBalance(playerKeypair.publicKey);

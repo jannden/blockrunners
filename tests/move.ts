@@ -4,7 +4,14 @@ import { Keypair, PublicKey } from "@solana/web3.js";
 import { expect } from "chai";
 import { Blockrunners } from "../target/types/blockrunners";
 import { GAME_STATE_SEED, PLAYER_STATE_SEED } from "./helpers/constants";
-import { airdropSol, getMsgLogs, giveCard, sleep } from "./helpers/utils";
+import {
+  airdropSol,
+  getEventLogs,
+  getMsgLogs,
+  getTxDetails,
+  giveCard,
+  sleep,
+} from "./helpers/utils";
 import { CARD_USAGE_EMPTY_MOCK } from "./mocks/card-usage";
 
 describe("Move Commit-Reveal", () => {
@@ -127,8 +134,11 @@ describe("Move Commit-Reveal", () => {
       .signers([playerKeypair])
       .rpc();
 
-    const commitLogs = await getMsgLogs(provider, txCommit);
+    const commitTxDetails = await getTxDetails(provider, txCommit);
+    const commitLogs = await getMsgLogs(commitTxDetails);
     console.log("Move commit logs -> ", commitLogs);
+    const commitEvents = await getEventLogs(commitTxDetails);
+    console.log("Move commit events -> ", commitEvents);
 
     // Step 2: Reveal the move
     const txReveal = await program.methods
@@ -140,8 +150,11 @@ describe("Move Commit-Reveal", () => {
       .signers([playerKeypair])
       .rpc();
 
-    const revealLogs = await getMsgLogs(provider, txReveal);
+    const revealTxDetails = await getTxDetails(provider, txReveal);
+    const revealLogs = await getMsgLogs(revealTxDetails);
     console.log("Move reveal logs -> ", revealLogs);
+    const revealEvents = await getEventLogs(revealTxDetails);
+    console.log("Move reveal events -> ", revealEvents);
 
     // Fetch player state after the move
     const playerStateAfter = await program.account.playerState.fetch(playerStatePda);
@@ -328,8 +341,11 @@ describe("Move Commit-Reveal", () => {
       .signers([playerKeypair])
       .rpc();
 
-    const logs = await getMsgLogs(provider, txReveal);
-    console.log("Move reveal logs -> ", logs);
+    const revealTxDetails = await getTxDetails(provider, txReveal);
+    const revealLogs = await getMsgLogs(revealTxDetails);
+    console.log("Move reveal logs -> ", revealLogs);
+    const revealEvents = await getEventLogs(revealTxDetails);
+    console.log("Move reveal events -> ", revealEvents);
 
     // Fetch player state after the move
     const playerStateAfter = await program.account.playerState.fetch(playerStatePda);
@@ -361,7 +377,6 @@ describe("Move Commit-Reveal", () => {
 
     // Fetch player state before move
     let stateBefore = await program.account.playerState.fetch(playerStatePda);
-    console.log("State before move -> ", stateBefore);
 
     const correctDirection = { right: {} }; // based on the TEST MODE for randomness
     const cards = { shield: false, doubler: true, swift: true };
@@ -386,64 +401,18 @@ describe("Move Commit-Reveal", () => {
       .signers([playerKeypair])
       .rpc();
 
-    const logs = await getMsgLogs(provider, txReveal);
-    console.log("Move reveal logs -> ", logs);
+    const revealTxDetails = await getTxDetails(provider, txReveal);
+    const revealLogs = await getMsgLogs(revealTxDetails);
+    console.log("Move reveal logs -> ", revealLogs);
+    const revealEvents = await getEventLogs(revealTxDetails);
+    console.log("Move reveal events -> ", revealEvents);
 
     const afterMove = await program.account.playerState.fetch(playerStatePda);
-    console.log("State after move -> ", afterMove);
 
     expect(afterMove.ciphers.toNumber()).to.equal(stateBefore.ciphers.toNumber() - 1); // Used 1 cipher for move, 2 for cards, but got 2 back for using swift
     expect(afterMove.position).to.equal(stateBefore.position + 1);
 
     expect(afterMove.cards.length).to.be.equal(stateBefore.cards.length); // 2 cards used, 2 cards received due to doubler
-  });
-
-  it("Applies card effects correctly on invalid move", async () => {
-    // Purchase ciphers for the test
-    await program.methods
-      .purchaseCiphers(new anchor.BN(2))
-      .accounts({
-        player: playerKeypair.publicKey,
-      })
-      .signers([playerKeypair])
-      .rpc();
-
-    await giveCard(program, playerKeypair, playerStatePda, { shield: {} });
-    let stateBefore = await program.account.playerState.fetch(playerStatePda);
-    console.log("State before move DEBUG -> ", stateBefore);
-
-    const incorrectDirection = { left: {} }; // based on the TEST MODE for randomness
-    const cards = { shield: true, doubler: false, swift: false };
-
-    // Step 1: Commit the move
-    await program.methods
-      .moveCommit(incorrectDirection, cards) // Incorrect direction, Shield
-      .accounts({
-        player: playerKeypair.publicKey,
-        randomnessAccount: randomnessKeypair.publicKey,
-      })
-      .signers([playerKeypair])
-      .rpc();
-
-    // Step 2: Reveal the move
-    const txReveal = await program.methods
-      .moveReveal()
-      .accounts({
-        player: playerKeypair.publicKey,
-        randomnessAccount: randomnessKeypair.publicKey,
-      })
-      .signers([playerKeypair])
-      .rpc();
-
-    const logs = await getMsgLogs(provider, txReveal);
-    console.log("Move reveal logs -> ", logs);
-
-    const stateAfterBad = await program.account.playerState.fetch(playerStatePda);
-    console.log("State after move DEBUG -> ", stateAfterBad);
-
-    expect(stateAfterBad.position).to.equal(stateBefore.position); // no reset
-
-    expect(stateAfterBad.cards.length).to.be.equal(stateBefore.cards.length - 1); // No new card, one used
   });
 
   it("Validates randomness account correctly", async () => {

@@ -8,7 +8,7 @@ Play the game here: [https://blockrunners-game.com](https://blockrunners-game.co
 
 You can clone the repository and run the game locally.
 
-TODO: The React client is by default connected to the Anchor program deployed on **devnet**. Just start it with:
+The React client is by default connected to the Anchor program deployed on **devnet**. Just start it with:
 
 ```bash
 cd app

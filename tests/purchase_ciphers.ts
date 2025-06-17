@@ -4,7 +4,7 @@ import { Keypair, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import { expect } from "chai";
 import { Blockrunners } from "../target/types/blockrunners";
 import { GAME_STATE_SEED, PLAYER_STATE_SEED, CIPHER_COST } from "./helpers/constants";
-import { airdropSol, getMsgLogs, sleep } from "./helpers/utils";
+import { airdropSol, getEventLogs, getMsgLogs, getTxDetails, sleep } from "./helpers/utils";
 
 describe("Purchase ciphers", () => {
   // Configure the client to use the local cluster.
@@ -92,8 +92,11 @@ describe("Purchase ciphers", () => {
       })
       .signers([playerKeypair])
       .rpc();
-    const logs = await getMsgLogs(provider, tx);
+    const txDetails = await getTxDetails(provider, tx);
+    const logs = await getMsgLogs(txDetails);
     console.log("Purchase ciphers logs -> ", logs);
+    const events = await getEventLogs(txDetails);
+    console.log("Purchase ciphers events -> ", events);
 
     // Get balance after purchase
     const playerBalanceAfter = await provider.connection.getBalance(playerKeypair.publicKey);
@@ -153,8 +156,11 @@ describe("Purchase ciphers", () => {
       })
       .signers([playerKeypair])
       .rpc();
-    const logs = await getMsgLogs(provider, tx);
+    const txDetails = await getTxDetails(provider, tx);
+    const logs = await getMsgLogs(txDetails);
     console.log("Additional purchase ciphers logs -> ", logs);
+    const events = await getEventLogs(txDetails);
+    console.log("Additional purchase ciphers events -> ", events);
 
     // Get updated states
     const playerStateAfter = await program.account.playerState.fetch(playerStatePda);
@@ -242,8 +248,11 @@ describe("Purchase ciphers", () => {
       })
       .signers([player2Keypair])
       .rpc();
-    const logs = await getMsgLogs(provider, tx);
+    const txDetails = await getTxDetails(provider, tx);
+    const logs = await getMsgLogs(txDetails);
     console.log("Second player purchase ciphers logs -> ", logs);
+    const events = await getEventLogs(txDetails);
+    console.log("Second player purchase ciphers events -> ", events);
 
     // Get updated states
     const gameStateAfter = await program.account.gameState.fetch(gameStatePda);

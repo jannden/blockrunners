@@ -10,10 +10,12 @@ pub fn give_random_cards(player_state: &mut Account<PlayerState>, card_count: u8
     // Check if player has reached max card limit
     let space_left = MAX_TOTAL_CARDS.saturating_sub(player_state.cards.len() as u8);
     if space_left == 0 {
+        // Announce to player's feed
+        let private_message = "You have already collected the maximum number of cards.".to_string();
         save_and_emit_event(
             &mut player_state.player_events,
             SocialFeedEventType::PlayerCardsMaxRange,
-            "You have already collected the maximum number of cards.".to_string(),
+            private_message,
         )?;
         return Ok(());
     }

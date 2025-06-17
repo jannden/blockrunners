@@ -122,7 +122,7 @@ fn handle_correct_move(
     let new_position = player_state.position;
 
     // Base message
-    let mut event_message = format!("Player advanced to position {}!", new_position);
+    let mut private_message = format!("Advanced to position {}!", new_position);
 
     // Apply doubler effect
     let collect_cards_count = if card_usage.doubler { 2 } else { 1 };
@@ -143,13 +143,17 @@ fn handle_correct_move(
     }
 
     if !card_effects.is_empty() {
-        event_message = format!("{}! Cards used: {}", event_message, card_effects.join(", "));
+        private_message = format!(
+            "{}! Cards used: {}",
+            private_message,
+            card_effects.join(", ")
+        );
     }
 
     save_and_emit_event(
         &mut player_state.player_events,
         SocialFeedEventType::PlayerMoved,
-        event_message,
+        private_message,
     )?;
 
     Ok(())
@@ -160,8 +164,8 @@ fn handle_incorrect_move(
     card_usage: CardUsage,
 ) -> Result<()> {
     if card_usage.shield {
-        let mut event_message = format!(
-            "Player used a Shield card! Staying at position {}.",
+        let mut private_message = format!(
+            "Used a Shield card! Staying at position {}.",
             player_state.position
         );
 
@@ -174,13 +178,13 @@ fn handle_incorrect_move(
         }
 
         if !other_cards.is_empty() {
-            event_message = format!("{}. Also used: {}", event_message, other_cards.join(", "));
+            private_message = format!("{}. Also used: {}", private_message, other_cards.join(", "));
         }
 
         save_and_emit_event(
             &mut player_state.player_events,
             SocialFeedEventType::PlayerMoved,
-            event_message,
+            private_message,
         )?;
     } else {
         // No shield = reset to start
@@ -188,7 +192,7 @@ fn handle_incorrect_move(
         player_state.cards = vec![Card::Shield, Card::Doubler, Card::Swift];
 
         // Build event message for incorrect move
-        let mut event_message = "Player made an incorrect move and reset to the start!".to_string();
+        let mut private_message = "Incorrect move, back to start!".to_string();
 
         let mut cards_used = Vec::new();
         if card_usage.doubler {
@@ -199,13 +203,13 @@ fn handle_incorrect_move(
         }
 
         if !cards_used.is_empty() {
-            event_message = format!("{}. Cards used: {}", event_message, cards_used.join(", "));
+            private_message = format!("{}. Cards used: {}", private_message, cards_used.join(", "));
         }
 
         save_and_emit_event(
             &mut player_state.player_events,
             SocialFeedEventType::PlayerMoved,
-            event_message,
+            private_message,
         )?;
     }
 
@@ -233,10 +237,12 @@ fn handle_win(
     let prize_amount = game_state.prize_pool;
 
     if prize_amount > 0 {
-        msg!(
-            "Yay! We are distributing prize of {} lamports",
-            prize_amount
-        );
+        let global_message = format!("Yay! Distributing the prize!");
+        save_and_emit_event(
+            &mut game_state.game_events,
+            SocialFeedEventType::GameWon,
+            global_message,
+        )?;
 
         // Subtract prize from game state
         **game_state.to_account_info().try_borrow_mut_lamports()? = game_state
@@ -257,12 +263,12 @@ fn handle_win(
         game_state.prize_pool = 0;
         msg!("Prize pool reset to 0.");
     } else {
-        msg!("Player won, but there's no money in the pool dang.");
+        msg!("Player won, but there's nothing in the pool.");
     }
 
     // Create global win message for everyone
     let global_message = format!(
-        "Player {} has won the game with {} correct moves and collected {} SOL!",
+        "Player {} has won the game with {} correct moves and collected {}!",
         player.key(), // use the signer's key
         player_state.position,
         prize_amount
@@ -276,8 +282,8 @@ fn handle_win(
     )?;
 
     // Create personal congrats for winner
-    let personal_message = format!(
-        "Congratulations! You won the game and collected {} SOL!",
+    let private_message = format!(
+        "Congratulations! You won the game and collected {}!",
         prize_amount
     );
 
@@ -285,7 +291,7 @@ fn handle_win(
     save_and_emit_event(
         &mut player_state.player_events,
         SocialFeedEventType::GameWon,
-        personal_message,
+        private_message,
     )?;
 
     // Update game start time to trigger resets for all players with a new timestamp set

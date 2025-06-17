@@ -4,7 +4,7 @@ import { Keypair, PublicKey } from "@solana/web3.js";
 import { expect } from "chai";
 import { Blockrunners } from "../target/types/blockrunners";
 import { GAME_STATE_SEED, PLAYER_STATE_SEED } from "./helpers/constants";
-import { airdropSol, getMsgLogs } from "./helpers/utils";
+import { airdropSol, getEventLogs, getMsgLogs, getTxDetails } from "./helpers/utils";
 
 describe("Join game", () => {
   // Configure the client to use the local cluster.
@@ -79,8 +79,11 @@ describe("Join game", () => {
       })
       .signers([playerKeypair])
       .rpc();
-    const logs = await getMsgLogs(provider, tx);
+    const txDetails = await getTxDetails(provider, tx);
+    const logs = await getMsgLogs(txDetails);
     console.log("Join game logs -> ", logs);
+    const events = await getEventLogs(txDetails);
+    console.log("Join game events -> ", events);
 
     // Fetch player state to verify
     const playerStateAfter = await program.account.playerState.fetch(playerStatePda);

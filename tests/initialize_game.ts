@@ -3,7 +3,7 @@ import { Program } from "@coral-xyz/anchor";
 import { Keypair, PublicKey } from "@solana/web3.js";
 import { expect } from "chai";
 import { Blockrunners } from "../target/types/blockrunners";
-import { airdropSol, getMsgLogs } from "./helpers/utils";
+import { airdropSol, getEventLogs, getMsgLogs, getTxDetails } from "./helpers/utils";
 import { GAME_STATE_SEED } from "./helpers/constants";
 
 describe("Initialize Game", () => {
@@ -44,8 +44,11 @@ describe("Initialize Game", () => {
         })
         .signers([adminKeypair])
         .rpc();
-      const logs = await getMsgLogs(provider, tx);
+      const txDetails = await getTxDetails(provider, tx);
+      const logs = await getMsgLogs(txDetails);
       console.log("Game initialization logs -> ", logs);
+      const events = await getEventLogs(txDetails);
+      console.log("Game initialization events -> ", events);
     }
 
     // Fetch game state to verify initialization
