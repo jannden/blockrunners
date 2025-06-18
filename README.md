@@ -47,10 +47,8 @@ This game has four main elements:
 
 - Players purchase ciphers, where 1 cipher = 1,000 lamports
 - Revenue distribution:
-  - 40% to prize pool
-  - 30% to creators
-  - 20% to oracles for randomness
-  - 10% to future game pools
+  - 88% to prize pool
+  - 12% to admin
 
 **Gameplay Loop**
 

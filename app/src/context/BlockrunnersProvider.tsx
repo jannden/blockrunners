@@ -216,10 +216,16 @@ function BlockrunnersProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    if (!gameState || !gameState.authority) {
+      console.error("Purchase ciphers: Game state or admin authority not found");
+      return;
+    }
+
     program.methods
       .purchaseCiphers(new BN(amount))
       .accounts({
         player: wallet.publicKey,
+        adminWallet: gameState.authority,
       })
       .rpc()
       .then((tx) => {

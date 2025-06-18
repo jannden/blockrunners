@@ -4,7 +4,7 @@ import { Keypair, PublicKey } from "@solana/web3.js";
 import { expect } from "chai";
 import { Blockrunners } from "../target/types/blockrunners";
 import { airdropSol, getEventLogs, getMsgLogs, getTxDetails } from "./helpers/utils";
-import { GAME_STATE_SEED } from "./helpers/constants";
+import { GAME_STATE_SEED, ADMIN_KEYPAIR } from "./helpers/constants";
 
 describe("Initialize Game", () => {
   // Configure the client to use the local cluster
@@ -17,7 +17,7 @@ describe("Initialize Game", () => {
   const PATH_LENGTH = 20;
 
   // Keypairs
-  const adminKeypair = Keypair.generate();
+  const adminKeypair = ADMIN_KEYPAIR;
 
   // Game state PDA
   const [gameStatePda] = PublicKey.findProgramAddressSync(
