@@ -3,7 +3,7 @@ import { Program } from "@coral-xyz/anchor";
 import { Keypair, PublicKey } from "@solana/web3.js";
 import { expect } from "chai";
 import { Blockrunners } from "../target/types/blockrunners";
-import { GAME_STATE_SEED, PLAYER_STATE_SEED } from "./helpers/constants";
+import { ADMIN_KEYPAIR, GAME_STATE_SEED, PLAYER_STATE_SEED } from "./helpers/constants";
 import { airdropSol, getEventLogs, getMsgLogs, getTxDetails } from "./helpers/utils";
 
 describe("Join game", () => {
@@ -13,8 +13,8 @@ describe("Join game", () => {
   const program = anchor.workspace.blockrunners as Program<Blockrunners>;
   const provider = anchor.getProvider() as anchor.AnchorProvider;
 
-  // Keypairs
-  const adminKeypair = Keypair.generate();
+  // Generate test accounts
+  const adminKeypair = ADMIN_KEYPAIR;
   const playerKeypair = Keypair.generate();
 
   // Game state PDA
