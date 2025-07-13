@@ -511,6 +511,10 @@ export type Blockrunners = {
           }
         },
         {
+          "name": "adminWallet",
+          "writable": true
+        },
+        {
           "name": "systemProgram",
           "address": "11111111111111111111111111111111"
         }
@@ -1131,6 +1135,14 @@ export type Blockrunners = {
       "name": "playerStateSeed",
       "type": "bytes",
       "value": "[112, 108, 97, 121, 101, 114, 95, 115, 116, 97, 116, 101]"
+    },
+    {
+      "name": "prizePoolPercentage",
+      "docs": [
+        "Revenue distribution percentages"
+      ],
+      "type": "u8",
+      "value": "88"
     }
   ]
 };

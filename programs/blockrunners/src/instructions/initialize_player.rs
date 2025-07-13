@@ -3,7 +3,7 @@ use anchor_lang::prelude::*;
 use crate::{
     constants::{DISCRIMINATOR_SIZE, GAME_STATE_SEED, PLAYER_STATE_SEED},
     instructions::update_last_login,
-    state::{Card, CardCounts, GameState, PlayerState},
+    state::{CardCounts, GameState, PlayerState},
 };
 
 #[derive(Accounts)]

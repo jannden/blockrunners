@@ -1,3 +1,5 @@
+#![allow(unused_imports)]
+
 use anchor_lang::prelude::*;
 use switchboard_on_demand::RandomnessAccountData;
 

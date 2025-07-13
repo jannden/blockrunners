@@ -27,3 +27,7 @@ pub const PLAYER_STATE_SEED: &[u8] = b"player_state";
 /// Move success probability as a percentage (out of 100)
 #[constant]
 pub const MOVE_SUCCESS_PROBABILITY: u8 = 75;
+
+/// Revenue distribution percentages
+#[constant]
+pub const PRIZE_POOL_PERCENTAGE: u8 = 88;
