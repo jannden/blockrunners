@@ -1,9 +1,9 @@
 import * as anchor from "@coral-xyz/anchor";
-import { Program } from "@coral-xyz/anchor";
+import { BN, Program } from "@coral-xyz/anchor";
 import { Keypair, PublicKey } from "@solana/web3.js";
 import { expect } from "chai";
 import { Blockrunners } from "../target/types/blockrunners";
-import { GAME_STATE_SEED, PLAYER_STATE_SEED } from "./helpers/constants";
+import { ADMIN_KEYPAIR, GAME_STATE_SEED, PLAYER_STATE_SEED } from "./helpers/constants";
 import {
   airdropSol,
   getEventLogs,
@@ -23,7 +23,7 @@ describe("Move Commit-Reveal", () => {
   const provider = anchor.getProvider() as anchor.AnchorProvider;
 
   // Keypairs
-  const adminKeypair = Keypair.generate();
+  const adminKeypair = ADMIN_KEYPAIR;
   const playerKeypair = Keypair.generate();
   const randomnessKeypair = Keypair.generate();
 
@@ -94,6 +94,7 @@ describe("Move Commit-Reveal", () => {
       .purchaseCiphers(new anchor.BN(ciphersToPurchase))
       .accounts({
         player: playerKeypair.publicKey,
+        adminWallet: adminKeypair.publicKey,
       })
       .signers([playerKeypair])
       .rpc();
@@ -111,6 +112,7 @@ describe("Move Commit-Reveal", () => {
       .purchaseCiphers(new anchor.BN(1))
       .accounts({
         player: playerKeypair.publicKey,
+        adminWallet: adminKeypair.publicKey,
       })
       .signers([playerKeypair])
       .rpc();
@@ -197,6 +199,7 @@ describe("Move Commit-Reveal", () => {
       .purchaseCiphers(new anchor.BN(3))
       .accounts({
         player: playerKeypair.publicKey,
+        adminWallet: adminKeypair.publicKey,
       })
       .signers([playerKeypair])
       .rpc();
@@ -254,6 +257,7 @@ describe("Move Commit-Reveal", () => {
       .purchaseCiphers(new anchor.BN(1))
       .accounts({
         player: playerKeypair.publicKey,
+        adminWallet: adminKeypair.publicKey,
       })
       .signers([playerKeypair])
       .rpc();
@@ -313,6 +317,7 @@ describe("Move Commit-Reveal", () => {
       .purchaseCiphers(new anchor.BN(1))
       .accounts({
         player: playerKeypair.publicKey,
+        adminWallet: adminKeypair.publicKey,
       })
       .signers([playerKeypair])
       .rpc();
@@ -430,6 +435,7 @@ describe("Move Commit-Reveal", () => {
       .purchaseCiphers(new anchor.BN(1))
       .accounts({
         player: playerKeypair.publicKey,
+        adminWallet: adminKeypair.publicKey,
       })
       .signers([playerKeypair])
       .rpc();
@@ -491,6 +497,7 @@ describe("Move Commit-Reveal", () => {
       .purchaseCiphers(new anchor.BN(movesNeeded))
       .accounts({
         player: playerKeypair.publicKey,
+        adminWallet: adminKeypair.publicKey,
       })
       .signers([playerKeypair])
       .rpc();

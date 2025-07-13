@@ -3,7 +3,13 @@ import { Program } from "@coral-xyz/anchor";
 import { Keypair, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import { expect } from "chai";
 import { Blockrunners } from "../target/types/blockrunners";
-import { GAME_STATE_SEED, PLAYER_STATE_SEED, CIPHER_COST } from "./helpers/constants";
+import {
+  ADMIN_KEYPAIR,
+  GAME_STATE_SEED,
+  PLAYER_STATE_SEED,
+  CIPHER_COST,
+  PRIZE_POOL_PERCENTAGE,
+} from "./helpers/constants";
 import {
   airdropSol,
   getEventLogs,
@@ -20,8 +26,8 @@ describe("Purchase ciphers", () => {
   const program = anchor.workspace.blockrunners as Program<Blockrunners>;
   const provider = anchor.getProvider() as anchor.AnchorProvider;
 
-  // Keypairs
-  const adminKeypair = Keypair.generate();
+  // Generate test accounts
+  const adminKeypair = ADMIN_KEYPAIR;
   const playerKeypair = Keypair.generate();
 
   // Game state PDA
@@ -82,6 +88,10 @@ describe("Purchase ciphers", () => {
   it("Allows player to purchase ciphers", async () => {
     const ciphersToPurchase = 5;
     const expectedCost = ciphersToPurchase * CIPHER_COST;
+    const expectedPrizePoolIncrease = new anchor.BN(expectedCost)
+      .mul(new anchor.BN(PRIZE_POOL_PERCENTAGE))
+      .div(new anchor.BN(100));
+    const expectedAdminShare = new anchor.BN(expectedCost).sub(expectedPrizePoolIncrease);
 
     // Get states before purchase
     const gameStateBefore = await program.account.gameState.fetch(gameStatePda);
@@ -90,12 +100,25 @@ describe("Purchase ciphers", () => {
     // Get balances before purchase
     const playerBalanceBefore = await provider.connection.getBalance(playerKeypair.publicKey);
     const gameBalanceBefore = await provider.connection.getBalance(gameStatePda);
+    const adminBalanceBefore = await provider.connection.getBalance(adminKeypair.publicKey);
+
+    console.log("=== PURCHASE CIPHERS TEST ===");
+    console.log(`Purchasing ${ciphersToPurchase} ciphers at ${CIPHER_COST} lamports each`);
+    console.log(`Expected total cost: ${expectedCost} lamports`);
+    console.log(
+      `Expected prize pool increase: ${expectedPrizePoolIncrease} lamports (${PRIZE_POOL_PERCENTAGE}%)`
+    );
+    console.log(
+      `Expected admin share: ${expectedAdminShare} lamports (${100 - PRIZE_POOL_PERCENTAGE}%)`
+    );
+    console.log(`Admin balance before: ${adminBalanceBefore} lamports`);
 
     // Purchase ciphers
     const tx = await program.methods
       .purchaseCiphers(new anchor.BN(ciphersToPurchase))
       .accounts({
         player: playerKeypair.publicKey,
+        adminWallet: adminKeypair.publicKey,
       })
       .signers([playerKeypair])
       .rpc();
@@ -108,6 +131,7 @@ describe("Purchase ciphers", () => {
     // Get balance after purchase
     const playerBalanceAfter = await provider.connection.getBalance(playerKeypair.publicKey);
     const gameBalanceAfter = await provider.connection.getBalance(gameStatePda);
+    const adminBalanceAfter = await provider.connection.getBalance(adminKeypair.publicKey);
 
     // Fetch player state to verify
     const playerStateAfter = await program.account.playerState.fetch(playerStatePda);
@@ -116,18 +140,28 @@ describe("Purchase ciphers", () => {
     const gameStateAfter = await program.account.gameState.fetch(gameStatePda);
 
     // Log balance changes for debugging
+    console.log("=== BALANCE CHANGES ===");
     console.log("Player balance change:", playerBalanceBefore - playerBalanceAfter);
     console.log("Game balance change:", gameBalanceAfter - gameBalanceBefore);
+    console.log("Admin balance change:", adminBalanceAfter - adminBalanceBefore);
     console.log("Prize pool before:", gameStateBefore.prizePool.toNumber());
     console.log("Prize pool after:", gameStateAfter.prizePool.toNumber());
+    console.log("Expected prize pool increase:", expectedPrizePoolIncrease);
+    console.log("Expected admin share:", expectedAdminShare);
 
     // Verify balance was reduced by the cost
     expect(playerBalanceBefore - playerBalanceAfter).to.equal(expectedCost);
 
-    // Verify prize pool was increased by the expected amount
+    // Verify prize pool was increased by PRIZE_POOL_PERCENTAGE% of the cost
     expect(gameStateAfter.prizePool.toNumber()).to.equal(
-      gameStateBefore.prizePool.toNumber() + expectedCost
+      gameStateBefore.prizePool.add(expectedPrizePoolIncrease).toNumber()
     );
+
+    // Verify admin received their share
+    expect(adminBalanceAfter - adminBalanceBefore).to.equal(expectedAdminShare.toNumber());
+
+    // Verify game balance increased by only the prize pool portion
+    expect(gameBalanceAfter - gameBalanceBefore).to.equal(expectedPrizePoolIncrease.toNumber());
 
     // Verify ciphers were increased by the correct amount
     expect(playerStateAfter.ciphers.toNumber()).to.equal(
@@ -151,15 +185,25 @@ describe("Purchase ciphers", () => {
     const gameStateBefore = await program.account.gameState.fetch(gameStatePda);
     const playerBalanceBefore = await provider.connection.getBalance(playerKeypair.publicKey);
     const gameBalanceBefore = await provider.connection.getBalance(gameStatePda);
+    const adminBalanceBefore = await provider.connection.getBalance(adminKeypair.publicKey);
 
     const additionalCiphers = 3;
     const expectedCost = additionalCiphers * CIPHER_COST;
+    const expectedPrizePoolIncrease = new anchor.BN(expectedCost)
+      .mul(new anchor.BN(PRIZE_POOL_PERCENTAGE))
+      .div(new anchor.BN(100));
+    const expectedAdminShare = new anchor.BN(expectedCost).sub(expectedPrizePoolIncrease);
+
+    console.log("=== SECOND PURCHASE TEST ===");
+    console.log(`Purchasing ${additionalCiphers} additional ciphers`);
+    console.log(`Expected admin share: ${expectedAdminShare} lamports`);
 
     // Purchase more ciphers as the first player
     const tx = await program.methods
       .purchaseCiphers(new anchor.BN(additionalCiphers))
       .accounts({
         player: playerKeypair.publicKey,
+        adminWallet: adminKeypair.publicKey,
       })
       .signers([playerKeypair])
       .rpc();
@@ -174,10 +218,12 @@ describe("Purchase ciphers", () => {
     const gameStateAfter = await program.account.gameState.fetch(gameStatePda);
     const playerBalanceAfter = await provider.connection.getBalance(playerKeypair.publicKey);
     const gameBalanceAfter = await provider.connection.getBalance(gameStatePda);
+    const adminBalanceAfter = await provider.connection.getBalance(adminKeypair.publicKey);
 
     // Log balance changes for debugging
     console.log("Player balance change:", playerBalanceBefore - playerBalanceAfter);
     console.log("Game balance change:", gameBalanceAfter - gameBalanceBefore);
+    console.log("Admin balance change:", adminBalanceAfter - adminBalanceBefore);
 
     // Verify ciphers were added to existing amount
     expect(playerStateAfter.ciphers.toNumber()).to.equal(
@@ -189,16 +235,19 @@ describe("Purchase ciphers", () => {
       playerStateBefore.totalCiphersBought.toNumber() + additionalCiphers
     );
 
-    // Verify prize pool was increased by the correct amount
+    // Verify prize pool was increased by PRIZE_POOL_PERCENTAGE% of the cost
     expect(gameStateAfter.prizePool.toNumber()).to.equal(
-      gameStateBefore.prizePool.toNumber() + expectedCost
+      gameStateBefore.prizePool.add(expectedPrizePoolIncrease).toNumber()
     );
+
+    // Verify admin received their share
+    expect(adminBalanceAfter - adminBalanceBefore).to.equal(expectedAdminShare.toNumber());
 
     // Verify player balance reduced by at least the cost of the ciphers
     expect(playerBalanceBefore - playerBalanceAfter).to.be.greaterThan(expectedCost - 100); // Allow for small rounding
 
-    // Verify game balance increased by exactly the cost of the ciphers
-    expect(gameBalanceAfter - gameBalanceBefore).to.equal(expectedCost);
+    // Verify game balance increased by only the prize pool portion
+    expect(gameBalanceAfter - gameBalanceBefore).to.equal(expectedPrizePoolIncrease.toNumber());
 
     // Verify the amount of cards did not increase
     expect(getTotalCards(playerStateAfter.cards)).to.equal(getTotalCards(playerStateBefore.cards));
@@ -243,15 +292,25 @@ describe("Purchase ciphers", () => {
     // Get balances before purchase
     const gameBalanceBefore = await provider.connection.getBalance(gameStatePda);
     const player2BalanceBefore = await provider.connection.getBalance(player2Keypair.publicKey);
+    const adminBalanceBefore = await provider.connection.getBalance(adminKeypair.publicKey);
 
     // Second player purchases ciphers
     const ciphersToPurchase = 2;
     const expectedCost = ciphersToPurchase * CIPHER_COST;
+    const expectedPrizePoolIncrease = new anchor.BN(expectedCost)
+      .mul(new anchor.BN(PRIZE_POOL_PERCENTAGE))
+      .div(new anchor.BN(100));
+    const expectedAdminShare = new anchor.BN(expectedCost).sub(expectedPrizePoolIncrease);
+
+    console.log("=== SECOND PLAYER PURCHASE TEST ===");
+    console.log(`Second player purchasing ${ciphersToPurchase} ciphers`);
+    console.log(`Expected admin share: ${expectedAdminShare} lamports`);
 
     const tx = await program.methods
       .purchaseCiphers(new anchor.BN(ciphersToPurchase))
       .accounts({
         player: player2Keypair.publicKey,
+        adminWallet: adminKeypair.publicKey,
       })
       .signers([player2Keypair])
       .rpc();
@@ -265,26 +324,31 @@ describe("Purchase ciphers", () => {
     const gameStateAfter = await program.account.gameState.fetch(gameStatePda);
     const gameBalanceAfter = await provider.connection.getBalance(gameStatePda);
     const player2BalanceAfter = await provider.connection.getBalance(player2Keypair.publicKey);
+    const adminBalanceAfter = await provider.connection.getBalance(adminKeypair.publicKey);
 
     // Log balance changes for debugging
     console.log("Player2 balance change:", player2BalanceBefore - player2BalanceAfter);
     console.log("Game balance change:", gameBalanceAfter - gameBalanceBefore);
+    console.log("Admin balance change:", adminBalanceAfter - adminBalanceBefore);
 
     // Verify player2 has the correct number of ciphers
     // (should be ciphersToPurchase since this is a new player)
     const player2StateAfter = await program.account.playerState.fetch(player2StatePda);
     expect(player2StateAfter.ciphers.toNumber()).to.equal(ciphersToPurchase);
 
-    // Verify prize pool was increased by the correct amount
+    // Verify prize pool was increased by PRIZE_POOL_PERCENTAGE% of the cost
     expect(gameStateAfter.prizePool.toNumber()).to.equal(
-      gameStateBefore.prizePool.toNumber() + expectedCost
+      gameStateBefore.prizePool.add(expectedPrizePoolIncrease).toNumber()
     );
+
+    // Verify admin received their share
+    expect(adminBalanceAfter - adminBalanceBefore).to.equal(expectedAdminShare.toNumber());
 
     // Verify player balance reduced by at least the cost of the ciphers
     expect(player2BalanceBefore - player2BalanceAfter).to.be.greaterThan(expectedCost - 100); // Allow for small rounding
 
-    // Verify game balance increased by exactly the cost of the ciphers
-    expect(gameBalanceAfter - gameBalanceBefore).to.equal(expectedCost);
+    // Verify game balance increased by only the prize pool portion
+    expect(gameBalanceAfter - gameBalanceBefore).to.equal(expectedPrizePoolIncrease.toNumber());
   });
 
   it("Tests lastLogin update when purchasing ciphers", async () => {
@@ -302,6 +366,7 @@ describe("Purchase ciphers", () => {
       .purchaseCiphers(new anchor.BN(ciphersToPurchase))
       .accounts({
         player: playerKeypair.publicKey,
+        adminWallet: adminKeypair.publicKey,
       })
       .signers([playerKeypair])
       .rpc();
@@ -323,6 +388,7 @@ describe("Purchase ciphers", () => {
         .purchaseCiphers(new anchor.BN(ciphersToPurchase))
         .accounts({
           player: playerKeypair.publicKey,
+          adminWallet: adminKeypair.publicKey,
         })
         .signers([playerKeypair])
         .rpc();
@@ -341,6 +407,7 @@ describe("Purchase ciphers", () => {
         .purchaseCiphers(new anchor.BN(ciphersToPurchase))
         .accounts({
           player: playerKeypair.publicKey,
+          adminWallet: adminKeypair.publicKey,
         })
         .signers([playerKeypair])
         .rpc();
@@ -362,6 +429,7 @@ describe("Purchase ciphers", () => {
         .purchaseCiphers(new anchor.BN(ciphersToPurchase))
         .accounts({
           player: player2Keypair.publicKey,
+          adminWallet: adminKeypair.publicKey,
         })
         .signers([player2Keypair])
         .rpc();

@@ -3,7 +3,7 @@ use anchor_lang::prelude::*;
 use crate::{
     constants::{GAME_STATE_SEED, PLAYER_STATE_SEED},
     errors::BlockrunnersError,
-    state::{Card, CardCounts, GameState, PlayerState, SocialFeedEventType},
+    state::{CardCounts, GameState, PlayerState, SocialFeedEventType},
     utils::save_and_emit_event,
 };
 

@@ -446,6 +446,10 @@
           }
         },
         {
+          "name": "admin_wallet",
+          "writable": true
+        },
+        {
           "name": "system_program",
           "address": "11111111111111111111111111111111"
         }
@@ -1066,6 +1070,14 @@
       "name": "PLAYER_STATE_SEED",
       "type": "bytes",
       "value": "[112, 108, 97, 121, 101, 114, 95, 115, 116, 97, 116, 101]"
+    },
+    {
+      "name": "PRIZE_POOL_PERCENTAGE",
+      "docs": [
+        "Revenue distribution percentages"
+      ],
+      "type": "u64",
+      "value": "88"
     }
   ]
 }

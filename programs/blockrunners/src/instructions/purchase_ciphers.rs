@@ -1,7 +1,7 @@
 use anchor_lang::{prelude::*, system_program};
 
 use crate::{
-    constants::{CIPHER_COST, GAME_STATE_SEED, PLAYER_STATE_SEED},
+    constants::{CIPHER_COST, GAME_STATE_SEED, PLAYER_STATE_SEED, PRIZE_POOL_PERCENTAGE},
     errors::BlockrunnersError,
     instructions::update_last_login,
     state::{GameState, PlayerState, SocialFeedEventType},
@@ -25,6 +25,10 @@ pub struct PurchaseCiphers<'info> {
     )]
     pub game_state: Account<'info, GameState>,
 
+    /// CHECK: This is the admin wallet that receives the admin share
+    #[account(mut, address = game_state.authority)]
+    pub admin_wallet: SystemAccount<'info>,
+
     pub system_program: Program<'info, System>,
 }
 
@@ -46,7 +50,14 @@ pub fn purchase_ciphers(ctx: Context<PurchaseCiphers>, amount: u64) -> Result<()
         BlockrunnersError::InsufficientBalance
     );
 
-    // Transfer SOL from player to the program
+    // Calculate revenue distribution
+    let prize_pool_amount = cost
+        .checked_mul(PRIZE_POOL_PERCENTAGE as u64)
+        .ok_or(ProgramError::ArithmeticOverflow)?
+        / 100;
+    let admin_amount = cost - prize_pool_amount; // Ensures no rounding loss
+
+    // Transfer prize pool portion to the game state
     let cpi_context = CpiContext::new(
         ctx.accounts.system_program.to_account_info(),
         system_program::Transfer {
@@ -54,7 +65,19 @@ pub fn purchase_ciphers(ctx: Context<PurchaseCiphers>, amount: u64) -> Result<()
             to: game_state.to_account_info(),
         },
     );
-    system_program::transfer(cpi_context, cost)?;
+    system_program::transfer(cpi_context, prize_pool_amount)?;
+
+    // Transfer admin portion directly to admin wallet
+    if admin_amount > 0 {
+        let cpi_context_admin = CpiContext::new(
+            ctx.accounts.system_program.to_account_info(),
+            system_program::Transfer {
+                from: ctx.accounts.player.to_account_info(),
+                to: ctx.accounts.admin_wallet.to_account_info(),
+            },
+        );
+        system_program::transfer(cpi_context_admin, admin_amount)?;
+    }
 
     // Update player's cipher count
     player_state.ciphers = player_state
@@ -72,12 +95,13 @@ pub fn purchase_ciphers(ctx: Context<PurchaseCiphers>, amount: u64) -> Result<()
     // Update prize pool
     game_state.prize_pool = game_state
         .prize_pool
-        .checked_add(cost)
+        .checked_add(prize_pool_amount)
         .ok_or(ProgramError::ArithmeticOverflow)?;
 
     // Check for significant prize pool increases (>10% increase)
     if old_prize_pool > 0 {
-        let increase_percentage = ((cost as f64 / old_prize_pool as f64) * 100.0) as u64;
+        let increase_percentage =
+            ((prize_pool_amount as f64 / old_prize_pool as f64) * 100.0) as u64;
         if increase_percentage >= 10 {
             let pool_message = format!(
                 "FUNDING SURGE: Protocol recovery fund increased by {}% to {} lamports. Mission priority escalating.",
@@ -94,7 +118,7 @@ pub fn purchase_ciphers(ctx: Context<PurchaseCiphers>, amount: u64) -> Result<()
 
     // Announce to player's feed
     let private_message = format!(
-        "RESOURCES ACQUIRED: {} computational ciphers purchased for {} lamports. Total reserves: {}",
+        "RESOURCES ACQUIRED: {} computational ciphers purchased for {} lamports. Your current reserves: {}",
         amount, cost, player_state.ciphers
     );
     save_and_emit_event(
