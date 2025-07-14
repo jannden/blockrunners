@@ -12,7 +12,11 @@ interface BlockrunnersContextType {
   playerStatePDA: PublicKey | null;
   // UI state
   selectedCards: AbilityCard[];
+  setSelectedCards: (cards: AbilityCard[]) => void;
   socialFeed: { id: string; message: string; timestamp: number; isNew: boolean }[];
+  setSocialFeed: (
+    feed: { id: string; message: string; timestamp: number; isNew: boolean }[]
+  ) => void;
   // Card usage for blockchain transactions
   cardUsage: CardUsage;
   setCardUsage: (cardUsage: CardUsage) => void;
@@ -31,7 +35,9 @@ export const BlockrunnersContext = createContext<BlockrunnersContextType>({
   playerStatePDA: null,
   // UI state
   selectedCards: [],
+  setSelectedCards: () => {},
   socialFeed: [],
+  setSocialFeed: () => {},
   // Card usage
   cardUsage: { shield: false, doubler: false, swift: false },
   setCardUsage: () => {},

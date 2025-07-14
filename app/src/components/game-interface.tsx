@@ -36,8 +36,15 @@ export function GameInterface() {
   // Get the game's prize pool from context
   const gamePrizePool = gameState?.prizePool ? Number(gameState.prizePool) : 0;
 
-  // Get the player's cipher count from context
-  const ciphers = playerState?.ciphers ? Number(playerState.ciphers) : 0;
+  // Determine if the player is in the game
+  const inTheGame: boolean =
+    connected &&
+    !!playerState &&
+    !!playerState.gameStart &&
+    playerState.gameStart.toString() === gameState?.start.toString();
+
+  // Get the player's cipher count from context - show 0 if not in current game
+  const ciphers = inTheGame && playerState?.ciphers ? Number(playerState.ciphers) : 0;
 
   // Transform player cards from blockchain format to our app format
   const playerCards = transformBlockchainCards(playerState?.cards);
@@ -46,13 +53,6 @@ export function GameInterface() {
   const playerPosition = playerState?.position ? Number(playerState.position) : 0;
   const pathLength = gameState?.pathLength || INITIAL_PATH_LENGTH;
   const progress = Math.floor((playerPosition / pathLength) * 100);
-
-  // Determine if the player is in the game
-  const inTheGame: boolean =
-    connected &&
-    !!playerState &&
-    !!playerState.gameStart &&
-    playerState.gameStart.toString() === gameState?.start.toString();
 
   // Determine if cards should be selectable (only when player is in the game and not waiting for move reveal)
   const isCardsSelectable = inTheGame && !playerState?.moveDirection; // TODO: Change to randomnessAccount
@@ -104,22 +104,29 @@ export function GameInterface() {
 
       {connected && (
         <>
-          <div className="flex-1 flex flex-col py-4 pr-1 gap-4">
-            <GameFeed />
+          <div className="flex-1 flex flex-col py-4 pr-1 gap-4 min-h-0">
+            <div className="flex-1 min-h-0">
+              <GameFeed />
+            </div>
 
-            <AbilityCards
-              cards={playerCards}
-              selectedCards={selectedCards}
-              onCardSelect={handleToggleCardSelection}
-              inTheGame={inTheGame}
-              isSelectable={isCardsSelectable}
-            />
+            <div className="flex-shrink-0">
+              <AbilityCards
+                cards={playerCards}
+                selectedCards={selectedCards}
+                onCardSelect={handleToggleCardSelection}
+                inTheGame={inTheGame}
+                isSelectable={isCardsSelectable}
+              />
+            </div>
 
-            <GameControls
-              nextMoveCost={nextMoveCost}
-              onCostInfoClick={() => setCostInfoModalOpen(true)}
-              progress={progress}
-            />
+            <div className="flex-shrink-0">
+              <GameControls
+                nextMoveCost={nextMoveCost}
+                onCostInfoClick={() => setCostInfoModalOpen(true)}
+                onPurchaseCiphersClick={() => setPurchaseCiphersModalOpen(true)}
+                progress={progress}
+              />
+            </div>
           </div>
 
           <PurchaseCiphersModal

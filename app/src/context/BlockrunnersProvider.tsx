@@ -25,14 +25,7 @@ function BlockrunnersProvider({ children }: { children: ReactNode }) {
   const [playerStatePDA, setPlayerStatePDA] = useState<PublicKey | null>(null);
   const [cardUsage, setCardUsage] = useState<CardUsage>(EMPTY_CARD_USAGE);
   const [selectedCards, setSelectedCards] = useState<AbilityCard[]>([]);
-  const [socialFeed, setSocialFeed] = useState<SocialFeedEventInState[]>([
-    {
-      id: generateId(),
-      message: "Welcome Runner!",
-      timestamp: Math.floor(Date.now() / 1000),
-      isNew: false,
-    },
-  ]);
+  const [socialFeed, setSocialFeed] = useState<SocialFeedEventInState[]>([]);
 
   const selectCard = (card: AbilityCard) => {
     if (!selectedCards.some((c) => c.id === card.id)) {
@@ -64,27 +57,48 @@ function BlockrunnersProvider({ children }: { children: ReactNode }) {
   };
 
   // Keep track of available cards from blockchain and handle selection by type
-  // TODO: Should be checking randomnessAccount instead of moveDirection
   useEffect(() => {
     // If player state changes and there are new cards, update selection state if needed
     if (playerState && playerState.cards) {
       // Reset selections when player state changes significantly
-      if (playerState.moveDirection === null && selectedCards.length > 0) {
+      if (playerState.randomnessAccount === null && selectedCards.length > 0) {
         // Only reset if we've completed a move
         setSelectedCards([]);
         setCardUsage(EMPTY_CARD_USAGE);
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [playerState?.moveDirection]);
+  }, [playerState?.randomnessAccount]);
 
   const addToFeed = (events: SocialFeedEvent[]) => {
     if (events.length === 0) return;
 
     setSocialFeed((prevFeed) => {
+      if (prevFeed.length === 0) {
+        return events.map((event) => ({
+          id: generateId(),
+          message: event.message,
+          timestamp: event.timestamp.toNumber(),
+          isNew: true,
+        }));
+      }
+
+      // Filter out events that already exist in the feed (same message and timestamp)
+      const existingEventKeys = new Set(
+        prevFeed.map((item) => `${item.message}-${item.timestamp}`)
+      );
+
       const newEvents = events
-        .filter((event) => event.timestamp.toNumber() > prevFeed[prevFeed.length - 1].timestamp)
+        .filter((event) => {
+          const eventKey = `${event.message}-${event.timestamp.toNumber()}`;
+          return !existingEventKeys.has(eventKey);
+        })
         .sort((a, b) => a.timestamp.toNumber() - b.timestamp.toNumber());
+
+      // If no new events, return the existing feed
+      if (newEvents.length === 0) {
+        return prevFeed;
+      }
 
       const newFeed = [
         ...prevFeed.map((item) => ({ ...item, isNew: false })),
@@ -96,9 +110,12 @@ function BlockrunnersProvider({ children }: { children: ReactNode }) {
         })),
       ];
 
-      // Keep only the last 20 messages
-      if (newFeed.length > 20) {
-        newFeed.splice(0, newFeed.length - 20);
+      // Sort by timestamp to maintain chronological order
+      newFeed.sort((a, b) => a.timestamp - b.timestamp);
+
+      // Keep only the last 10 messages
+      if (newFeed.length > 10) {
+        newFeed.splice(0, newFeed.length - 10);
       }
 
       return newFeed;
@@ -145,6 +162,7 @@ function BlockrunnersProvider({ children }: { children: ReactNode }) {
         if (data) {
           console.log("GameState fetched", data);
           setGameState(data as GameState);
+          addToFeed(data.gameEvents);
         } else {
           console.log("GameState does not exist yet - may need initialization");
         }
@@ -191,6 +209,7 @@ function BlockrunnersProvider({ children }: { children: ReactNode }) {
         if (data) {
           console.log("PlayerState fetched", data);
           setPlayerState(data as PlayerState);
+          addToFeed(data.playerEvents);
         } else {
           console.log("PlayerState does not exist yet - may need initialization");
         }
@@ -242,9 +261,11 @@ function BlockrunnersProvider({ children }: { children: ReactNode }) {
     playerState,
     gameStatePDA,
     playerStatePDA,
-    cardUsage,
     selectedCards,
+    setSelectedCards,
     socialFeed,
+    setSocialFeed,
+    cardUsage,
     setCardUsage,
     purchaseCiphers,
     selectCard,

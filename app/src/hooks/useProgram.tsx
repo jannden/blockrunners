@@ -36,6 +36,15 @@ export function useSwitchboardProgramPromise() {
     if (!provider) return undefined;
 
     const loadProgram = async () => {
+      const isLocalnet =
+        provider.connection.rpcEndpoint.includes("localhost") ||
+        provider.connection.rpcEndpoint.includes("127.0.0.1");
+
+      if (isLocalnet) {
+        console.log("Running on localnet - skipping Switchboard program loading");
+        return null;
+      }
+
       const sbProgramId = await sb.getProgramId(provider.connection);
       if (!sbProgramId) {
         throw new Error("Switchboard program ID not found");

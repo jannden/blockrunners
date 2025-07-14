@@ -8,6 +8,65 @@
   },
   "instructions": [
     {
+      "name": "debug_give_card",
+      "discriminator": [
+        194,
+        238,
+        180,
+        20,
+        144,
+        241,
+        112,
+        80
+      ],
+      "accounts": [
+        {
+          "name": "player",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "player_state",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  108,
+                  97,
+                  121,
+                  101,
+                  114,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "player"
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "card",
+          "type": {
+            "defined": {
+              "name": "Card"
+            }
+          }
+        }
+      ]
+    },
+    {
       "name": "initialize_game",
       "discriminator": [
         44,
@@ -1041,7 +1100,7 @@
     {
       "name": "INITIAL_PATH_LENGTH",
       "type": "u8",
-      "value": "20"
+      "value": "10"
     },
     {
       "name": "INITIAL_PRIZE_POOL",
@@ -1076,7 +1135,7 @@
       "docs": [
         "Revenue distribution percentages"
       ],
-      "type": "u64",
+      "type": "u8",
       "value": "88"
     }
   ]

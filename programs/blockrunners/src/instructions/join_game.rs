@@ -51,6 +51,8 @@ pub fn join_game(ctx: Context<JoinGame>) -> Result<()> {
 
     player_state.game_start = Some(game_state.start);
     player_state.cards = CardCounts::default();
+    player_state.ciphers = 0;
+    player_state.position = 0;
 
     msg!("Player joined the game");
     Ok(())
