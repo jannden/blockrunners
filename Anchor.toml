@@ -8,10 +8,10 @@ resolution = true
 skip-lint = false
 
 [programs.devnet]
-blockrunners = "4daaULsebqDAFfASzX1YoTwF1rn4ZMxKdfLtLKfyjwcE"
+blockrunners = "FajM5A4b5VgLSqcxxeYz3WxqsG3RnGiW9FN7G7PiBpcV"
 
 [programs.localnet]
-blockrunners = "4daaULsebqDAFfASzX1YoTwF1rn4ZMxKdfLtLKfyjwcE"
+blockrunners = "FajM5A4b5VgLSqcxxeYz3WxqsG3RnGiW9FN7G7PiBpcV"
 
 [registry]
 url = "https://api.apr.dev"
