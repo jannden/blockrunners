@@ -28,10 +28,17 @@ export function PurchaseCiphersModal({ open, onClose }: PurchaseCiphersModalProp
   const [expectedNewTotal, setExpectedNewTotal] = useState<number | null>(null);
   const { connected } = useWallet();
   const { balance } = useBalance();
-  const { purchaseCiphers, playerState } = useBlockrunners();
+  const { purchaseCiphers, playerState, gameState } = useBlockrunners();
 
-  // Get the current cipher count from the player state
-  const currentCiphers = playerState?.ciphers ? Number(playerState.ciphers) : 0;
+  // Determine if the player is in the current game
+  const inTheGame: boolean =
+    connected &&
+    !!playerState &&
+    !!playerState.gameStart &&
+    playerState.gameStart.toString() === gameState?.start.toString();
+
+  // Get the current cipher count from the player state - show 0 if not in current game
+  const currentCiphers = inTheGame && playerState?.ciphers ? Number(playerState.ciphers) : 0;
   const previousCiphersRef = useRef(currentCiphers);
 
   // Effect to close the modal when purchase is confirmed (when ciphers increase)

@@ -15,10 +15,16 @@ import { MoveCommitButtons } from "./move-commit-buttons";
 interface GameControlsProps {
   nextMoveCost: number;
   onCostInfoClick: () => void;
+  onPurchaseCiphersClick: () => void;
   progress: number;
 }
 
-export function GameControls({ nextMoveCost, onCostInfoClick, progress }: GameControlsProps) {
+export function GameControls({
+  nextMoveCost,
+  onCostInfoClick,
+  onPurchaseCiphersClick,
+  progress,
+}: GameControlsProps) {
   const { connection } = useConnection();
   const { connected } = useWallet();
   const { balance } = useBalance();
@@ -85,7 +91,11 @@ export function GameControls({ nextMoveCost, onCostInfoClick, progress }: GameCo
         </div>
 
         {showMoveCommitButtons && (
-          <MoveCommitButtons nextMoveCost={nextMoveCost} onCostInfoClick={onCostInfoClick} />
+          <MoveCommitButtons
+            nextMoveCost={nextMoveCost}
+            onCostInfoClick={onCostInfoClick}
+            onPurchaseCiphersClick={onPurchaseCiphersClick}
+          />
         )}
       </div>
 

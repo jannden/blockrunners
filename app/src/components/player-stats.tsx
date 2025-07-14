@@ -3,10 +3,12 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useBlockrunners } from "@/hooks/useBlockrunners";
+import { useWallet } from "@solana/wallet-adapter-react";
 import { BN } from "@coral-xyz/anchor";
 
 export function PlayerStats() {
-  const { playerState } = useBlockrunners();
+  const { playerState, gameState } = useBlockrunners();
+  const { connected } = useWallet();
 
   if (!playerState) {
     return (
@@ -133,7 +135,16 @@ export function PlayerStats() {
               Position: {playerState.position || 0}
             </Badge>
             <Badge variant="outline" className="font-mono text-xs">
-              Ciphers: {playerState.ciphers?.toString() || "0"}
+              Ciphers:{" "}
+              {(() => {
+                // Show 0 if not in current game
+                const inTheGame =
+                  connected &&
+                  !!playerState &&
+                  !!playerState.gameStart &&
+                  playerState.gameStart.toString() === gameState?.start.toString();
+                return inTheGame && playerState.ciphers ? playerState.ciphers.toString() : "0";
+              })()}
             </Badge>
             <Badge
               variant={playerState.consecutiveWins?.gt(new BN(0)) ? "default" : "outline"}

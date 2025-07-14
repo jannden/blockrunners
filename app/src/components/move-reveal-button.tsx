@@ -26,6 +26,56 @@ export const MoveRevealButton = () => {
     setIsLoading(true);
 
     try {
+      const isLocalnet =
+        connection.rpcEndpoint.includes("localhost") ||
+        connection.rpcEndpoint.includes("127.0.0.1");
+
+      if (isLocalnet) {
+        console.log("Running on localnet - using mock randomness reveal");
+
+        // Get latest blockhash for transaction
+        const latestBlockHash = await connection.getLatestBlockhash();
+
+        // Create only the blockrunners reveal instruction (no switchboard reveal needed)
+        const blockrunnersRevealIx = await program.methods
+          .moveReveal()
+          .accounts({
+            player: publicKey,
+            randomnessAccount: randomnessAccountAddress,
+          })
+          .instruction();
+
+        // Create transaction
+        const tx = new Transaction({
+          feePayer: publicKey,
+          blockhash: latestBlockHash.blockhash,
+          lastValidBlockHeight: latestBlockHash.lastValidBlockHeight,
+        });
+
+        // Add only the blockrunners instruction
+        tx.add(blockrunnersRevealIx);
+
+        // Sign transaction using wallet adapter
+        const signedTx = await wallet.signTransaction(tx);
+        const signature = await connection.sendRawTransaction(signedTx.serialize());
+
+        console.log("Localnet move reveal transaction sent", signature);
+
+        // Wait to confirm the transaction
+        const confirmResult = await connection.confirmTransaction({
+          blockhash: latestBlockHash.blockhash,
+          lastValidBlockHeight: latestBlockHash.lastValidBlockHeight,
+          signature,
+        });
+
+        if (confirmResult) {
+          console.log("Localnet move reveal transaction was confirmed");
+        }
+
+        return;
+      }
+
+      // Original switchboard logic for devnet/mainnet
       const switchboardProgram = await switchboardProgramPromise;
       if (!switchboardProgram) {
         console.error("Switchboard program not available");

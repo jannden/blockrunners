@@ -2,17 +2,21 @@ import { useState } from "react";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { Button } from "./ui/button";
 import { useProgram } from "@/hooks/useProgram";
+import { useBlockrunners } from "@/hooks/useBlockrunners";
 
 export const JoinGameButton = () => {
   const { publicKey } = useWallet();
   const { connection } = useConnection();
   const [isLoading, setIsLoading] = useState(false);
   const program = useProgram();
+  const { setSelectedCards, setSocialFeed } = useBlockrunners();
 
   const handleJoinGame = async () => {
     if (!publicKey || !program) return;
 
     setIsLoading(true);
+    setSelectedCards([]);
+    setSocialFeed([]);
 
     try {
       const latestBlockHash = await connection.getLatestBlockhash();
@@ -45,7 +49,7 @@ export const JoinGameButton = () => {
 
   return (
     <Button onClick={handleJoinGame} disabled={isLoading} variant="primary">
-      {isLoading ? "Loading..." : "Join Game"}
+      {isLoading ? "Loading..." : "Join New Game"}
     </Button>
   );
 };

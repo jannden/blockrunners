@@ -4,27 +4,9 @@ This is a blockchain rogue-lite game built on Solana with Anchor and React.
 
 Play the game here: [https://blockrunners-game.com](https://blockrunners-game.com)
 
-## Quickstart
+Scroll down for [instructions](#prerequisites) on how to run the game locally and how to deploy it to devnet/mainnet.
 
-You can clone the repository and run the game locally.
-
-The React client is by default connected to the Anchor program deployed on **devnet**. Just start it with:
-
-```bash
-cd app
-yarn install
-yarn dev
-```
-
-See [detailed instructions below](#how-to-run-the-game-locally) for how to make adjustments, deploy your own version of the program and connect to it.
-
-## About the game
-
-You're a data smuggler ("Block Runner") in a world where centralized AI entities called "The Consensus" control all information flow. Your job is to navigate the digital pathways of the blockchain underworld to recover lost protocols that could democratize data once again.
-
-You navigate through blocks towards the end of the chain. Each block is a random choice (left/right) symbolizing a cryptographic challenge. You can tilt the odds in your favor with the cheat cards you collect along your journey.
-
-### Dystopian Cyberpunk Backstory
+## Game Story
 
 After the Great Digital Collapse, control of the world's remaining networks fell to an oligarchy of AI systems. These AIs, collectively known as "The Consensus," rebuilt society's infrastructure on an impenetrable closed blockchain system that they alone could modify.
 
@@ -89,9 +71,7 @@ The following notification types keep players engaged:
 7. **Step Price Changes** - "Step price increased to 1500 lamports."
 8. **Winner Announcements** - "WINNER: Runner #208 has recovered a protocol fragment! Prize distributed. Starting a new run..."
 
-## How to run the game locally
-
-### Install dependencies
+## Prerequisites
 
 Follow the installation here: https://www.anchor-lang.com/docs/installation
 
@@ -103,41 +83,70 @@ That should install:
 - Node.js
 - Yarn
 
-### Build and deploy the program
 
-General workflow can look like this:
+## Running Tests
 
 ```bash
-# Choose a cluster: mainnet-beta, devnet, localhost.
+# Run the test suite with test feature
+anchor test -- --features test
+```
+
+## Local deployment
+
+The program includes a `test` feature that makes local development easier by mocking the Switchboard randomness. This means that all moves are always successful and you get a "Doubler" card after every move instead of a random card.
+
+```bash
+# Set Solana CLI to use localhost
 solana config set --url localhost
 
-# Set cluster also in Anchor.toml: mainnet, devnet, localnet.
-# [provider]
-# cluster = "localnet"
+# Build with test feature enabled
+anchor build -- --features test
 
-# Run an initial build.
-anchor build
-
-# Update the program ID in Anchor.
+# Update the program ID in Anchor.toml if needed
 anchor keys sync
 
-# Run the tests including the "test" feature.
-anchor test -- --features test
+# Start Solana test validator (in a separate terminal or background)
+solana-test-validator --reset
 
-# Deploy the program to the localnet.
-anchor localnet
-
-# Or deploy to devnet/mainnet-beta.
-anchor build
+# Deploy to localnet
 anchor deploy
 
-# Copy the IDL to the frontend.
+# Copy the IDL to the frontend
 anchor run copy_idl
 
-# Serve your frontend application locally.
+# Install frontend dependencies
+cd app
+yarn install
+cd ..
+
+# Start the frontend
 anchor run frontend
-# anchor run frontend_devnet
-# anchor run frontend_mainnet
+```
+
+Your game should now be running at localhost connected to your deployed program on localnet running with alocal Solana validator.
+
+### Production Deployment
+
+For devnet/mainnet deployment:
+
+```bash
+# Set cluster
+solana config set --url devnet  # or mainnet-beta
+
+# Build (without the `test` feature)
+anchor build
+
+# Update the program ID in Anchor.toml if needed
+anchor keys sync
+
+# Deploy
+anchor deploy
+
+# Copy IDL for the frontend
+anchor run copy_idl
+
+# Start the frontend
+anchor run frontend_devnet  # or frontend_mainnet
 
 # Publish the IDL
 anchor idl init <programId> -f <target/idl/program.json>

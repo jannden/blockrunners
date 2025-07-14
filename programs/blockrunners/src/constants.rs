@@ -10,7 +10,7 @@ pub const DISCRIMINATOR_SIZE: u8 = 8;
 pub const INITIAL_PRIZE_POOL: u64 = 0;
 
 #[constant]
-pub const INITIAL_PATH_LENGTH: u8 = 20;
+pub const INITIAL_PATH_LENGTH: u8 = 10;
 
 #[constant]
 pub const GAME_STATE_SEED: &[u8] = b"game_state";

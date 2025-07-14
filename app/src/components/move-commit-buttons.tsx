@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useAnchorWallet, useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { Button } from "./ui/button";
 import { RoundButton } from "./ui/round-button";
-import { ArrowLeft, ArrowRight, AlertCircle } from "lucide-react";
+import { ArrowLeft, ArrowRight, AlertCircle, Zap } from "lucide-react";
 import { useProgram, useSwitchboardProgramPromise } from "@/hooks/useProgram";
 import { useBlockrunners } from "@/hooks/useBlockrunners";
 import * as sb from "@switchboard-xyz/on-demand";
@@ -13,19 +13,31 @@ import { setupQueue } from "@/lib/utils";
 interface MoveCommitButtonsProps {
   nextMoveCost: number;
   onCostInfoClick: () => void;
+  onPurchaseCiphersClick: () => void;
 }
 
-export const MoveCommitButtons = ({ nextMoveCost, onCostInfoClick }: MoveCommitButtonsProps) => {
+export const MoveCommitButtons = ({
+  nextMoveCost,
+  onCostInfoClick,
+  onPurchaseCiphersClick,
+}: MoveCommitButtonsProps) => {
   const wallet = useAnchorWallet();
-  const { publicKey } = useWallet();
+  const { publicKey, connected } = useWallet();
   const { connection } = useConnection();
   const [isLoading, setIsLoading] = useState(false);
   const program = useProgram();
-  const { cardUsage, playerState } = useBlockrunners();
+  const { cardUsage, playerState, gameState } = useBlockrunners();
   const switchboardProgramPromise = useSwitchboardProgramPromise();
 
-  // Check if player has enough ciphers for the move
-  const playerCiphers = playerState?.ciphers ? Number(playerState.ciphers) : 0;
+  // Determine if the player is in the current game
+  const inTheGame: boolean =
+    connected &&
+    !!playerState &&
+    !!playerState.gameStart &&
+    playerState.gameStart.toString() === gameState?.start.toString();
+
+  // Check if player has enough ciphers for the move - show 0 if not in current game
+  const playerCiphers = inTheGame && playerState?.ciphers ? Number(playerState.ciphers) : 0;
   const hasEnoughCiphers = playerCiphers >= nextMoveCost;
 
   const handleMoveCommit = async (direction: PathDirection) => {
@@ -37,6 +49,57 @@ export const MoveCommitButtons = ({ nextMoveCost, onCostInfoClick }: MoveCommitB
     setIsLoading(true);
 
     try {
+      // Check if we're on localnet first
+      const isLocalnet =
+        connection.rpcEndpoint.includes("localhost") ||
+        connection.rpcEndpoint.includes("127.0.0.1");
+
+      if (isLocalnet) {
+        console.log("Running on localnet - using mock randomness account");
+
+        // Create a mock randomness account keypair
+        const rngKeypair = Keypair.generate();
+
+        // Get latest blockhash
+        const latestBlockHash = await connection.getLatestBlockhash();
+
+        // Create the move commit instruction with mock randomness account
+        const blockrunnersRequestIx = await program.methods
+          .moveCommit(direction, cardUsage)
+          .accounts({
+            player: publicKey,
+            randomnessAccount: rngKeypair.publicKey,
+          })
+          .instruction();
+
+        // Create and send transaction
+        const tx = new Transaction({
+          feePayer: publicKey,
+          blockhash: latestBlockHash.blockhash,
+          lastValidBlockHeight: latestBlockHash.lastValidBlockHeight,
+        });
+
+        tx.add(blockrunnersRequestIx);
+
+        const signedTx = await wallet.signTransaction(tx);
+        const signature = await connection.sendRawTransaction(signedTx.serialize());
+        console.log("Localnet move commit transaction sent", signature);
+
+        // Wait for confirmation
+        const confirmResult = await connection.confirmTransaction({
+          blockhash: latestBlockHash.blockhash,
+          lastValidBlockHeight: latestBlockHash.lastValidBlockHeight,
+          signature,
+        });
+
+        if (confirmResult) {
+          console.log("Localnet move commit transaction confirmed");
+        }
+
+        return;
+      }
+
+      // Switchboard logic for devnet/mainnet
       const switchboardProgram = await switchboardProgramPromise;
       if (!switchboardProgram) {
         console.error("Switchboard program not available");
@@ -138,9 +201,15 @@ export const MoveCommitButtons = ({ nextMoveCost, onCostInfoClick }: MoveCommitB
       {!hasEnoughCiphers && (
         <div className="flex items-center justify-center p-2 bg-red-100 border border-red-300 text-red-700 rounded-md">
           <AlertCircle className="w-4 h-4 mr-1" />
-          <span className="text-sm">
-            Not enough ciphers! You need {nextMoveCost}, but have {playerCiphers}.
-          </span>
+          <span className="text-sm">Not enough ciphers!</span>
+          <Button
+            onClick={onPurchaseCiphersClick}
+            className="group flex items-center ml-3"
+            size="xs"
+          >
+            <Zap className="w-4 h-4 mr-0.5" />
+            <span className="text-sm font-bold">Buy more</span>
+          </Button>
         </div>
       )}
       <div className="flex items-center justify-between">

@@ -1106,7 +1106,7 @@ export type Blockrunners = {
     {
       "name": "initialPathLength",
       "type": "u8",
-      "value": "20"
+      "value": "10"
     },
     {
       "name": "initialPrizePool",

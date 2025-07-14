@@ -19,6 +19,13 @@ export function GameHeader({ ciphers, prizePool, onInfoClick, onPurchaseCiphersC
   const [prizePoolModalOpen, setPrizePoolModalOpen] = useState(false);
   const { gameState, playerState } = useBlockrunners();
 
+  // Determine if the player is in the game
+  const inTheGame: boolean =
+    connected &&
+    !!playerState &&
+    !!playerState.gameStart &&
+    playerState.gameStart.toString() === gameState?.start.toString();
+
   const onGamePrizePoolClick = () => {
     setPrizePoolModalOpen(true);
   };
@@ -43,7 +50,7 @@ export function GameHeader({ ciphers, prizePool, onInfoClick, onPurchaseCiphersC
             <span className="text-sm font-bold">{lamportsShortString(prizePool)}</span>
           </Button>
         </div>
-        {connected && gameState && playerState && (
+        {connected && gameState && playerState && inTheGame && (
           <div className="flex-1 flex items-center justify-center">
             <Button
               onClick={onPurchaseCiphersClick}
