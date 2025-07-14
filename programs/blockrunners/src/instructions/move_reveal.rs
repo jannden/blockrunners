@@ -167,7 +167,7 @@ fn handle_correct_move(
 
     if !card_effects.is_empty() {
         private_message = format!(
-            "{}! Cards used: {}",
+            "{} Cards used: {}",
             private_message,
             card_effects.join(", ")
         );
@@ -236,7 +236,7 @@ fn handle_incorrect_move(
         }
 
         if !cards_used.is_empty() {
-            private_message = format!("{}. Cards used: {}", private_message, cards_used.join(", "));
+            private_message = format!("{} Cards used: {}", private_message, cards_used.join(", "));
         }
 
         save_and_emit_event(

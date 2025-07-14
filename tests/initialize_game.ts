@@ -4,7 +4,7 @@ import { Keypair, PublicKey } from "@solana/web3.js";
 import { expect } from "chai";
 import { Blockrunners } from "../target/types/blockrunners";
 import { airdropSol, getEventLogs, getMsgLogs, getTxDetails } from "./helpers/utils";
-import { GAME_STATE_SEED, ADMIN_KEYPAIR } from "./helpers/constants";
+import { GAME_STATE_SEED, ADMIN_KEYPAIR, INITIAL_PATH_LENGTH } from "./helpers/constants";
 
 describe("Initialize Game", () => {
   // Configure the client to use the local cluster
@@ -12,9 +12,6 @@ describe("Initialize Game", () => {
 
   const program = anchor.workspace.blockrunners as Program<Blockrunners>;
   const provider = anchor.getProvider() as anchor.AnchorProvider;
-
-  // Fixed path length for alpha
-  const PATH_LENGTH = 20;
 
   // Keypairs
   const adminKeypair = ADMIN_KEYPAIR;
@@ -56,7 +53,7 @@ describe("Initialize Game", () => {
 
     // Verify game state was initialized correctly
     expect(gameStateAfter.prizePool.toNumber()).to.equal(0);
-    expect(gameStateAfter.pathLength).to.equal(PATH_LENGTH);
+    expect(gameStateAfter.pathLength).to.equal(INITIAL_PATH_LENGTH);
   });
 
   it("Fails if game state account already exists", async () => {
