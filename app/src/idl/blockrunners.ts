@@ -5,7 +5,7 @@
  * IDL can be found at `target/idl/blockrunners.json`.
  */
 export type Blockrunners = {
-  "address": "FajM5A4b5VgLSqcxxeYz3WxqsG3RnGiW9FN7G7PiBpcV",
+  "address": "6BwNv3aA437eCifxaUymtRov1bw17eK4xXuYVXodNWjC",
   "metadata": {
     "name": "blockrunners",
     "version": "0.1.0",

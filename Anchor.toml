@@ -11,7 +11,7 @@ skip-lint = false
 blockrunners = "FajM5A4b5VgLSqcxxeYz3WxqsG3RnGiW9FN7G7PiBpcV"
 
 [programs.localnet]
-blockrunners = "FajM5A4b5VgLSqcxxeYz3WxqsG3RnGiW9FN7G7PiBpcV"
+blockrunners = "6BwNv3aA437eCifxaUymtRov1bw17eK4xXuYVXodNWjC"
 
 [registry]
 url = "https://api.apr.dev"
@@ -20,11 +20,8 @@ url = "https://api.apr.dev"
 cluster = "localnet"
 wallet = "~/.config/solana/id.json"
 
-[workspace]
-types = "app/src/idl/"
-
 [scripts]
-copy_idl = "mkdir -p app/src/idl && cp target/idl/blockrunners.json app/src/idl/blockrunners.json"
+copy_idl = "mkdir -p app/src/idl && cp target/idl/blockrunners.json app/src/idl/blockrunners.json && anchor idl type app/src/idl/blockrunners.json -o app/src/idl/blockrunners.ts"
 frontend = "cd app && yarn dev:localnet"
 frontend_devnet = "cd app && yarn dev:devnet"
 frontend_mainnet = "cd app && yarn dev:mainnet"

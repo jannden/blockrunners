@@ -17,11 +17,9 @@ export function useProgram() {
   return useMemo(() => {
     if (provider) {
       // For write operations with wallet connected
-      // @ts-expect-error Inconsistency in dependencies
       return new Program<Blockrunners>(IDL, provider);
     } else {
       // For read-only operations with no wallet
-      // @ts-expect-error Inconsistency in dependencies
       return new Program<Blockrunners>(IDL, {
         connection,
       });

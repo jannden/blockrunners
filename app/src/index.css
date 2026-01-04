@@ -50,6 +50,7 @@
 }
 
 :root {
+  background-color: white;
   /* Base theme colors */
   --app-primary: #FFDC58;
   /* Yellow for primary actions */
