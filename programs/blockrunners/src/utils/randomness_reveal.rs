@@ -38,7 +38,7 @@ pub fn randomness_reveal(
     // TODO: Refactor not to store the randomness value in the player state
     player_state.randomness_value = Some(
         randomness_data
-            .get_value(&clock)
+            .get_value(clock.slot)
             .map_err(|_| {
                 msg!("Randomness not yet resolved");
                 BlockrunnersError::RandomnessNotResolved

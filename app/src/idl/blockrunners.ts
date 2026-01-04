@@ -5,7 +5,7 @@
  * IDL can be found at `target/idl/blockrunners.json`.
  */
 export type Blockrunners = {
-  "address": "11111111111111111111111111111111",
+  "address": "FajM5A4b5VgLSqcxxeYz3WxqsG3RnGiW9FN7G7PiBpcV",
   "metadata": {
     "name": "blockrunners",
     "version": "0.1.0",
@@ -13,6 +13,65 @@ export type Blockrunners = {
     "description": "Created with Anchor"
   },
   "instructions": [
+    {
+      "name": "debugGiveCard",
+      "discriminator": [
+        194,
+        238,
+        180,
+        20,
+        144,
+        241,
+        112,
+        80
+      ],
+      "accounts": [
+        {
+          "name": "player",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "playerState",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  108,
+                  97,
+                  121,
+                  101,
+                  114,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "player"
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "card",
+          "type": {
+            "defined": {
+              "name": "card"
+            }
+          }
+        }
+      ]
+    },
     {
       "name": "initializeGame",
       "discriminator": [
