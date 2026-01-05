@@ -2,7 +2,7 @@
 
 This is a blockchain rogue-lite game built on Solana with Anchor and React.
 
-Play the game here: [https://jannden.github.io/blockrunners/]](https://jannden.github.io/blockrunners/)
+Play the game here: [https://jannden.github.io/blockrunners/](https://jannden.github.io/blockrunners/)
 
 Scroll down for [instructions](#prerequisites) on how to run the game locally and how to deploy it to devnet/mainnet.
 
