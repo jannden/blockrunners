@@ -10,7 +10,7 @@ mod utils;
 use instructions::*;
 use state::{Card, CardUsage, PathDirection};
 
-declare_id!("FajM5A4b5VgLSqcxxeYz3WxqsG3RnGiW9FN7G7PiBpcV");
+declare_id!("6BwNv3aA437eCifxaUymtRov1bw17eK4xXuYVXodNWjC");
 
 #[program]
 pub mod blockrunners {
