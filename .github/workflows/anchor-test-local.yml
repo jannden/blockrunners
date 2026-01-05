@@ -65,7 +65,9 @@ jobs:
         if: steps.cache-solana.outputs.cache-hit != 'true'
         run: |
           sh -c "$(curl -sSfL https://release.anza.xyz/v${{ env.SOLANA_VERSION }}/install)"
-          echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
+
+      - name: Setup Solana PATH
+        run: echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
 
       - name: Setup Solana config
         run: |
@@ -88,7 +90,9 @@ jobs:
           cargo install --git https://github.com/coral-xyz/anchor avm --locked --force
           avm install ${{ env.ANCHOR_VERSION }}
           avm use ${{ env.ANCHOR_VERSION }}
-          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Setup Anchor PATH
+        run: echo "$HOME/.cargo/bin" >> $GITHUB_PATH
 
       - name: Cache Anchor build artifacts
         id: cache-anchor-build
