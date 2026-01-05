@@ -84,6 +84,7 @@ export const MoveRevealButton = () => {
       }
 
       // Create a Randomness instance from the public key
+      // @ts-expect-error Inconsistency in dependencies
       const randomness = new sb.Randomness(switchboardProgram, randomnessAccountAddress);
 
       // Reveal randomness instruction

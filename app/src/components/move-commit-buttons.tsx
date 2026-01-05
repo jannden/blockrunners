@@ -112,6 +112,7 @@ export const MoveCommitButtons = ({
       const queue = await setupQueue(switchboardProgram);
       console.log("Queue:", queue.toString());
       const [randomnessAccount, createRandomnessIx] = await sb.Randomness.create(
+        // @ts-expect-error Inconsistency in dependencies
         switchboardProgram,
         rngKeypair,
         queue

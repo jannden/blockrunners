@@ -100,6 +100,7 @@ export async function setupQueue(program: anchor.Program): Promise<PublicKey> {
 }
 
 export async function setupSVMQueue(program: anchor.Program, queue: PublicKey): Promise<PublicKey> {
+  // @ts-expect-error Inconsistency in dependencies
   const queuePDA = sb.Queue.queuePDA(program, queue);
   console.log("Queue:", queuePDA.toString());
 
