@@ -10,7 +10,7 @@ blockrunners = "FajM5A4b5VgLSqcxxeYz3WxqsG3RnGiW9FN7G7PiBpcV"
 blockrunners = "6BwNv3aA437eCifxaUymtRov1bw17eK4xXuYVXodNWjC"
 
 [provider]
-cluster = "devnet"
+cluster = "localnet"
 wallet = "~/.config/solana/id.json"
 
 [scripts]
