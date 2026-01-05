@@ -3,18 +3,11 @@ anchor_version = "0.32.1"
 solana_version = "3.0.13"
 package_manager = "yarn"
 
-[features]
-resolution = true
-skip-lint = false
-
 [programs.devnet]
 blockrunners = "FajM5A4b5VgLSqcxxeYz3WxqsG3RnGiW9FN7G7PiBpcV"
 
 [programs.localnet]
 blockrunners = "6BwNv3aA437eCifxaUymtRov1bw17eK4xXuYVXodNWjC"
-
-[registry]
-url = "https://api.apr.dev"
 
 [provider]
 cluster = "devnet"
