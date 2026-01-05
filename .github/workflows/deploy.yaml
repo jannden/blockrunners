@@ -12,10 +12,10 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
     
-    - name: Use Node.js 22.14.0
+    - name: Use Node.js 24.10.0
       uses: actions/setup-node@v4
       with:
-        node-version: 22.14.0
+        node-version: 24.10.0
         cache: 'yarn'
         cache-dependency-path: app/yarn.lock
     
